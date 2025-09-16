@@ -1,0 +1,268 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  HR                    // Менеджер по найму
+  OPERATIONS           // Операционный менеджер  
+  MIXED                // Смешанная роль (найм + операции)
+  COUNTRY_MANAGER      // Менеджер по стране
+  ADMIN                // Администратор
+}
+
+enum City {
+  WARSAW
+  KRAKOW
+  GDANSK
+  WROCLAW
+  POZNAN
+  LODZ
+  LUBLIN
+  KATOWICE
+  BYDGOSZCZ
+  SZCZECIN
+  TORUN
+  RADOM
+  RZESZOW
+  OLSZTYN
+  BIALYSTOK
+}
+
+// Основная таблица пользователей
+model User {
+  id        String   @id @default(cuid())
+  login     String   @unique  // Логин (не email)
+  password  String   // Хешированный пароль
+  email     String?  // Email не обязателен
+  name      String   // Имя пользователя
+  role      Role     // Роль пользователя
+  city      City     // Город (задается админом, readonly для пользователя)
+  salary    Float?   // Зарплата (может быть не указана)
+  currency  String   @default("PLN") // Валюта зарплаты
+  isActive  Boolean  @default(true) // Статус: активен/архив
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Связанные данные
+  weeklyReports    WeeklyReport[]
+  hrMetrics        HrMetrics[]
+  opsMetrics       OpsMetrics[]
+  countryAggregates CountryAggregates[]
+
+  @@map("users")
+}
+
+// Справочник городов
+model CityInfo {
+  id        String   @id @default(cuid())
+  code      City     @unique
+  name      String   // Название города на русском
+  timezone  String   @default("Europe/Warsaw")
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@map("cities")
+}
+
+// Еженедельные отчеты
+model WeeklyReport {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Период отчета
+  weekIso       String   // ISO неделя (например, "2024-W15")
+  weekStartDate DateTime // Понедельник
+  weekEndDate   DateTime // Воскресенье
+  
+  // Общие поля для всех ролей
+  workdays      Float    @default(0) // Отработанные дни (0-7)
+  stressLevel   Int      @default(0) // Уровень стресса (0-10)
+  overtime      Boolean  @default(false) // Переработки (флаг)
+  overtimeHours Float?   // Часы переработки
+  
+  // График на следующую неделю (JSON)
+  nextWeekSchedule Json?  // { "monday": "9:00-18:00", "tuesday": "9:00-18:00", ... }
+  
+  // Работа с командой
+  goodWorkWith  String?  // С кем хорошо работалось (текст)
+  badWorkWith   String?  // С кем плохо работалось (текст)
+  teamComment   String?  // Комментарий к работе с командой
+  
+  // Заметки
+  notes         String?  // Дополнительные заметки
+  
+  // Статус
+  isCompleted   Boolean  @default(false)
+  submittedAt   DateTime?
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Связанные метрики
+  hrMetrics     HrMetrics?
+  opsMetrics    OpsMetrics?
+
+  @@unique([userId, weekIso])
+  @@map("weekly_reports")
+}
+
+// HR метрики (для ролей HR и MIXED)
+model HrMetrics {
+  id               String   @id @default(cuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reportId         String   @unique
+  report           WeeklyReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  
+  // HR метрики
+  interviews       Int      @default(0) // Количество собеседований
+  jobPosts         Int      @default(0) // Количество объявлений
+  registrations    Int      @default(0) // Количество регистраций
+  difficultCases   String?  // Сложные ситуации (текст)
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([userId, reportId])
+  @@map("hr_metrics")
+}
+
+// Операционные метрики (для ролей OPERATIONS и MIXED)
+model OpsMetrics {
+  id                      String   @id @default(cuid())
+  userId                  String
+  user                    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reportId                String   @unique
+  report                  WeeklyReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  
+  // Данные Trengo (автоматически или вручную)
+  trengoMessages          Int      @default(0) // Сообщения
+  trengoTicketsResolved   Int      @default(0) // Решенные тикеты
+  
+  // Данные CRM (автоматически или вручную)
+  crmTicketsResolved      Int      @default(0) // Решенные тикеты
+  crmOrdersCity           Int      @default(0) // Заказы города
+  
+  // Сложные ситуации
+  difficultCleanerCases   String?  // Сложные ситуации с клинерами
+  difficultClientCases    String?  // Сложные ситуации с клиентами
+  
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  @@unique([userId, reportId])
+  @@map("ops_metrics")
+}
+
+// Агрегированные данные по стране (заполняет менеджер по стране)
+model CountryAggregates {
+  id            String   @id @default(cuid())
+  managerId     String
+  manager       User     @relation(fields: [managerId], references: [id], onDelete: Cascade)
+  
+  // Период
+  weekIso       String   // ISO неделя
+  weekStartDate DateTime
+  weekEndDate   DateTime
+  
+  // Данные Trengo по людям/городам (JSON)
+  trengoByPeople Json?    // { "userId": { "messages": 100, "tickets": 20 }, ... }
+  trengoByCity   Json?    // { "WARSAW": { "messages": 500, "tickets": 100 }, ... }
+  
+  // Данные CRM по людям/городам (JSON)
+  crmByPeople    Json?    // { "userId": { "tickets": 15, "orders": 50 }, ... }
+  crmByCity      Json?    // { "WARSAW": { "tickets": 75, "orders": 250 }, ... }
+  
+  // Количество нанятых по городам
+  hiresByCity    Json?    // { "WARSAW": 5, "KRAKOW": 3, ... }
+  
+  // Заказы по городам
+  ordersByCity   Json?    // { "WARSAW": 150, "KRAKOW": 89, ... }
+  
+  // Корректировки
+  adjustments    String?  // Корректировки (±, причина)
+  
+  // Комментарии
+  comments       String?  // Общие комментарии
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([managerId, weekIso])
+  @@map("country_aggregates")
+}
+
+// Настройки системы
+model Settings {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  category  String   @default("general")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
+}
+
+// AI анализ и инсайты
+model AiAnalysis {
+  id            String   @id @default(cuid())
+  type          String   // "summary", "notification", "anomaly", "comparison"
+  title         String
+  description   String
+  severity      String   @default("info") // info, warning, critical
+  
+  // Целевые данные
+  targetUserId  String?
+  targetCity    String?
+  weekIso       String
+  
+  // Результаты анализа
+  insights      Json     // Структурированные инсайты
+  recommendations String?
+  
+  // Статус
+  isNotified    Boolean  @default(false)
+  notifiedAt    DateTime?
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("ai_analysis")
+}
+
+// Отчеты
+model Report {
+  id          String   @id @default(cuid())
+  type        String   // "personal", "city", "country", "comparison"
+  title       String
+  description String?
+  
+  // Фильтры
+  dateFrom    DateTime
+  dateTo      DateTime
+  cities      Json?    // Массив городов
+  userIds     Json?    // Массив ID пользователей
+  
+  // Данные отчета
+  data        Json     // Структурированные данные
+  summary     String?  // AI резюме
+  
+  // Экспорт
+  exportFormats Json?  // ["csv", "xlsx", "pdf"]
+  
+  generatedBy String   // ID пользователя
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("reports")
+}

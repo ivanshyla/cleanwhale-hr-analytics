@@ -1,0 +1,75 @@
+@import "tailwindcss";
+
+:root {
+  /* CleanWhale Brand Colors */
+  --cw-primary: #1a56db;       /* CleanWhale Blue */
+  --cw-secondary: #7c3aed;     /* CleanWhale Purple */
+  --cw-accent: #059669;        /* CleanWhale Green */
+  --cw-background: #ffffff;
+  --cw-foreground: #1f2937;
+  --cw-gray-50: #f9fafb;
+  --cw-gray-100: #f3f4f6;
+  --cw-gray-900: #111827;
+  
+  --background: var(--cw-background);
+  --foreground: var(--cw-foreground);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --cw-background: #1f2937;
+    --cw-foreground: #f9fafb;
+    --background: var(--cw-background);
+    --foreground: var(--cw-foreground);
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* CleanWhale Brand Utilities */
+.cw-primary {
+  background-color: var(--cw-primary);
+}
+
+.cw-text-primary {
+  color: var(--cw-primary);
+}
+
+.cw-border-primary {
+  border-color: var(--cw-primary);
+}
+
+.cw-gradient {
+  background: linear-gradient(135deg, var(--cw-primary) 0%, var(--cw-secondary) 100%);
+}
+
+.cw-card {
+  background: var(--cw-background);
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  border-radius: 0.75rem;
+}
+
+.cw-button {
+  background: linear-gradient(135deg, var(--cw-primary) 0%, var(--cw-secondary) 100%);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.cw-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.25);
+}
