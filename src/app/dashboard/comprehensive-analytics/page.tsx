@@ -1,6 +1,9 @@
 'use client';
 
+// Отключаем пререндеринг полностью
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const runtime = 'nodejs';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -19,6 +22,25 @@ const AnalyticsCharts = dynamic(() => import('../../../components/AnalyticsChart
     </div>
   )
 });
+
+// Компонент-обертка для условного рендеринга
+function ChartsWrapper({ data }: { data: any[] }) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <div className="flex justify-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  return <AnalyticsCharts data={data} />;
+}
 
 interface UnifiedAnalyticsForm {
   reportDate: string;
@@ -470,7 +492,7 @@ export default function ComprehensiveAnalyticsPage() {
 
         {/* Графики */}
         {!isLoading && analyticsData?.analytics && analyticsData.analytics.length > 0 && (
-          <AnalyticsCharts data={prepareChartData()} />
+          <ChartsWrapper data={prepareChartData()} />
         )}
 
         {isLoading && (
