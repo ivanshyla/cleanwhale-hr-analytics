@@ -5,14 +5,20 @@ export const dynamic = 'force-dynamic';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
-import { 
-  BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  ScatterChart, Scatter, PieChart, Pie, Cell, ComposedChart, Area, AreaChart
-} from 'recharts';
+import dynamic from 'next/dynamic';
 import { 
   TrendingUp, Users, Phone, MessageSquare, AlertTriangle, Star, 
   Calendar, ArrowLeft, RefreshCw, Save, BarChart3, Activity, Target
 } from 'lucide-react';
+
+const AnalyticsCharts = dynamic(() => import('../../../components/AnalyticsCharts'), {
+  ssr: false,
+  loading: () => (
+    <div className="flex justify-center py-12">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+    </div>
+  )
+});
 
 interface UnifiedAnalyticsForm {
   reportDate: string;
@@ -200,8 +206,6 @@ export default function ComprehensiveAnalyticsPage() {
       удовлетворенность: item.employeeSatisfaction,
     }));
   };
-
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
 
   if (!user) {
     return (
@@ -466,60 +470,7 @@ export default function ComprehensiveAnalyticsPage() {
 
         {/* Графики */}
         {!isLoading && analyticsData?.analytics && analyticsData.analytics.length > 0 && (
-          <div className="space-y-8">
-            {/* Основные показатели */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Динамика основных показателей</h2>
-              <div style={{ width: '100%', height: 400 }}>
-                <ResponsiveContainer>
-                  <ComposedChart data={prepareChartData()}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Bar dataKey="найм" fill="#8884d8" name="Новые наймы" />
-                    <Line type="monotone" dataKey="заказы" stroke="#82ca9d" name="Заказы" strokeWidth={3} />
-                    <Line type="monotone" dataKey="жалобы" stroke="#ff7300" name="Жалобы" strokeWidth={2} />
-                  </ComposedChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            {/* Корреляционный анализ */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">HR vs Операционные показатели</h2>
-              <div style={{ width: '100%', height: 400 }}>
-                <ResponsiveContainer>
-                  <ScatterChart data={prepareChartData()}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="коммуникации" name="Коммуникации" />
-                    <YAxis dataKey="заказы" name="Заказы" />
-                    <Tooltip cursor={{ strokeDasharray: '3 3' }} />
-                    <Scatter dataKey="заказы" fill="#8884d8" />
-                  </ScatterChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            {/* Удовлетворенность */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Динамика удовлетворенности</h2>
-              <div style={{ width: '100%', height: 300 }}>
-                <ResponsiveContainer>
-                  <AreaChart data={prepareChartData()}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis domain={[1, 10]} />
-                    <Tooltip />
-                    <Legend />
-                    <Area type="monotone" dataKey="удовлетворенность" stackId="1" stroke="#8884d8" fill="#8884d8" name="Сотрудники" />
-                    <Area type="monotone" dataKey="рейтинг" stackId="2" stroke="#82ca9d" fill="#82ca9d" name="Клиенты" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          </div>
+          <AnalyticsCharts data={prepareChartData()} />
         )}
 
         {isLoading && (
