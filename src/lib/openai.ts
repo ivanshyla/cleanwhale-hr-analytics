@@ -1,28 +1,26 @@
 import OpenAI from 'openai';
 
-// Инициализация OpenAI клиента
-export const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Lazy-initialized OpenAI client to avoid build-time errors when key is missing
+let cachedClient: OpenAI | null = null;
 
-// Проверка доступности OpenAI
-export async function isOpenAIAvailable(): Promise<boolean> {
-  if (!process.env.OPENAI_API_KEY) {
-    return false;
+export function getOpenAIClient(): OpenAI | null {
+  const key = process.env.OPENAI_API_KEY;
+  if (!key) return null;
+  if (!cachedClient) {
+    cachedClient = new OpenAI({ apiKey: key });
   }
-  
-  try {
-    await openai.models.list();
-    return true;
-  } catch (error) {
-    console.error('OpenAI not available:', error);
-    return false;
-  }
+  return cachedClient;
+}
+
+// Быстрая проверка доступности по наличию ключа (без сетевых запросов на билд-этапе)
+export function isOpenAIAvailable(): boolean {
+  return Boolean(process.env.OPENAI_API_KEY);
 }
 
 // Генерация AI резюме для отчетов
 export async function generateReportSummary(data: any): Promise<string> {
-  if (!await isOpenAIAvailable()) {
+  const client = getOpenAIClient();
+  if (!client) {
     return 'AI анализ недоступен - не настроен OpenAI API ключ';
   }
 
@@ -41,7 +39,7 @@ ${JSON.stringify(data, null, 2)}
 Ответ должен быть профессиональным и конкретным.
 `;
 
-    const response = await openai.chat.completions.create({
+    const response = await client.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
         {
@@ -70,7 +68,8 @@ export async function detectAnomalies(currentData: any, historicalData: any[]): 
   anomalies: string[];
   severity: 'low' | 'medium' | 'high';
 }> {
-  if (!await isOpenAIAvailable()) {
+  const client = getOpenAIClient();
+  if (!client) {
     return {
       hasAnomalies: false,
       anomalies: ['AI анализ недоступен'],
@@ -102,7 +101,7 @@ ${JSON.stringify(historicalData, null, 2)}
 }
 `;
 
-    const response = await openai.chat.completions.create({
+    const response = await client.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
         {
@@ -132,7 +131,8 @@ ${JSON.stringify(historicalData, null, 2)}
 
 // Генерация рекомендаций для команды
 export async function generateTeamRecommendations(teamData: any): Promise<string[]> {
-  if (!await isOpenAIAvailable()) {
+  const client = getOpenAIClient();
+  if (!client) {
     return ['AI рекомендации недоступны - настройте OpenAI API ключ'];
   }
 
@@ -151,7 +151,7 @@ ${JSON.stringify(teamData, null, 2)}
 Ответь списком рекомендаций в формате JSON массива строк.
 `;
 
-    const response = await openai.chat.completions.create({
+    const response = await client.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
         {
