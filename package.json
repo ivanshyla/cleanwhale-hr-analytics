@@ -7,7 +7,7 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "NEXT_DISABLE_ESLINT_PLUGIN=1 next build",
     "start": "next start",
     "postinstall": "prisma generate",
     "lint": "eslint",
