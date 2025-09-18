@@ -1,0 +1,42 @@
+# Logs
+*.log
+.vite.log
+
+# macOS
+.DS_Store
+
+# Editors
+.idea/
+.vscode/
+
+# Node
+node_modules/
+frontend/node_modules/
+hr-analytics-dashboard/node_modules/
+frontend/dist/
+hr-analytics-dashboard/.next/
+.turbo/
+
+# Python
+backend/.venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# Env
+.env
+.env.*
+backend/.env
+backend/.env.*
+
+# Builds
+dist/
+build/
+
+# Prisma/DB
+hr-analytics-dashboard/prisma/dev.db
+
+# Coverage/cache
+coverage/
+.cache/

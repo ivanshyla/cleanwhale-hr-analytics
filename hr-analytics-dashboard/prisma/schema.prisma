@@ -1,0 +1,142 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+  schemas  = ["public", "auth"]
+}
+
+enum Role {
+  HIRING_MANAGER       // Менеджер по найму (HR)
+  OPS_MANAGER          // Операционный менеджер  
+  MIXED_MANAGER        // Смешанная роль (найм + операции)
+  COUNTRY_MANAGER      // Менеджер по стране
+  ADMIN                // Администратор
+}
+@@schema("public")
+
+enum City {
+  WARSAW
+  KRAKOW
+  GDANSK
+  WROCLAW
+  POZNAN
+  LODZ
+  LUBLIN
+  KATOWICE
+  BYDGOSZCZ
+  SZCZECIN
+  TORUN
+  RADOM
+  RZESZOW
+  OLSZTYN
+  BIALYSTOK
+}
+@@schema("public")
+
+// Основная таблица пользователей
+model User {
+  id        String   @id @default(cuid())
+  login     String   @unique  // Логин (не email)
+  password  String   // Хешированный пароль
+  email     String?  // Email не обязателен
+  name      String   // Имя пользователя
+  role      Role     // Роль пользователя
+  city      City     // Город (задается админом, readonly для пользователя)
+  salaryGross Float? // Зарплата брутто в злотых
+  salaryNet   Float? // Зарплата нетто в злотых
+  currency  String   @default("PLN") // Валюта зарплаты (всегда злотые)
+  isActive  Boolean  @default(true) // Статус: активен/архив
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Связанные данные
+  workSchedules    WorkSchedule[]
+
+  @@map("users")
+  @@schema("public")
+}
+
+// Рабочие графики пользователей
+model WorkSchedule {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Период графика
+  weekStartDate DateTime // Понедельник
+  weekEndDate   DateTime // Воскресенье
+  
+  // График по дням недели
+  mondayStart    String?  // Время начала (HH:MM)
+  mondayEnd      String?  // Время окончания (HH:MM)
+  mondayNote     String?  // Заметка к понедельнику
+  
+  tuesdayStart   String?
+  tuesdayEnd     String?
+  tuesdayNote    String?
+  
+  wednesdayStart String?
+  wednesdayEnd   String?
+  wednesdayNote  String?
+  
+  thursdayStart  String?
+  thursdayEnd    String?
+  thursdayNote   String?
+  
+  fridayStart    String?
+  fridayEnd      String?
+  fridayNote     String?
+  
+  saturdayStart  String?
+  saturdayEnd    String?
+  saturdayNote   String?
+  
+  sundayStart    String?
+  sundayEnd      String?
+  sundayNote     String?
+  
+  // Общие настройки
+  weeklyNotes    String?  // Общие заметки к неделе
+  isFlexible     Boolean  @default(false) // Гибкий график
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([userId, weekStartDate])
+  @@map("work_schedules")
+  @@schema("public")
+}
+
+// Справочник городов
+model CityInfo {
+  id        String   @id @default(cuid())
+  code      City     @unique
+  name      String   // Название города на русском
+  timezone  String   @default("Europe/Warsaw")
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@map("cities")
+  @@schema("public")
+}
+
+// Настройки системы
+model Settings {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  category  String   @default("general")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
+  @@schema("public")
+}
