@@ -1,8 +1,8 @@
 /**
- * Генератор еженедельных вопросов для AI анализа личности сотрудников
+ * Генератор еженедельных вопросов для анализа (MVP без OpenAI)
  */
 
-import { openai } from './openai';
+// OpenAI отключен для MVP
 
 interface QuestionTemplate {
   question: string;
@@ -135,28 +135,23 @@ const QUESTION_BANK: QuestionTemplate[] = [
 ];
 
 export class WeeklyQuestionGenerator {
-  
   /**
    * Генерирует случайный вопрос из банка
    */
   generateRandomQuestion(excludeQuestionIds: string[] = []): QuestionTemplate {
-    // Фильтруем вопросы, исключая уже использованные
     const availableQuestions = QUESTION_BANK.filter((_, index) => 
       !excludeQuestionIds.includes(`bank_${index}`)
     );
-    
     if (availableQuestions.length === 0) {
-      // Если все вопросы использованы, возвращаем случайный
       const randomIndex = Math.floor(Math.random() * QUESTION_BANK.length);
       return QUESTION_BANK[randomIndex];
     }
-    
     const randomIndex = Math.floor(Math.random() * availableQuestions.length);
     return availableQuestions[randomIndex];
   }
 
   /**
-   * Генерирует персонализированный вопрос через AI на основе профиля сотрудника
+   * Персонализированный вопрос (MVP: берём из банка)
    */
   async generatePersonalizedQuestion(userProfile: {
     name: string;
@@ -166,116 +161,34 @@ export class WeeklyQuestionGenerator {
     personalityTraits?: any;
     workHistory?: string;
   }): Promise<QuestionTemplate> {
-    const prompt = `
-Ты - эксперт по HR и психологии. Создай один персонализированный вопрос для еженедельного опроса сотрудника.
-
-ПРОФИЛЬ СОТРУДНИКА:
-- Имя: ${userProfile.name}
-- Роль: ${userProfile.role}
-- Город: ${userProfile.city}
-- Предыдущие ответы: ${userProfile.recentAnswers?.join('; ') || 'Нет данных'}
-- Черты личности: ${JSON.stringify(userProfile.personalityTraits) || 'Не определены'}
-
-ТРЕБОВАНИЯ К ВОПРОСУ:
-1. Вопрос должен быть на русском языке
-2. Должен помочь лучше понять личность, мотивацию и предпочтения сотрудника
-3. Не должен повторять темы предыдущих ответов
-4. Должен быть интересным и не навязчивым
-5. Ответ должен раскрывать, как человек думает и принимает решения
-
-ТИПЫ ВОПРОСОВ (выбери один):
-- PERSONAL: личностные особенности
-- WORK: рабочие процессы и предпочтения
-- TEAM: командная работа
-- MOTIVATION: мотивация и цели
-- SCENARIO: ситуационные вопросы
-- REFLECTION: рефлексия и самоанализ
-
-Ответь в JSON формате:
-{
-  "question": "Текст вопроса",
-  "type": "PERSONAL|WORK|TEAM|MOTIVATION|SCENARIO|REFLECTION",
-  "category": "краткая категория",
-  "difficulty": 1-5,
-  "expectedAnswerLength": 150-400
-}
-`;
-
-    try {
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: [
-          {
-            role: "system",
-            content: "Ты создаешь персонализированные вопросы для лучшего понимания сотрудников. Вопросы должны быть деликатными, интересными и помогать выявить особенности личности."
-          },
-          {
-            role: "user",
-            content: prompt
-          }
-        ],
-        max_tokens: 500,
-        temperature: 0.8,
-        response_format: { type: "json_object" }
-      });
-
-      const result = JSON.parse(completion.choices[0]?.message?.content || '{}');
-      
-      return {
-        question: result.question || this.generateRandomQuestion().question,
-        type: result.type || 'PERSONAL',
-        category: result.category || 'личность',
-        difficulty: result.difficulty || 3,
-        expectedAnswerLength: result.expectedAnswerLength || 250,
-      };
-    } catch (error) {
-      console.error('Error generating personalized question:', error);
-      // Fallback к случайному вопросу
-      return this.generateRandomQuestion();
-    }
+    return this.generateRandomQuestion();
   }
 
-  /**
-   * Получает вопрос по категории
-   */
   getQuestionByCategory(category: string): QuestionTemplate | null {
     const questions = QUESTION_BANK.filter(q => q.category.includes(category));
     if (questions.length === 0) return null;
-    
     const randomIndex = Math.floor(Math.random() * questions.length);
     return questions[randomIndex];
   }
 
-  /**
-   * Получает вопрос по типу
-   */
   getQuestionByType(type: string): QuestionTemplate | null {
     const questions = QUESTION_BANK.filter(q => q.type === type);
     if (questions.length === 0) return null;
-    
     const randomIndex = Math.floor(Math.random() * questions.length);
     return questions[randomIndex];
   }
 
-  /**
-   * Получает вопрос по уровню сложности
-   */
   getQuestionByDifficulty(difficulty: number): QuestionTemplate | null {
     const questions = QUESTION_BANK.filter(q => q.difficulty === difficulty);
     if (questions.length === 0) return null;
-    
     const randomIndex = Math.floor(Math.random() * questions.length);
     return questions[randomIndex];
   }
 
-  /**
-   * Получает общую статистику банка вопросов
-   */
   getQuestionBankStats() {
     const types = [...new Set(QUESTION_BANK.map(q => q.type))];
     const categories = [...new Set(QUESTION_BANK.map(q => q.category))];
     const avgDifficulty = QUESTION_BANK.reduce((sum, q) => sum + q.difficulty, 0) / QUESTION_BANK.length;
-    
     return {
       totalQuestions: QUESTION_BANK.length,
       types,
