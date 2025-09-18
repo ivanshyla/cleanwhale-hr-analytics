@@ -1,57 +1,4 @@
-import OpenAI from 'openai';
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
-interface AnalysisData {
-  // Основные метрики
-  totalRevenue: number;
-  totalOrders: number;
-  totalHires: number;
-  activeEmployees: number;
-  
-  // Тренды роста
-  revenueGrowth: number;
-  ordersGrowth: number;
-  hiresGrowth: number;
-  clientsGrowth: number;
-  
-  // Качественные показатели
-  customerSatisfaction: number;
-  employeeSatisfaction: number;
-  avgStressLevel: number;
-  overtimeRate: number;
-  turnoverRate: number;
-  
-  // Данные по городам
-  cityData: Record<string, {
-    orders: number;
-    revenue: number;
-    hires: number;
-    employees: number;
-    satisfaction: number;
-  }>;
-  
-  // Операционные показатели
-  avgResponseTime: number;
-  orderCompletionRate: number;
-  qualityScore: number;
-  complaintRate: number;
-  
-  // Финансовые показатели
-  weeklyProfit: number;
-  marketingSpend: number;
-  costPerHire: number;
-  costPerOrder: number;
-  
-  // Текстовые данные
-  majorIssues?: string;
-  challenges?: string;
-  achievements?: string;
-  weekNumber: number;
-  reportDate: string;
-}
+import { getOpenAIClient } from '@/lib/openai';
 
 export class AIAnalyzer {
   
@@ -118,18 +65,17 @@ ${data.achievements ? `🎯 Достижения: ${data.achievements}` : ''}
 Пиши деловым, но понятным языком. Фокусируйся на ROI, росте бизнеса и ключевых метриках.
 `;
 
+    const client = getOpenAIClient();
+    if (!client) {
+      return 'AI анализ недоступен - не настроен OpenAI API ключ';
+    }
+
     try {
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4o",
+      const completion = await client.chat.completions.create({
+        model: 'gpt-4o',
         messages: [
-          {
-            role: "system",
-            content: "Ты - опытный бизнес-аналитик, специализирующийся на клининговых услугах в Польше. Твоя задача - создавать четкие, актуальные отчеты для владельцев бизнеса."
-          },
-          {
-            role: "user",
-            content: prompt
-          }
+          { role: 'system', content: 'Ты - опытный бизнес-аналитик, специализирующийся на клининговых услугах в Польше. Твоя задача - создавать четкие, актуальные отчеты для владельцев бизнеса.' },
+          { role: 'user', content: prompt },
         ],
         max_tokens: 1500,
         temperature: 0.7,
@@ -178,22 +124,26 @@ ${JSON.stringify(data, null, 2)}
 Ищи неочевидные связи!
 `;
 
+    const client = getOpenAIClient();
+    if (!client) {
+      return {
+        insights: ['AI анализ недоступен'],
+        correlations: [],
+        anomalies: [],
+        recommendations: [],
+      };
+    }
+
     try {
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4o",
+      const completion = await client.chat.completions.create({
+        model: 'gpt-4o',
         messages: [
-          {
-            role: "system",
-            content: "Ты - эксперт по анализу операционных данных, специализирующийся на выявлении корреляций и аномалий в HR и операционных метриках."
-          },
-          {
-            role: "user",
-            content: prompt
-          }
+          { role: 'system', content: 'Ты - эксперт по анализу операционных данных, специализирующийся на выявлении корреляций и аномалий в HR и операционных метриках.' },
+          { role: 'user', content: prompt },
         ],
         max_tokens: 1000,
         temperature: 0.3,
-        response_format: { type: "json_object" }
+        response_format: { type: 'json_object' },
       });
 
       const result = JSON.parse(completion.choices[0]?.message?.content || '{}');
@@ -249,22 +199,25 @@ ${JSON.stringify(historicalData, null, 2)}
 }
 `;
 
+    const client = getOpenAIClient();
+    if (!client) {
+      return {
+        predictions: {},
+        confidence: 0,
+        reasoning: 'AI прогноз недоступен - нет ключа',
+      };
+    }
+
     try {
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4o",
+      const completion = await client.chat.completions.create({
+        model: 'gpt-4o',
         messages: [
-          {
-            role: "system",
-            content: "Ты - аналитик-прогнозист, специализирующийся на предсказании бизнес-метрик на основе исторических данных."
-          },
-          {
-            role: "user",
-            content: prompt
-          }
+          { role: 'system', content: 'Ты - аналитик-прогнозист, специализирующийся на предсказании бизнес-метрик на основе исторических данных.' },
+          { role: 'user', content: prompt },
         ],
         max_tokens: 800,
         temperature: 0.2,
-        response_format: { type: "json_object" }
+        response_format: { type: 'json_object' },
       });
 
       const result = JSON.parse(completion.choices[0]?.message?.content || '{}');

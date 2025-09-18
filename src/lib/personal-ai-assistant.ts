@@ -1,8 +1,4 @@
-import OpenAI from 'openai';
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+import { getOpenAIClient } from '@/lib/openai';
 
 interface PersonalMetrics {
   // Текущие показатели
@@ -109,22 +105,25 @@ ${JSON.stringify(metrics.previous, null, 2)}
 - "Отличный результат по найму - продолжайте в том же духе"
 `;
 
+    const client = getOpenAIClient();
+    if (!client) {
+      // Fallback анализ без AI
+      return this.generateFallbackAnalysis(metrics);
+    }
+
     try {
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4o",
+      const completion = await client.chat.completions.create({
+        model: 'gpt-4o',
         messages: [
           {
-            role: "system",
-            content: "Ты - опытный HR/Operations консультант, который помогает менеджерам улучшать их показатели. Будь персональным, поддерживающим, но честным в оценках."
+            role: 'system',
+            content: 'Ты - опытный HR/Operations консультант, который помогает менеджерам улучшать их показатели. Будь персональным, поддерживающим, но честным в оценках.'
           },
-          {
-            role: "user",
-            content: prompt
-          }
+          { role: 'user', content: prompt }
         ],
         max_tokens: 1500,
         temperature: 0.7,
-        response_format: { type: "json_object" }
+        response_format: { type: 'json_object' }
       });
 
       const result = JSON.parse(completion.choices[0]?.message?.content || '{}');
@@ -137,8 +136,6 @@ ${JSON.stringify(metrics.previous, null, 2)}
       };
     } catch (error) {
       console.error('Error analyzing personal metrics:', error);
-      
-      // Fallback анализ
       return this.generateFallbackAnalysis(metrics);
     }
   }
