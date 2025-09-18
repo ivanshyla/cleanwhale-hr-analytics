@@ -1,5 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { api, WeeklyReport } from '../lib/api'
+import DataTable from '../components/DataTable'
+import FiltersBar from '../components/FiltersBar'
 
 export default function Reports() {
   const { data, isLoading, error } = useQuery({
@@ -11,34 +13,21 @@ export default function Reports() {
   if (error || !data) return <div>Error</div>
 
   return (
-    <div>
-      <h1 className="text-2xl font-semibold mb-4">Reports</h1>
-      <div className="overflow-x-auto">
-        <table className="min-w-full border bg-white">
-          <thead className="bg-gray-50 text-left text-sm">
-            <tr>
-              <th className="p-2 border">Week</th>
-              <th className="p-2 border">Interviews</th>
-              <th className="p-2 border">Registrations</th>
-              <th className="p-2 border">Messages</th>
-              <th className="p-2 border">Tickets</th>
-              <th className="p-2 border">Orders</th>
-            </tr>
-          </thead>
-          <tbody className="text-sm">
-            {data.map((r) => (
-              <tr key={r.id} className="even:bg-gray-50">
-                <td className="p-2 border">{r.week_start} – {r.week_end}</td>
-                <td className="p-2 border">{r.interviews ?? 0}</td>
-                <td className="p-2 border">{r.registrations ?? 0}</td>
-                <td className="p-2 border">{r.messages ?? 0}</td>
-                <td className="p-2 border">{r.tickets_resolved ?? 0}</td>
-                <td className="p-2 border">{r.orders ?? 0}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+    <div className="space-y-4">
+      <h1 className="text-2xl font-semibold">Reports</h1>
+      <FiltersBar />
+      <DataTable
+        data={data}
+        columns={[
+          { key: 'week_start', title: 'Week start' },
+          { key: 'week_end', title: 'Week end' },
+          { key: 'interviews', title: 'Interviews' },
+          { key: 'registrations', title: 'Registrations' },
+          { key: 'messages', title: 'Messages' },
+          { key: 'tickets_resolved', title: 'Tickets' },
+          { key: 'orders', title: 'Orders' },
+        ]}
+      />
     </div>
   )
 }

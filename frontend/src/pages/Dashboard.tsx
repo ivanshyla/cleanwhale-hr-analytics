@@ -1,5 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import { api, Summary } from '../lib/api'
+import KPIcards from '../components/KPIcards'
+import LineChart from '../components/LineChart'
+import BarChart from '../components/BarChart'
+import FiltersBar from '../components/FiltersBar'
 
 export default function Dashboard() {
   const { data, isLoading, error } = useQuery({
@@ -10,24 +14,30 @@ export default function Dashboard() {
   if (isLoading) return <div>Loading...</div>
   if (error || !data) return <div>Error</div>
 
-  return (
-    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-      <Card title="Reports" value={data.count} />
-      <Card title="Interviews" value={data.interviews} />
-      <Card title="Registrations" value={data.registrations} />
-      <Card title="Messages" value={data.messages} />
-      <Card title="Tickets" value={data.tickets_resolved} />
-      <Card title="Orders" value={data.orders} />
-      <Card title="Avg Stress" value={data.avg_stress} />
-    </div>
-  )
-}
+  const kpi = [
+    { title: 'Reports', value: data.count },
+    { title: 'Interviews', value: data.interviews },
+    { title: 'Registrations', value: data.registrations },
+    { title: 'Messages', value: data.messages },
+    { title: 'Tickets', value: data.tickets_resolved },
+    { title: 'Orders', value: data.orders },
+    { title: 'Avg Stress', value: data.avg_stress },
+  ]
 
-function Card({ title, value }: { title: string; value: number }) {
+  const chartData = Array.from({ length: 6 }).map((_, i) => ({
+    week: `W${i + 1}`,
+    messages: Math.round((data.messages / 6) * (0.8 + Math.random() * 0.4)),
+    interviews: Math.round((data.interviews / 6) * (0.8 + Math.random() * 0.4)),
+  }))
+
   return (
-    <div className="rounded-md bg-white p-4 shadow-sm border">
-      <div className="text-xs text-gray-500">{title}</div>
-      <div className="text-2xl font-semibold">{value}</div>
+    <div className="space-y-4">
+      <FiltersBar />
+      <KPIcards items={kpi} />
+      <div className="grid md:grid-cols-2 gap-4">
+        <LineChart data={chartData} xKey="week" yKey="messages" />
+        <BarChart data={chartData} xKey="week" yKey="interviews" />
+      </div>
     </div>
   )
 }
