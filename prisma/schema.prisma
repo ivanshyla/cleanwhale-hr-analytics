@@ -11,9 +11,9 @@ datasource db {
 }
 
 enum Role {
-  HR                    // Менеджер по найму
-  OPERATIONS           // Операционный менеджер  
-  MIXED                // Смешанная роль (найм + операции)
+  HIRING_MANAGER       // Менеджер по найму
+  OPS_MANAGER          // Операционный менеджер  
+  MIXED_MANAGER        // Смешанная роль (найм + операции)
   COUNTRY_MANAGER      // Менеджер по стране
   ADMIN                // Администратор
 }
