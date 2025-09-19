@@ -1,4 +1,4 @@
-export type Role = 'HR' | 'OPERATIONS' | 'MIXED' | 'COUNTRY_MANAGER' | 'ADMIN';
+export type Role = 'HIRING_MANAGER' | 'OPS_MANAGER' | 'MIXED_MANAGER' | 'COUNTRY_MANAGER' | 'ADMIN';
 
 export type City = 
   | 'WARSAW'
@@ -204,9 +204,9 @@ export const CITY_LABELS: Record<City, string> = {
 };
 
 export const ROLE_LABELS: Record<Role, string> = {
-  HR: 'Менеджер по найму',
-  OPERATIONS: 'Операционный менеджер',
-  MIXED: 'Смешанная роль (найм + операции)',
+  HIRING_MANAGER: 'Менеджер по найму',
+  OPS_MANAGER: 'Операционный менеджер',
+  MIXED_MANAGER: 'Смешанная роль (найм + операции)',
   COUNTRY_MANAGER: 'Менеджер по стране',
   ADMIN: 'Администратор',
 };

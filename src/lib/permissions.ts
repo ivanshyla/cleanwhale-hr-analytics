@@ -34,7 +34,7 @@ export enum Permission {
 // Разрешения для каждой роли
 const ROLE_PERMISSIONS: Record<string, Permission[]> = {
   // HR специалист - свои данные + данные своего города
-  HR: [
+  HIRING_MANAGER: [
     Permission.VIEW_OWN_DATA,
     Permission.VIEW_CITY_DATA,
     Permission.CREATE_OWN_METRICS,
@@ -43,7 +43,7 @@ const ROLE_PERMISSIONS: Record<string, Permission[]> = {
   ],
   
   // Операционный специалист - свои данные + данные своего города
-  OPERATIONS: [
+  OPS_MANAGER: [
     Permission.VIEW_OWN_DATA,
     Permission.VIEW_CITY_DATA,
     Permission.CREATE_OWN_METRICS,
@@ -52,7 +52,7 @@ const ROLE_PERMISSIONS: Record<string, Permission[]> = {
   ],
   
   // Смешанная роль - свои данные + данные своего города
-  MIXED: [
+  MIXED_MANAGER: [
     Permission.VIEW_OWN_DATA,
     Permission.VIEW_CITY_DATA,
     Permission.CREATE_OWN_METRICS,
@@ -185,7 +185,7 @@ export function isManager(user: JWTPayload): boolean {
 
 // Проверка, является ли пользователь обычным сотрудником
 export function isRegularEmployee(user: JWTPayload): boolean {
-  return ['HR', 'OPERATIONS', 'MIXED'].includes(user.role);
+  return ['HIRING_MANAGER', 'OPS_MANAGER', 'MIXED_MANAGER'].includes(user.role);
 }
 
 // Получение фильтра для запросов к базе данных на основе прав пользователя

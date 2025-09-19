@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { BarChart3, Eye, EyeOff } from 'lucide-react';
+import { apiPost } from '@/lib/api-client';
 
 export default function LoginPage() {
   const [login, setLogin] = useState('');
@@ -19,14 +20,7 @@ export default function LoginPage() {
     setError('');
 
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ login, password }),
-      });
-
+      const response = await apiPost('/api/auth/login', { login, password });
       const data = await response.json();
 
       if (response.ok) {
