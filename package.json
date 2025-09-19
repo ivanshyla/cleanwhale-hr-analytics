@@ -24,7 +24,7 @@
     "@supabase/supabase-js": "^2.57.2",
     "@types/bcryptjs": "^2.4.6",
     "@types/jsonwebtoken": "^9.0.10",
-    "bcryptjs": "^3.0.2",
+    "bcryptjs": "^2.4.3",
     "exceljs": "^4.4.0",
     "jspdf": "^2.5.2",
     "jsonwebtoken": "^9.0.2",
