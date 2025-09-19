@@ -45,7 +45,8 @@ model User {
   name      String   // Имя пользователя
   role      Role     // Роль пользователя
   city      City     // Город (задается админом, readonly для пользователя)
-  salary    Float?   // Зарплата (может быть не указана)
+  salaryGross Float? @map("salaryGross") // Зарплата (может быть не указана)
+  salaryNet Float? @map("salaryNet") // Зарплата (может быть не указана)
   currency  String   @default("PLN") // Валюта зарплаты
   isActive  Boolean  @default(true) // Статус: активен/архив
   createdAt DateTime @default(now())
