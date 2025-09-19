@@ -33,7 +33,7 @@ interface PersonalMetrics {
   
   // Контекст пользователя
   user: {
-    role: 'HR' | 'OPERATIONS' | 'MIXED';
+    role: 'HIRING_MANAGER' | 'OPS_MANAGER' | 'MIXED_MANAGER';
     city: string;
     name?: string;
   };
@@ -157,7 +157,7 @@ ${JSON.stringify(metrics.previous, null, 2)}
       const lastWeek = metrics.previous[0];
       
       // Проверяем HR метрики
-      if (metrics.user.role === 'HR' || metrics.user.role === 'MIXED') {
+      if (metrics.user.role === 'HIRING_MANAGER' || metrics.user.role === 'MIXED_MANAGER') {
         if (lastWeek.hrInterviews && (lastWeek.hrInterviews > (metrics.current.hrInterviews || 0) * 1.3)) {
           warnings.push({
             type: 'warning',
@@ -187,7 +187,7 @@ ${JSON.stringify(metrics.previous, null, 2)}
       }
 
       // Проверяем операционные метрики
-      if (metrics.user.role === 'OPERATIONS' || metrics.user.role === 'MIXED') {
+      if (metrics.user.role === 'OPS_MANAGER' || metrics.user.role === 'MIXED_MANAGER') {
         if (lastWeek.opsOrdersWeek && (lastWeek.opsOrdersWeek > (metrics.current.opsOrdersWeek || 0) * 1.2)) {
           warnings.push({
             type: 'warning',

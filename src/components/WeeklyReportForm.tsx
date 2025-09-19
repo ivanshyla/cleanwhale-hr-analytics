@@ -57,8 +57,8 @@ export default function WeeklyReportForm({
 }: WeeklyReportFormProps) {
   const [activeTab, setActiveTab] = useState<'general' | 'hr' | 'ops'>('general');
 
-  const showHrTab = userRole === 'HR' || userRole === 'MIXED';
-  const showOpsTab = userRole === 'OPERATIONS' || userRole === 'MIXED';
+  const showHrTab = userRole === 'HIRING_MANAGER' || userRole === 'MIXED_MANAGER';
+  const showOpsTab = userRole === 'OPS_MANAGER' || userRole === 'MIXED_MANAGER';
 
   // Основная форма
   const mainForm = useForm<WeeklyReportFormData>({
