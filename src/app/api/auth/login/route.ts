@@ -15,26 +15,32 @@ export async function POST(request: NextRequest) {
     }
 
     // Поиск пользователя
+    console.log(`[Login Attempt] Searching for user: ${login}`);
     const user = await prisma.user.findUnique({
       where: { login },
     });
 
     if (!user || !user.isActive) {
+      console.error(`[Login Failed] User not found or inactive: ${login}`);
       return NextResponse.json(
         { message: 'Неверные учетные данные' },
         { status: 401 }
       );
     }
+    console.log(`[Login Success] User found: ${user.login}`);
 
     // Проверка пароля
+    console.log(`[Login Attempt] Comparing password for user: ${login}`);
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
+      console.error(`[Login Failed] Invalid password for user: ${login}`);
       return NextResponse.json(
         { message: 'Неверные учетные данные' },
         { status: 401 }
       );
     }
+    console.log(`[Login Success] Password is valid for user: ${login}`);
 
     // Создание JWT токена
     const token = jwt.sign(
