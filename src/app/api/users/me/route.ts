@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
         name: true,
         role: true,
         city: true,
-        salary: true,
+        salaryGross: true,
         currency: true,
         isActive: true,
         createdAt: true,

@@ -1,0 +1,16 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next",
+  "framework": "nextjs",
+  "regions": ["fra1"],
+  "functions": {
+    "src/app/api/**/*.ts": {
+      "runtime": "@vercel/node",
+      "maxDuration": 60
+    }
+  },
+  "env": {
+    "NODE_OPTIONS": "--max_old_space_size=4096",
+    "NEXT_DISABLE_ESLINT_PLUGIN": "1"
+  }
+}
