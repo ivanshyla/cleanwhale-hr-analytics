@@ -53,81 +53,81 @@ async function main() {
       login: 'admin',
       name: 'Системный администратор',
       email: 'admin@cleanwhale.com',
-      role: 'ADMIN',
-      city: 'WARSAW',
-      salary: 12000.0, // PLN
+      role: 'ADMIN' as const,
+      city: 'WARSAW' as const,
+      salaryGross: 12000.0, // PLN
     },
     {
       login: 'country_manager',
       name: 'Анна Ковальская',
       email: 'anna.kowalska@cleanwhale.com',
-      role: 'COUNTRY_MANAGER',
-      city: 'WARSAW',
-      salary: 15000.0, // PLN
+      role: 'COUNTRY_MANAGER' as const,
+      city: 'WARSAW' as const,
+      salaryGross: 15000.0, // PLN
     },
     {
       login: 'hr_manager',
       name: 'Петр Новак',
       email: 'petr.novak@cleanwhale.com',
-      role: 'HR',
-      city: 'WARSAW',
-      salary: 8500.0, // PLN
+      role: 'HIRING_MANAGER' as const,
+      city: 'WARSAW' as const,
+      salaryGross: 8500.0, // PLN
     },
     {
       login: 'ops_manager',
       name: 'Мария Вишневская',
       email: 'maria.wisz@cleanwhale.com',
-      role: 'OPERATIONS',
-      city: 'WARSAW',
-      salary: 7800.0, // PLN
+      role: 'OPS_MANAGER' as const,
+      city: 'WARSAW' as const,
+      salaryGross: 7800.0, // PLN
     },
     {
       login: 'mixed_manager',
       name: 'Томаш Лесняк',
       email: 'tomasz.lesny@cleanwhale.com',
-      role: 'MIXED',
-      city: 'KRAKOW',
-      salary: 9200.0, // PLN
+      role: 'MIXED_MANAGER' as const,
+      city: 'KRAKOW' as const,
+      salaryGross: 9200.0, // PLN
     },
     {
       login: 'hr_krakow',
       name: 'Агнешка Козловская',
       email: 'agnieszka.kozl@cleanwhale.com',
-      role: 'HR',
-      city: 'KRAKOW',
-      salary: 8000.0, // PLN
+      role: 'HIRING_MANAGER' as const,
+      city: 'KRAKOW' as const,
+      salaryGross: 8000.0, // PLN
     },
     {
       login: 'ops_gdansk',
       name: 'Марцин Каминский',
       email: 'marcin.kam@cleanwhale.com',
-      role: 'OPERATIONS',
-      city: 'GDANSK',
-      salary: 7500.0, // PLN
+      role: 'OPS_MANAGER' as const,
+      city: 'GDANSK' as const,
+      salaryGross: 7500.0, // PLN
     },
     {
       login: 'mixed_wroclaw',
       name: 'Катажина Дуда',
       email: 'katarzyna.duda@cleanwhale.com',
-      role: 'MIXED',
-      city: 'WROCLAW',
-      salary: 8800.0, // PLN
+      role: 'MIXED_MANAGER' as const,
+      city: 'WROCLAW' as const,
+      salaryGross: 8800.0, // PLN
     },
     {
       login: 'hr_poznan',
       name: 'Павел Войцеховский',
       email: 'pawel.wojc@cleanwhale.com',
-      role: 'HR',
-      city: 'POZNAN',
-      salary: 7700.0, // PLN
+      role: 'HIRING_MANAGER' as const,
+      city: 'POZNAN' as const,
+      salaryGross: 7700.0, // PLN
     },
     {
       login: 'ops_lodz',
       name: 'Моника Янковская',
       email: 'monika.jank@cleanwhale.com',
-      role: 'OPERATIONS',
-      city: 'LODZ',
-      salary: 7300.0, // PLN
+      role: 'OPS_MANAGER' as const,
+      city: 'LODZ' as const,
+      salaryGross: 7300.0, // PLN
     },
   ] as const;
 

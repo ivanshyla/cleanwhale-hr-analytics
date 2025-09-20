@@ -6,6 +6,53 @@ export async function POST(request: NextRequest) {
   try {
     console.log('🌱 Начинаем инициализацию базы данных...');
 
+    // Сначала создаем таблицы если их нет (упрощенная версия)
+    await prisma.$executeRaw`
+      CREATE TABLE IF NOT EXISTS "cities" (
+        "id" TEXT NOT NULL,
+        "code" TEXT NOT NULL,
+        "name" TEXT NOT NULL,
+        "timezone" TEXT NOT NULL DEFAULT 'Europe/Warsaw',
+        "isActive" BOOLEAN NOT NULL DEFAULT true,
+        "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT "cities_pkey" PRIMARY KEY ("id"),
+        CONSTRAINT "cities_code_key" UNIQUE ("code")
+      );
+    `;
+
+    await prisma.$executeRaw`
+      CREATE TABLE IF NOT EXISTS "users" (
+        "id" TEXT NOT NULL,
+        "login" TEXT NOT NULL,
+        "password" TEXT NOT NULL,
+        "email" TEXT,
+        "name" TEXT NOT NULL,
+        "role" TEXT NOT NULL,
+        "city" TEXT NOT NULL,
+        "salaryGross" DOUBLE PRECISION,
+        "salaryNet" DOUBLE PRECISION,
+        "currency" TEXT NOT NULL DEFAULT 'PLN',
+        "isActive" BOOLEAN NOT NULL DEFAULT true,
+        "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT "users_pkey" PRIMARY KEY ("id"),
+        CONSTRAINT "users_login_key" UNIQUE ("login")
+      );
+    `;
+
+    await prisma.$executeRaw`
+      CREATE TABLE IF NOT EXISTS "settings" (
+        "id" TEXT NOT NULL,
+        "key" TEXT NOT NULL,
+        "value" TEXT NOT NULL,
+        "category" TEXT NOT NULL DEFAULT 'general',
+        "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT "settings_pkey" PRIMARY KEY ("id"),
+        CONSTRAINT "settings_key_key" UNIQUE ("key")
+      );
+    `;
+
     // Хешируем пароль для всех пользователей
     const hashedPassword = await bcrypt.hash('password123', 10);
 
