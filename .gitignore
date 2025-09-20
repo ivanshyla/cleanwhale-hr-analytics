@@ -109,3 +109,7 @@ temp_*
 # Backup files
 *.bak
 prisma/schema.prisma.bak
+
+# Lockfiles
+# package-lock.json, yarn.lock, pnpm-lock.yaml
+package-lock.json
