@@ -34,9 +34,10 @@
     "prisma": "^6.15.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "react-hook-form": "^7.62.0",
+    "react-hook-form": "^7.53.0",
+    "react-is": "^18.3.1",
     "react-pdf": "^8.0.2",
-    "recharts": "^3.2.0",
+    "recharts": "^2.13.0-alpha.4",
     "zod": "^3.23.8"
   },
   "devDependencies": {
