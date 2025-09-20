@@ -55,31 +55,41 @@ export async function GET(request: NextRequest) {
 // POST - создать нового пользователя (временно открыто с секретом)
 export async function POST(request: NextRequest) {
   try {
+    console.log('[Create User] Received request');
     const data = await request.json();
     const { login, password, email, name, role, city, salary, currency = 'PLN', secret } = data;
+    console.log(`[Create User] Data parsed for login: ${login}`);
 
     // Временная проверка секрета для первой регистрации
     if (process.env.REGISTRATION_SECRET && secret !== process.env.REGISTRATION_SECRET) {
+      console.log('[Create User] Secret provided is invalid');
       const authResult = requireRole(['ADMIN'])(request);
       if (authResult.error) return authResult.error;
     } else if (!process.env.REGISTRATION_SECRET) {
+      console.log('[Create User] REGISTRATION_SECRET is not set, requiring ADMIN role');
       const authResult = requireRole(['ADMIN'])(request);
       if (authResult.error) return authResult.error;
     }
+    console.log('[Create User] Authorization check passed');
 
     if (!login || !password || !name || !role || !city) {
+      console.error('[Create User] Missing required fields');
       return NextResponse.json(
         { message: 'Обязательные поля: login, password, name, role, city' },
         { status: 400 }
       );
     }
+    console.log('[Create User] All required fields are present');
 
     // Проверяем, не существует ли уже пользователь с таким логином
+    console.log(`[Create User] Checking for existing user: ${login}`);
     const existingUser = await prisma.user.findUnique({
       where: { login },
     });
+    console.log(`[Create User] Prisma check for existing user completed`);
 
     if (existingUser) {
+      console.error(`[Create User] User with login ${login} already exists`);
       return NextResponse.json(
         { message: 'Пользователь с таким логином уже существует' },
         { status: 400 }
@@ -87,8 +97,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Хешируем пароль
+    console.log(`[Create User] Hashing password for: ${login}`);
     const hashedPassword = await bcrypt.hash(password, 10);
+    console.log(`[Create User] Password hashed for: ${login}`);
 
+    console.log(`[Create User] Attempting to create user in database: ${login}`);
     const user = await prisma.user.create({
       data: {
         login,
@@ -114,6 +127,7 @@ export async function POST(request: NextRequest) {
         updatedAt: true,
       },
     });
+    console.log(`[Create User] Successfully created user: ${login}`);
 
     return NextResponse.json(user, { status: 201 });
   } catch (error) {
