@@ -52,14 +52,20 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST - создать нового пользователя (только для админов)
+// POST - создать нового пользователя (временно открыто с секретом)
 export async function POST(request: NextRequest) {
-  const authResult = requireRole(['ADMIN'])(request);
-  if (authResult.error) return authResult.error;
-
   try {
     const data = await request.json();
-    const { login, password, email, name, role, city, salary, currency = 'PLN' } = data;
+    const { login, password, email, name, role, city, salary, currency = 'PLN', secret } = data;
+
+    // Временная проверка секрета для первой регистрации
+    if (process.env.REGISTRATION_SECRET && secret !== process.env.REGISTRATION_SECRET) {
+      const authResult = requireRole(['ADMIN'])(request);
+      if (authResult.error) return authResult.error;
+    } else if (!process.env.REGISTRATION_SECRET) {
+      const authResult = requireRole(['ADMIN'])(request);
+      if (authResult.error) return authResult.error;
+    }
 
     if (!login || !password || !name || !role || !city) {
       return NextResponse.json(
