@@ -56,82 +56,32 @@ export async function POST(request: NextRequest) {
     // Хешируем пароль для всех пользователей
     const hashedPassword = await bcrypt.hash('password123', 10);
 
-    // Создание информации о городах
-    const cities = [
-      { code: 'WARSAW', name: 'Варшава' },
-      { code: 'KRAKOW', name: 'Краков' },
-      { code: 'GDANSK', name: 'Гданьск' },
-      { code: 'WROCLAW', name: 'Вроцлав' },
-      { code: 'POZNAN', name: 'Познань' },
-      { code: 'LODZ', name: 'Лодзь' },
-    ] as const;
-
-    // Создаем города если их еще нет
-    for (const city of cities) {
-      await prisma.cityInfo.upsert({
-        where: { code: city.code },
-        update: {},
-        create: {
-          code: city.code,
-          name: city.name,
-        },
-      });
-    }
-
-    // Создание демо пользователей
+    // Создание демо пользователей через SQL
     const users = [
-      {
-        login: 'admin',
-        name: 'Системный администратор',
-        email: 'admin@cleanwhale.com',
-        role: 'ADMIN' as const,
-        city: 'WARSAW' as const,
-        salaryGross: 12000.0,
-      },
-      {
-        login: 'country_manager',
-        name: 'Анна Ковальская',
-        email: 'anna.kowalska@cleanwhale.com',
-        role: 'COUNTRY_MANAGER' as const,
-        city: 'WARSAW' as const,
-        salaryGross: 15000.0,
-      },
-      {
-        login: 'hr_manager',
-        name: 'Петр Новак',
-        email: 'petr.novak@cleanwhale.com',
-        role: 'HIRING_MANAGER' as const,
-        city: 'WARSAW' as const,
-        salaryGross: 8500.0,
-      },
-      {
-        login: 'ops_manager',
-        name: 'Мария Вишневская',
-        email: 'maria.wisz@cleanwhale.com',
-        role: 'OPS_MANAGER' as const,
-        city: 'WARSAW' as const,
-        salaryGross: 7800.0,
-      },
-      {
-        login: 'mixed_manager',
-        name: 'Томаш Лесняк',
-        email: 'tomasz.lesny@cleanwhale.com',
-        role: 'MIXED_MANAGER' as const,
-        city: 'KRAKOW' as const,
-        salaryGross: 9200.0,
-      },
+      { login: 'admin', name: 'Системный администратор', role: 'ADMIN', city: 'WARSAW' },
+      { login: 'country_manager', name: 'Анна Ковальская', role: 'COUNTRY_MANAGER', city: 'WARSAW' },
+      { login: 'hr_manager', name: 'Петр Новак', role: 'HIRING_MANAGER', city: 'WARSAW' },
+      { login: 'ops_manager', name: 'Мария Вишневская', role: 'OPS_MANAGER', city: 'WARSAW' },
+      { login: 'mixed_manager', name: 'Томаш Лесняк', role: 'MIXED_MANAGER', city: 'KRAKOW' },
     ];
 
-    // Создаем пользователей
-    for (const userData of users) {
-      await prisma.user.upsert({
-        where: { login: userData.login },
-        update: {},
-        create: {
-          ...userData,
-          password: hashedPassword,
-        },
-      });
+    // Создаем пользователей напрямую через SQL
+    for (const user of users) {
+      await prisma.$executeRaw`
+        INSERT INTO "users" (id, login, password, name, role, city, "isActive", "createdAt", "updatedAt")
+        VALUES (
+          ${crypto.randomUUID()},
+          ${user.login},
+          ${hashedPassword},
+          ${user.name},
+          ${user.role},
+          ${user.city},
+          true,
+          CURRENT_TIMESTAMP,
+          CURRENT_TIMESTAMP
+        )
+        ON CONFLICT (login) DO NOTHING;
+      `;
     }
 
     // Создание базовых настроек
@@ -152,6 +102,7 @@ export async function POST(request: NextRequest) {
       success: true,
       message: 'База данных успешно инициализирована!',
       users: users.map(u => ({ login: u.login, role: u.role })),
+      credentials: 'Все пользователи имеют пароль: password123'
     });
 
   } catch (error) {
