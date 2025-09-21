@@ -193,55 +193,8 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <button 
-              onClick={() => router.push('/dashboard')}
-              className="flex items-center hover:opacity-80 transition-opacity cursor-pointer"
-            >
-              <img 
-                src="/cleanwhale-logo.png" 
-                alt="CleanWhale" 
-                className="h-10 w-10 rounded-lg mr-3"
-              />
-              <div className="text-left">
-                <span className="text-xl font-bold cw-text-primary">
-                  CleanWhale Analytics
-                </span>
-                <p className="text-xs text-gray-600">Панель управления командой</p>
-              </div>
-            </button>
-            <div className="flex items-center space-x-4">
-              <div className="text-sm text-gray-600">
-                {user && (
-                  <span>
-                    {getRoleLabel(user.role)} • {getCityLabel(user.city)}
-                  </span>
-                )}
-              </div>
-              <button
-                onClick={() => router.push('/dashboard/schedule')}
-                className="hidden sm:inline-flex items-center cw-text-primary border cw-border-primary bg-blue-50 hover:bg-blue-100 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-              >
-                🗓️ График
-              </button>
-              <button
-                onClick={handleLogout}
-                className="flex items-center text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium"
-              >
-                <LogOut className="h-4 w-4 mr-1" />
-                Выйти
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div>
+      {/* Main Content - убрали дублирующий header */}
         {/* Welcome Section */}
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900">
@@ -484,7 +437,6 @@ export default function DashboardPage() {
             </div>
           )}
         </div>
-      </main>
     </div>
   );
 }
