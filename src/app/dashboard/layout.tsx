@@ -37,11 +37,19 @@ export default function DashboardLayout({
     // Получаем данные пользователя из API (по токену в cookie)
     const fetchUser = async () => {
       try {
-        const response = await fetch('/api/auth/me');
+        console.log('Fetching user data...');
+        const response = await fetch('/api/auth/me', {
+          cache: 'no-cache', // Принудительно обновляем данные
+          headers: {
+            'Cache-Control': 'no-cache'
+          }
+        });
         if (response.ok) {
           const data = await response.json();
+          console.log('User data received:', data.user);
           setUser(data.user);
         } else {
+          console.log('Auth failed, redirecting to login');
           // Невалидный токен - перенаправляем на логин
           router.push('/login');
         }
@@ -113,7 +121,7 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div key={user?.id || 'loading'} className="min-h-screen bg-gray-50">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div 

@@ -19,43 +19,41 @@ export default function DashboardPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Проверяем токен и загружаем данные пользователя
-    const token = localStorage.getItem('token');
-    if (!token) {
-      router.push('/login');
-      return;
-    }
+    // Получаем данные пользователя из API (так же как layout)
+    const fetchUser = async () => {
+      try {
+        const response = await fetch('/api/auth/me', {
+          cache: 'no-cache',
+          headers: {
+            'Cache-Control': 'no-cache'
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setUser(data.user);
+          
+          // Загружаем статистику после получения пользователя
+          loadDashboardStats();
+          
+          // Загружаем данные для графиков
+          loadAnalyticsData();
+        } else {
+          router.push('/login');
+        }
+      } catch (error) {
+        console.error('Error fetching user:', error);
+        router.push('/login');
+      }
+    };
 
-    // Декодируем токен для получения информации о пользователе
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      setUser({
-        id: payload.userId,
-        email: payload.email,
-        role: payload.role,
-        city: payload.city,
-      });
-      
-      // Загружаем статистику
-      loadDashboardStats();
-      
-      // Загружаем данные для графиков
-      loadAnalyticsData();
-    } catch (error) {
-      console.error('Invalid token:', error);
-      router.push('/login');
-    }
+    fetchUser();
   }, [router]);
 
   const loadDashboardStats = async () => {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) return;
-
-      // Загружаем статистику с учетом прав пользователя
+      // Загружаем статистику с учетом прав пользователя (токен в cookie)
       const response = await fetch('/api/dashboard-stats', {
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
       });
@@ -97,12 +95,8 @@ export default function DashboardPage() {
   const loadAnalyticsData = async () => {
     setIsLoadingCharts(true);
     try {
-      const token = localStorage.getItem('token');
-      if (!token) return;
-
       const response = await fetch('/api/analytics-data?period=7&type=overview', {
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
       });
@@ -148,16 +142,21 @@ export default function DashboardPage() {
     }));
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    router.push('/');
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      router.push('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+      router.push('/login');
+    }
   };
 
   const getRoleLabel = (role: string) => {
     const labels: Record<string, string> = {
-      HR: 'HR менеджер',
-      OPERATIONS: 'Операционный менеджер',
-      MIXED: 'Смешанная роль',
+      HIRING_MANAGER: 'HR менеджер',
+      OPS_MANAGER: 'Операционный менеджер',
+      MIXED_MANAGER: 'Смешанная роль',
       COUNTRY_MANAGER: 'Менеджер по стране',
       ADMIN: 'Администратор',
     };
