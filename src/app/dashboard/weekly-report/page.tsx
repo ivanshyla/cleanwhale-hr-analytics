@@ -2,286 +2,242 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { Calendar, ChevronLeft, ChevronRight, FileText, AlertCircle } from 'lucide-react';
 import WeeklyReportForm from '@/components/WeeklyReportForm';
-import { getWeekISO } from '@/types';
-import { Calendar, CheckCircle, AlertCircle } from 'lucide-react';
+import { isoWeekOf, formatWeekForDisplay, getPreviousWeek, getNextWeek, isCurrentWeek } from '@/lib/week';
 
 interface User {
   id: string;
-  name: string;
   login: string;
-  role: string;
+  name: string;
+  role: 'HIRING_MANAGER' | 'OPS_MANAGER' | 'MIXED_MANAGER' | 'COUNTRY_MANAGER' | 'ADMIN';
   city: string;
 }
 
 export default function WeeklyReportPage() {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [recentReports, setRecentReports] = useState<any[]>([]);
-  const [notification, setNotification] = useState<{
-    type: 'success' | 'error';
-    message: string;
-  } | null>(null);
+  const [currentWeek, setCurrentWeek] = useState<string>(isoWeekOf());
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
-    loadUserData();
-    loadRecentReports();
+    fetchUser();
   }, []);
 
-  const loadUserData = async () => {
+  const fetchUser = async () => {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        router.push('/login');
-        return;
-      }
-
-      const response = await fetch('/api/users/me', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
+      setIsLoading(true);
+      const response = await fetch('/api/auth/me');
       if (response.ok) {
-        const userData = await response.json();
-        setUser(userData);
-      } else {
-        router.push('/login');
-      }
-    } catch (error) {
-      console.error('Error loading user data:', error);
-      router.push('/login');
-    }
-  };
-
-  const loadRecentReports = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) return;
-
-      const response = await fetch('/api/weekly-reports', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (response.ok) {
-        const reports = await response.json();
-        setRecentReports(reports.slice(0, 5)); // Последние 5 отчетов
-      }
-    } catch (error) {
-      console.error('Error loading recent reports:', error);
-    }
-  };
-
-  const handleSubmit = async (data: any) => {
-    if (!user) return;
-
-    setIsLoading(true);
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/weekly-reports', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (response.ok) {
-        setNotification({
-          type: 'success',
-          message: 'Отчет успешно сохранен!',
-        });
-        await loadRecentReports();
+        const data = await response.json();
+        setUser(data.user);
         
-        // Автоматически скрыть уведомление через 5 секунд
-        setTimeout(() => setNotification(null), 5000);
+        // Проверяем доступ к еженедельным отчетам
+        const allowedRoles = ['HIRING_MANAGER', 'OPS_MANAGER', 'MIXED_MANAGER'];
+        if (!allowedRoles.includes(data.user.role)) {
+          setError('У вас нет доступа к еженедельным отчетам');
+        }
       } else {
-        const errorData = await response.json();
-        setNotification({
-          type: 'error',
-          message: errorData.message || 'Ошибка при сохранении отчета',
-        });
+        router.push('/login');
       }
     } catch (error) {
-      console.error('Error submitting report:', error);
-      setNotification({
-        type: 'error',
-        message: 'Произошла ошибка при отправке отчета',
-      });
+      console.error('Error fetching user:', error);
+      setError('Ошибка загрузки данных пользователя');
     } finally {
       setIsLoading(false);
     }
   };
 
-  if (!user) {
+  const getRoleForForm = (): 'hr' | 'ops' | 'mixed' => {
+    if (!user) return 'hr';
+    
+    switch (user.role) {
+      case 'HIRING_MANAGER':
+        return 'hr';
+      case 'OPS_MANAGER':
+        return 'ops';
+      case 'MIXED_MANAGER':
+        return 'mixed';
+      default:
+        return 'hr';
+    }
+  };
+
+  const getRoleDisplayName = (role: string): string => {
+    switch (role) {
+      case 'HIRING_MANAGER':
+        return 'HR менеджер';
+      case 'OPS_MANAGER':
+        return 'Операционный менеджер';
+      case 'MIXED_MANAGER':
+        return 'Смешанная роль (HR + Operations)';
+      default:
+        return role;
+    }
+  };
+
+  const handleWeekChange = (direction: 'prev' | 'next') => {
+    if (direction === 'prev') {
+      setCurrentWeek(getPreviousWeek(currentWeek));
+    } else {
+      setCurrentWeek(getNextWeek(currentWeek));
+    }
+  };
+
+  const handleGoToCurrentWeek = () => {
+    setCurrentWeek(isoWeekOf());
+  };
+
+  const handleSaveReport = (data: any) => {
+    console.log('Report saved:', data);
+    // Здесь можно добавить дополнительную логику после сохранения
+  };
+
+  if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+          <p className="text-gray-600">Загрузка...</p>
+        </div>
       </div>
     );
   }
 
-  const currentWeek = getWeekISO(new Date());
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Ошибка доступа</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+          >
+            Вернуться на дашборд
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Заголовок */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
-            Еженедельный отчет
-          </h1>
-          <p className="mt-2 text-gray-600">
-            Заполните отчет за текущую неделю ({currentWeek})
-          </p>
-        </div>
-
-        {/* Уведомления */}
-        {notification && (
-          <div className={`mb-6 p-4 rounded-md ${
-            notification.type === 'success' 
-              ? 'bg-green-50 border border-green-200' 
-              : 'bg-red-50 border border-red-200'
-          }`}>
-            <div className="flex items-center">
-              {notification.type === 'success' ? (
-                <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-              ) : (
-                <AlertCircle className="h-5 w-5 text-red-500 mr-2" />
-              )}
-              <p className={`text-sm ${
-                notification.type === 'success' ? 'text-green-700' : 'text-red-700'
-              }`}>
-                {notification.message}
-              </p>
-              <button
-                onClick={() => setNotification(null)}
-                className="ml-auto text-gray-400 hover:text-gray-600"
-              >
-                ×
-              </button>
-            </div>
+    <div className="space-y-6">
+      {/* Заголовок страницы */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 flex items-center">
+              <FileText className="h-8 w-8 mr-3 text-blue-600" />
+              Еженедельный отчет
+            </h1>
+            <p className="text-gray-600 mt-1">
+              {user.name} • {getRoleDisplayName(user.role)} • {user.city}
+            </p>
           </div>
-        )}
-
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Основная форма */}
-          <div className="lg:col-span-3">
-            <WeeklyReportForm
-              userRole={user.role}
-              onSubmit={handleSubmit}
-              isLoading={isLoading}
-            />
-          </div>
-
-          {/* Боковая панель */}
-          <div className="lg:col-span-1 space-y-6">
-            {/* Информация о пользователе */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Информация
-              </h3>
-              <div className="space-y-3">
-                <div>
-                  <span className="text-sm text-gray-500">Имя:</span>
-                  <p className="font-medium">{user.name}</p>
-                </div>
-                <div>
-                  <span className="text-sm text-gray-500">Роль:</span>
-                  <p className="font-medium">{user.role}</p>
-                </div>
-                <div>
-                  <span className="text-sm text-gray-500">Город:</span>
-                  <p className="font-medium">{user.city}</p>
-                </div>
-                {user.salary && (
-                  <div>
-                    <span className="text-sm text-gray-500">Зарплата:</span>
-                    <p className="font-medium">
-                      {new Intl.NumberFormat('pl-PL', {
-                        style: 'currency',
-                        currency: user.currency || 'PLN',
-                        minimumFractionDigits: 0,
-                      }).format(user.salary)}
-                    </p>
-                  </div>
-                )}
-                <div>
-                  <span className="text-sm text-gray-500">Текущая неделя:</span>
-                  <p className="font-medium">{currentWeek}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Последние отчеты */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <Calendar className="w-5 h-5 mr-2" />
-                Последние отчеты
-              </h3>
-              <div className="space-y-3">
-                {recentReports.length > 0 ? (
-                  recentReports.map((report) => (
-                    <div
-                      key={report.id}
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded-md"
-                    >
-                      <div>
-                        <p className="text-sm font-medium">{report.weekIso}</p>
-                        <p className="text-xs text-gray-500">
-                          {report.isCompleted ? 'Завершен' : 'Черновик'}
-                        </p>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        {report.isCompleted ? (
-                          <CheckCircle className="w-4 h-4 text-green-500" />
-                        ) : (
-                          <AlertCircle className="w-4 h-4 text-yellow-500" />
-                        )}
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-gray-500">
-                    Пока нет отчетов
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* Быстрые действия */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Быстрые действия
-              </h3>
-              <div className="space-y-3">
-                <button
-                  onClick={() => router.push('/dashboard')}
-                  className="w-full text-left px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-md"
-                >
-                  ← Вернуться на дашборд
-                </button>
-                <button
-                  onClick={() => router.push('/dashboard/analytics')}
-                  className="w-full text-left px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-md"
-                >
-                  Посмотреть аналитику
-                </button>
-                <button
-                  onClick={() => router.push('/dashboard/comparison')}
-                  className="w-full text-left px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-md"
-                >
-                  Сравнить данные
-                </button>
-              </div>
+          
+          <div className="text-right">
+            <div className="text-sm text-gray-500">Текущая неделя</div>
+            <div className="text-lg font-semibold text-gray-900">
+              {formatWeekForDisplay(isoWeekOf())}
             </div>
           </div>
         </div>
       </div>
+
+      {/* Навигация по неделям */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => handleWeekChange('prev')}
+            className="flex items-center px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+          >
+            <ChevronLeft className="h-5 w-5 mr-1" />
+            Предыдущая неделя
+          </button>
+          
+          <div className="text-center">
+            <div className="flex items-center space-x-2">
+              <Calendar className="h-5 w-5 text-blue-600" />
+              <span className="text-lg font-semibold text-gray-900">
+                {formatWeekForDisplay(currentWeek)}
+              </span>
+            </div>
+            
+            {!isCurrentWeek(currentWeek) && (
+              <button
+                onClick={handleGoToCurrentWeek}
+                className="mt-2 text-sm text-blue-600 hover:text-blue-800 underline"
+              >
+                Перейти к текущей неделе
+              </button>
+            )}
+            
+            {isCurrentWeek(currentWeek) && (
+              <div className="mt-2 text-sm text-green-600 font-medium">
+                Текущая неделя
+              </div>
+            )}
+          </div>
+          
+          <button
+            onClick={() => handleWeekChange('next')}
+            className="flex items-center px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+          >
+            Следующая неделя
+            <ChevronRight className="h-5 w-5 ml-1" />
+          </button>
+        </div>
+      </div>
+
+      {/* Информационная панель */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="flex items-start">
+          <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" />
+          <div className="text-sm text-blue-800">
+            <p className="font-medium mb-1">Инструкции по заполнению:</p>
+            <ul className="list-disc list-inside space-y-1">
+              {getRoleForForm() === 'hr' && (
+                <>
+                  <li>Заполните количество проведенных собеседований за неделю</li>
+                  <li>Укажите количество размещенных объявлений о работе</li>
+                  <li>Добавьте количество новых регистраций кандидатов</li>
+                </>
+              )}
+              {getRoleForForm() === 'ops' && (
+                <>
+                  <li>Укажите количество обработанных сообщений в Trengo</li>
+                  <li>Добавьте количество решенных тикетов в CRM и Trengo</li>
+                  <li>Укажите количество заказов по вашему городу</li>
+                </>
+              )}
+              {getRoleForForm() === 'mixed' && (
+                <>
+                  <li>Заполните как HR, так и Operations метрики</li>
+                  <li>Можете сохранять отчеты по ролям отдельно</li>
+                  <li>Все базовые поля применяются к обеим ролям</li>
+                </>
+              )}
+              <li>Не забудьте указать уровень стресса и общую информацию о работе с командой</li>
+              <li>При повторном заполнении данные будут обновлены</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      {/* Форма отчета */}
+      <WeeklyReportForm
+        role={getRoleForForm()}
+        userId={user.id}
+        weekIso={currentWeek}
+        onSave={handleSaveReport}
+      />
     </div>
   );
 }

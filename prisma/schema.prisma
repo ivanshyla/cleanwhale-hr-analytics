@@ -123,6 +123,7 @@ model HrMetrics {
   user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   reportId         String   @unique
   report           WeeklyReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  weekIso          String   // Денормализованное поле для удобства запросов
   
   // HR метрики
   interviews       Int      @default(0) // Количество собеседований
@@ -133,7 +134,7 @@ model HrMetrics {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
-  @@unique([userId, reportId])
+  @@unique([userId, weekIso])
   @@map("hr_metrics")
 }
 
@@ -144,6 +145,7 @@ model OpsMetrics {
   user                    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   reportId                String   @unique
   report                  WeeklyReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  weekIso                 String   // Денормализованное поле для удобства запросов
   
   // Данные Trengo (автоматически или вручную)
   trengoMessages          Int      @default(0) // Сообщения
@@ -160,7 +162,7 @@ model OpsMetrics {
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt
 
-  @@unique([userId, reportId])
+  @@unique([userId, weekIso])
   @@map("ops_metrics")
 }
 
