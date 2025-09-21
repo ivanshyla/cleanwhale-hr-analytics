@@ -24,9 +24,14 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (response.ok) {
-        // Сохраняем токен и перенаправляем на дашборд
+        // Сохраняем токен и данные пользователя
         localStorage.setItem('token', data.token);
-        router.push('/dashboard');
+        localStorage.setItem('user', JSON.stringify(data.user));
+        
+        // Перенаправляем на дашборд или на страницу, с которой пришли
+        const urlParams = new URLSearchParams(window.location.search);
+        const redirectTo = urlParams.get('redirect') || '/dashboard';
+        router.push(redirectTo);
       } else {
         setError(data.message || 'Ошибка входа');
       }

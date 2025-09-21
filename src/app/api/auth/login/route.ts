@@ -57,11 +57,23 @@ export async function POST(request: NextRequest) {
     // Возвращаем пользователя без пароля
     const { password: _, ...userWithoutPassword } = user;
 
-    return NextResponse.json({
+    // Создаем ответ с токеном в cookie
+    const response = NextResponse.json({
       message: 'Успешный вход',
       token,
       user: userWithoutPassword,
     });
+
+    // Устанавливаем JWT в httpOnly cookie для безопасности
+    response.cookies.set('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60, // 7 дней
+      path: '/',
+    });
+
+    return response;
 
   } catch (error) {
     console.error('Login error:', error);
