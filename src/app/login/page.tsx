@@ -24,10 +24,7 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (response.ok) {
-        // Сохраняем токен и данные пользователя
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
-        
+        // Токен уже сохранен в cookie на сервере
         // Перенаправляем на дашборд или на страницу, с которой пришли
         const urlParams = new URLSearchParams(window.location.search);
         const redirectTo = urlParams.get('redirect') || '/dashboard';

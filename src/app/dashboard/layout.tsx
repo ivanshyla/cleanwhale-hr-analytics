@@ -34,12 +34,25 @@ export default function DashboardLayout({
   const router = useRouter();
 
   useEffect(() => {
-    // Получаем данные пользователя из localStorage (сохраненные при логине)
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      setUser(JSON.parse(userData));
-    }
-  }, []);
+    // Получаем данные пользователя из API (по токену в cookie)
+    const fetchUser = async () => {
+      try {
+        const response = await fetch('/api/auth/me');
+        if (response.ok) {
+          const data = await response.json();
+          setUser(data.user);
+        } else {
+          // Невалидный токен - перенаправляем на логин
+          router.push('/login');
+        }
+      } catch (error) {
+        console.error('Error fetching user:', error);
+        router.push('/login');
+      }
+    };
+
+    fetchUser();
+  }, [router]);
 
   const handleLogout = async () => {
     try {
