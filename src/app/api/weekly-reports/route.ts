@@ -123,13 +123,34 @@ export async function POST(request: NextRequest) {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as any;
     const userId = decoded.userId;
 
-    // Получаем данные из тела запроса
+    // Получаем данные из тела запроса согласно новому контракту
     const body = await request.json();
-    const { weekIso, role, payload } = body;
+    const { weekIso, role, hr, ops } = body;
 
-    if (!weekIso || !role || !payload) {
+    if (!weekIso || !role) {
       return NextResponse.json(
-        { message: 'Отсутствуют обязательные поля: weekIso, role, payload' },
+        { message: 'Отсутствуют обязательные поля: weekIso, role' },
+        { status: 400 }
+      );
+    }
+
+    if (role === 'hr' && !hr) {
+      return NextResponse.json(
+        { message: 'Для роли hr требуются данные в поле hr' },
+        { status: 400 }
+      );
+    }
+
+    if (role === 'ops' && !ops) {
+      return NextResponse.json(
+        { message: 'Для роли ops требуются данные в поле ops' },
+        { status: 400 }
+      );
+    }
+
+    if (role === 'mixed' && (!hr && !ops)) {
+      return NextResponse.json(
+        { message: 'Для роли mixed требуются данные в полях hr или ops' },
         { status: 400 }
       );
     }
@@ -156,28 +177,14 @@ export async function POST(request: NextRequest) {
     // Получаем даты недели
     const { start: weekStartDate, end: weekEndDate } = getWeekDates(weekIso);
 
-    // Используем транзакцию для атомарного создания/обновления
+    // Используем транзакцию для атомарного создания/обновления (новая структура)
     const result = await prisma.$transaction(async (tx) => {
-      // Создаем или обновляем базовый отчет
+      // Создаем или обновляем базовый отчет (минимальные данные)
       const weeklyReport = await tx.weeklyReport.upsert({
         where: {
-          userId_weekIso: {
-            userId,
-            weekIso
-          }
+          userId_weekIso: { userId, weekIso }
         },
         update: {
-          workdays: payload.workdays || 0,
-          stressLevel: payload.stressLevel || 0,
-          overtime: payload.overtime || false,
-          overtimeHours: payload.overtimeHours || null,
-          nextWeekSchedule: payload.nextWeekSchedule || null,
-          goodWorkWith: payload.goodWorkWith || null,
-          badWorkWith: payload.badWorkWith || null,
-          teamComment: payload.teamComment || null,
-          notes: payload.notes || null,
-          isCompleted: payload.isCompleted || false,
-          submittedAt: payload.isCompleted ? new Date() : null,
           updatedAt: new Date()
         },
         create: {
@@ -185,82 +192,80 @@ export async function POST(request: NextRequest) {
           weekIso,
           weekStartDate,
           weekEndDate,
-          workdays: payload.workdays || 0,
-          stressLevel: payload.stressLevel || 0,
-          overtime: payload.overtime || false,
-          overtimeHours: payload.overtimeHours || null,
-          nextWeekSchedule: payload.nextWeekSchedule || null,
-          goodWorkWith: payload.goodWorkWith || null,
-          badWorkWith: payload.badWorkWith || null,
-          teamComment: payload.teamComment || null,
-          notes: payload.notes || null,
-          isCompleted: payload.isCompleted || false,
-          submittedAt: payload.isCompleted ? new Date() : null
+          workdays: 0,
+          stressLevel: 0,
+          overtime: false
         }
       });
 
-      // Создаем или обновляем метрики в зависимости от роли
-      if (role === 'hr') {
-        const hrMetrics = await tx.hrMetrics.upsert({
+      let hrMetrics = null;
+      let opsMetrics = null;
+
+      // Обновляем HR метрики если переданы HR данные
+      if ((role === 'hr' || role === 'mixed') && hr) {
+        hrMetrics = await tx.hrMetrics.upsert({
           where: {
-            userId_weekIso: {
-              userId,
-              weekIso
-            }
+            userId_weekIso: { userId, weekIso }
           },
           update: {
-            interviews: payload.interviews || 0,
-            jobPosts: payload.jobPosts || 0,
-            registrations: payload.registrations || 0,
-            difficultCases: payload.difficultCases || null,
+            interviews: hr.interviews ?? undefined,
+            jobPosts: hr.jobPosts ?? undefined,
+            registrations: hr.registered ?? undefined, // mapping
+            fullDays: hr.fullDays ?? undefined,
+            difficultCases: hr.difficult ?? undefined, // mapping
+            stress: hr.stress ?? undefined,
+            overtime: hr.overtime ?? undefined,
             updatedAt: new Date()
           },
           create: {
             userId,
             reportId: weeklyReport.id,
             weekIso,
-            interviews: payload.interviews || 0,
-            jobPosts: payload.jobPosts || 0,
-            registrations: payload.registrations || 0,
-            difficultCases: payload.difficultCases || null
+            interviews: hr.interviews || 0,
+            jobPosts: hr.jobPosts || 0,
+            registrations: hr.registered || 0,
+            fullDays: hr.fullDays || 0,
+            difficultCases: hr.difficult || null,
+            stress: hr.stress || null,
+            overtime: hr.overtime || false
           }
         });
-        return { weeklyReport, hrMetrics };
       }
 
-      if (role === 'ops') {
-        const opsMetrics = await tx.opsMetrics.upsert({
+      // Обновляем Ops метрики если переданы Ops данные
+      if ((role === 'ops' || role === 'mixed') && ops) {
+        opsMetrics = await tx.opsMetrics.upsert({
           where: {
-            userId_weekIso: {
-              userId,
-              weekIso
-            }
+            userId_weekIso: { userId, weekIso }
           },
           update: {
-            trengoMessages: payload.trengoMessages || 0,
-            trengoTicketsResolved: payload.trengoTicketsResolved || 0,
-            crmTicketsResolved: payload.crmTicketsResolved || 0,
-            crmOrdersCity: payload.crmOrdersCity || 0,
-            difficultCleanerCases: payload.difficultCleanerCases || null,
-            difficultClientCases: payload.difficultClientCases || null,
+            messages: ops.messages ?? undefined,
+            tickets: ops.tickets ?? undefined,
+            orders: ops.orders ?? undefined,
+            fullDays: ops.fullDays ?? undefined,
+            diffCleaners: ops.diffCleaners ?? undefined,
+            diffClients: ops.diffClients ?? undefined,
+            stress: ops.stress ?? undefined,
+            overtime: ops.overtime ?? undefined,
             updatedAt: new Date()
           },
           create: {
             userId,
             reportId: weeklyReport.id,
             weekIso,
-            trengoMessages: payload.trengoMessages || 0,
-            trengoTicketsResolved: payload.trengoTicketsResolved || 0,
-            crmTicketsResolved: payload.crmTicketsResolved || 0,
-            crmOrdersCity: payload.crmOrdersCity || 0,
-            difficultCleanerCases: payload.difficultCleanerCases || null,
-            difficultClientCases: payload.difficultClientCases || null
+            messages: ops.messages || 0,
+            tickets: ops.tickets || 0,
+            orders: ops.orders || 0,
+            fullDays: ops.fullDays || 0,
+            diffCleaners: ops.diffCleaners || null,
+            diffClients: ops.diffClients || null,
+            stress: ops.stress || null,
+            overtime: ops.overtime || false
           }
         });
-        return { weeklyReport, opsMetrics };
       }
 
-      return { weeklyReport };
+      return { weeklyReport, hrMetrics, opsMetrics };
     });
 
     return NextResponse.json({
