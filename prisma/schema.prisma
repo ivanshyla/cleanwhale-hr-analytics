@@ -73,6 +73,22 @@ model CityInfo {
   @@map("cities")
 }
 
+// Справочник недель для быстрых запросов
+model Week {
+  id        Int      @id @default(autoincrement())
+  iso       String   @unique // "2025-W38"
+  startDate DateTime // Понедельник
+  endDate   DateTime // Воскресенье
+  year      Int      // 2025
+  weekNum   Int      // 38
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@index([year, weekNum])
+  @@index([startDate, endDate])
+  @@map("weeks")
+}
+
 // Еженедельные отчеты
 model WeeklyReport {
   id            String   @id @default(cuid())
@@ -129,12 +145,19 @@ model HrMetrics {
   interviews       Int      @default(0) // Количество собеседований
   jobPosts         Int      @default(0) // Количество объявлений
   registrations    Int      @default(0) // Количество регистраций
+  fullDays         Int      @default(0) // Отработанные дни
   difficultCases   String?  // Сложные ситуации (текст)
+  
+  // Дополнительные поля
+  stress           Int?     // Уровень стресса 0-10
+  overtime         Boolean  @default(false) // Переработки
   
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
   @@unique([userId, weekIso])
+  @@index([weekIso])  // Индекс для быстрых запросов по неделе
+  @@index([userId])   // Индекс для быстрых запросов по пользователю
   @@map("hr_metrics")
 }
 
@@ -147,22 +170,31 @@ model OpsMetrics {
   report                  WeeklyReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
   weekIso                 String   // Денормализованное поле для удобства запросов
   
-  // Данные Trengo (автоматически или вручную)
-  trengoMessages          Int      @default(0) // Сообщения
-  trengoTicketsResolved   Int      @default(0) // Решенные тикеты
+  // Основные Ops метрики (упрощенные названия)
+  messages                Int      @default(0) // Сообщения (Trengo)
+  tickets                 Int      @default(0) // Решенные тикеты (Trengo + CRM)
+  orders                  Int      @default(0) // Заказы города
+  fullDays                Int      @default(0) // Отработанные дни
   
-  // Данные CRM (автоматически или вручную)
-  crmTicketsResolved      Int      @default(0) // Решенные тикеты
-  crmOrdersCity           Int      @default(0) // Заказы города
+  // Сложные ситуации (упрощенные названия)
+  diffCleaners            String?  // Сложные ситуации с клинерами
+  diffClients             String?  // Сложные ситуации с клиентами
   
-  // Сложные ситуации
-  difficultCleanerCases   String?  // Сложные ситуации с клинерами
-  difficultClientCases    String?  // Сложные ситуации с клиентами
+  // Дополнительные поля
+  stress                  Int?     // Уровень стресса 0-10
+  overtime                Boolean  @default(false) // Переработки
+  
+  // Источники данных (для отслеживания автозаполнения)
+  sourceMsg               String?  // 'api'|'manual' для messages
+  sourceTkt               String?  // 'api'|'manual' для tickets
+  sourceOrd               String?  // 'api'|'manual' для orders
   
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt
 
   @@unique([userId, weekIso])
+  @@index([weekIso])    // Индекс для быстрых запросов по неделе
+  @@index([userId])     // Индекс для быстрых запросов по пользователю
   @@map("ops_metrics")
 }
 
