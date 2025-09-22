@@ -1,244 +1,127 @@
 import { NextRequest, NextResponse } from 'next/server';
+import jwt from 'jsonwebtoken';
 import { prisma } from '@/lib/prisma';
-import { requireAuth } from '@/lib/auth';
+import type { WeeklyReportGetResponse } from '@/types/api';
 
-// GET - получить конкретный отчет
+// GET /api/weekly-reports/:id?role=hr|ops (where id is weekIso)
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const authResult = requireAuth(request);
-  if (authResult.error) return authResult.error;
-
   try {
-    const report = await prisma.weeklyReport.findUnique({
-      where: { id: params.id },
-      include: {
-        hrMetrics: true,
-        opsMetrics: true,
-        user: {
-          select: {
-            id: true,
-            name: true,
-            login: true,
-            role: true,
-            city: true,
-          },
-        },
-      },
+    // Проверяем токен
+    const token = request.cookies.get('token')?.value;
+    if (!token) {
+      return NextResponse.json({ message: 'Не авторизован' }, { status: 401 });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as any;
+    const userId = decoded.userId;
+
+    const { searchParams } = new URL(request.url);
+    const role = searchParams.get('role') as 'hr' | 'ops' | null;
+    const weekIso = params.id; // id parameter contains weekIso
+
+    // Получаем данные пользователя для проверки роли
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, role: true }
     });
 
-    if (!report) {
-      return NextResponse.json(
-        { message: 'Отчет не найден' },
-        { status: 404 }
-      );
+    if (!user) {
+      return NextResponse.json({ message: 'Пользователь не найден' }, { status: 404 });
     }
 
-    // Проверяем права доступа
-    if (
-      report.userId !== authResult.user.userId &&
-      authResult.user.role !== 'ADMIN' &&
-      authResult.user.role !== 'COUNTRY_MANAGER'
-    ) {
-      return NextResponse.json(
-        { message: 'Недостаточно прав доступа' },
-        { status: 403 }
-      );
+    // Получаем отчет и связанные метрики
+    const weeklyReport = await prisma.weeklyReport.findUnique({
+      where: {
+        userId_weekIso: { userId, weekIso }
+      },
+      include: {
+        hrMetrics: true,
+        opsMetrics: true
+      }
+    });
+
+    const response: WeeklyReportGetResponse = {
+      weekIso,
+      hr: null,
+      ops: null
+    };
+
+    // Проверяем доступ и добавляем данные
+    const userRole = user.role;
+    const hasHRAccess = ['HIRING_MANAGER', 'MIXED_MANAGER'].includes(userRole);
+    const hasOpsAccess = ['OPS_MANAGER', 'MIXED_MANAGER'].includes(userRole);
+
+    if ((role === 'hr' && !hasHRAccess) || (role === 'ops' && !hasOpsAccess)) {
+      return NextResponse.json({ message: 'Нет доступа к данной роли' }, { status: 403 });
     }
 
-    return NextResponse.json(report);
+    // Если указана конкретная роль, возвращаем только её данные
+    if (role === 'hr' && hasHRAccess && weeklyReport?.hrMetrics) {
+      const hr = weeklyReport.hrMetrics;
+      response.hr = {
+        interviews: hr.interviews,
+        jobPosts: hr.jobPosts,
+        registered: hr.registrations, // mapping
+        fullDays: hr.fullDays || 0,
+        difficult: hr.difficultCases || '', // mapping
+        stress: hr.stress || 0,
+        overtime: hr.overtime
+      };
+    }
+
+    if (role === 'ops' && hasOpsAccess && weeklyReport?.opsMetrics) {
+      const ops = weeklyReport.opsMetrics;
+      response.ops = {
+        messages: ops.messages || 0,
+        tickets: ops.tickets || 0,
+        orders: ops.orders || 0,
+        fullDays: ops.fullDays || 0,
+        diffCleaners: ops.diffCleaners || '',
+        diffClients: ops.diffClients || '',
+        stress: ops.stress || 0,
+        overtime: ops.overtime
+      };
+    }
+
+    // Если роль не указана, возвращаем все доступные данные
+    if (!role) {
+      if (hasHRAccess && weeklyReport?.hrMetrics) {
+        const hr = weeklyReport.hrMetrics;
+        response.hr = {
+          interviews: hr.interviews,
+          jobPosts: hr.jobPosts,
+          registered: hr.registrations,
+          fullDays: hr.fullDays || 0,
+          difficult: hr.difficultCases || '',
+          stress: hr.stress || 0,
+          overtime: hr.overtime
+        };
+      }
+
+      if (hasOpsAccess && weeklyReport?.opsMetrics) {
+        const ops = weeklyReport.opsMetrics;
+        response.ops = {
+          messages: ops.messages || 0,
+          tickets: ops.tickets || 0,
+          orders: ops.orders || 0,
+          fullDays: ops.fullDays || 0,
+          diffCleaners: ops.diffCleaners || '',
+          diffClients: ops.diffClients || '',
+          stress: ops.stress || 0,
+          overtime: ops.overtime
+        };
+      }
+    }
+
+    return NextResponse.json(response);
+
   } catch (error) {
     console.error('Error fetching weekly report:', error);
     return NextResponse.json(
-      { message: 'Ошибка при получении отчета' },
-      { status: 500 }
-    );
-  }
-}
-
-// PUT - обновить отчет
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  const authResult = requireAuth(request);
-  if (authResult.error) return authResult.error;
-
-  try {
-    const data = await request.json();
-    const {
-      workdays,
-      stressLevel,
-      overtime,
-      overtimeHours,
-      nextWeekSchedule,
-      goodWorkWith,
-      badWorkWith,
-      teamComment,
-      notes,
-      isCompleted,
-      hrMetrics,
-      opsMetrics,
-    } = data;
-
-    // Проверяем существование отчета
-    const existingReport = await prisma.weeklyReport.findUnique({
-      where: { id: params.id },
-      include: {
-        hrMetrics: true,
-        opsMetrics: true,
-      },
-    });
-
-    if (!existingReport) {
-      return NextResponse.json(
-        { message: 'Отчет не найден' },
-        { status: 404 }
-      );
-    }
-
-    // Проверяем права доступа
-    if (
-      existingReport.userId !== authResult.user.userId &&
-      authResult.user.role !== 'ADMIN'
-    ) {
-      return NextResponse.json(
-        { message: 'Недостаточно прав доступа' },
-        { status: 403 }
-      );
-    }
-
-    // Обновляем в транзакции
-    const result = await prisma.$transaction(async (tx) => {
-      // Обновляем основной отчет
-      const updatedReport = await tx.weeklyReport.update({
-        where: { id: params.id },
-        data: {
-          workdays: workdays ?? existingReport.workdays,
-          stressLevel: stressLevel ?? existingReport.stressLevel,
-          overtime: overtime ?? existingReport.overtime,
-          overtimeHours: overtimeHours ?? existingReport.overtimeHours,
-          nextWeekSchedule: nextWeekSchedule ?? existingReport.nextWeekSchedule,
-          goodWorkWith: goodWorkWith ?? existingReport.goodWorkWith,
-          badWorkWith: badWorkWith ?? existingReport.badWorkWith,
-          teamComment: teamComment ?? existingReport.teamComment,
-          notes: notes ?? existingReport.notes,
-          isCompleted: isCompleted ?? existingReport.isCompleted,
-          submittedAt: isCompleted ? new Date() : existingReport.submittedAt,
-        },
-      });
-
-      // Обновляем HR метрики, если они переданы
-      if (hrMetrics && (authResult.user.role === 'HR' || authResult.user.role === 'MIXED')) {
-        if (existingReport.hrMetrics) {
-          await tx.hrMetrics.update({
-            where: { id: existingReport.hrMetrics.id },
-            data: {
-              interviews: hrMetrics.interviews ?? existingReport.hrMetrics.interviews,
-              jobPosts: hrMetrics.jobPosts ?? existingReport.hrMetrics.jobPosts,
-              registrations: hrMetrics.registrations ?? existingReport.hrMetrics.registrations,
-              difficultCases: hrMetrics.difficultCases ?? existingReport.hrMetrics.difficultCases,
-            },
-          });
-        } else {
-          await tx.hrMetrics.create({
-            data: {
-              userId: authResult.user.userId,
-              reportId: params.id,
-              interviews: hrMetrics.interviews || 0,
-              jobPosts: hrMetrics.jobPosts || 0,
-              registrations: hrMetrics.registrations || 0,
-              difficultCases: hrMetrics.difficultCases,
-            },
-          });
-        }
-      }
-
-      // Обновляем операционные метрики, если они переданы
-      if (opsMetrics && (authResult.user.role === 'OPERATIONS' || authResult.user.role === 'MIXED')) {
-        if (existingReport.opsMetrics) {
-          await tx.opsMetrics.update({
-            where: { id: existingReport.opsMetrics.id },
-            data: {
-              trengoMessages: opsMetrics.trengoMessages ?? existingReport.opsMetrics.trengoMessages,
-              trengoTicketsResolved: opsMetrics.trengoTicketsResolved ?? existingReport.opsMetrics.trengoTicketsResolved,
-              crmTicketsResolved: opsMetrics.crmTicketsResolved ?? existingReport.opsMetrics.crmTicketsResolved,
-              crmOrdersCity: opsMetrics.crmOrdersCity ?? existingReport.opsMetrics.crmOrdersCity,
-              difficultCleanerCases: opsMetrics.difficultCleanerCases ?? existingReport.opsMetrics.difficultCleanerCases,
-              difficultClientCases: opsMetrics.difficultClientCases ?? existingReport.opsMetrics.difficultClientCases,
-            },
-          });
-        } else {
-          await tx.opsMetrics.create({
-            data: {
-              userId: authResult.user.userId,
-              reportId: params.id,
-              trengoMessages: opsMetrics.trengoMessages || 0,
-              trengoTicketsResolved: opsMetrics.trengoTicketsResolved || 0,
-              crmTicketsResolved: opsMetrics.crmTicketsResolved || 0,
-              crmOrdersCity: opsMetrics.crmOrdersCity || 0,
-              difficultCleanerCases: opsMetrics.difficultCleanerCases,
-              difficultClientCases: opsMetrics.difficultClientCases,
-            },
-          });
-        }
-      }
-
-      return updatedReport;
-    });
-
-    return NextResponse.json(result);
-  } catch (error) {
-    console.error('Error updating weekly report:', error);
-    return NextResponse.json(
-      { message: 'Ошибка при обновлении отчета' },
-      { status: 500 }
-    );
-  }
-}
-
-// DELETE - удалить отчет
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  const authResult = requireAuth(request);
-  if (authResult.error) return authResult.error;
-
-  try {
-    const report = await prisma.weeklyReport.findUnique({
-      where: { id: params.id },
-    });
-
-    if (!report) {
-      return NextResponse.json(
-        { message: 'Отчет не найден' },
-        { status: 404 }
-      );
-    }
-
-    // Проверяем права доступа
-    if (
-      report.userId !== authResult.user.userId &&
-      authResult.user.role !== 'ADMIN'
-    ) {
-      return NextResponse.json(
-        { message: 'Недостаточно прав доступа' },
-        { status: 403 }
-      );
-    }
-
-    // Удаляем отчет (каскадное удаление удалит связанные метрики)
-    await prisma.weeklyReport.delete({
-      where: { id: params.id },
-    });
-
-    return NextResponse.json({ message: 'Отчет удален' });
-  } catch (error) {
-    console.error('Error deleting weekly report:', error);
-    return NextResponse.json(
-      { message: 'Ошибка при удалении отчета' },
+      { message: 'Ошибка получения отчета' },
       { status: 500 }
     );
   }
