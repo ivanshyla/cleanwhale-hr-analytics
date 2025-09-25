@@ -57,6 +57,8 @@ model User {
   hrMetrics        HrMetrics[]
   opsMetrics       OpsMetrics[]
   countryUserInputs CountryUserInput[]
+  userSchedules   UserSchedule[]
+  userScheduleExceptions UserScheduleException[]
 
   @@map("users")
 }
