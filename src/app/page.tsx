@@ -58,48 +58,22 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Features */}
-          <div className="mt-16">
-            <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-              {/* Feature 1 */}
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <div className="flex items-center justify-center h-12 w-12 rounded-md bg-blue-100 text-blue-600 mx-auto">
-                  <Users className="h-6 w-6" />
-                </div>
-                <h3 className="mt-4 text-lg font-medium text-gray-900 text-center">
-                  Управление данными
-                </h3>
-                <p className="mt-2 text-base text-gray-500 text-center">
-                  Централизованный сбор HR и операционных метрик от всех сотрудников
-                </p>
-              </div>
-
-              {/* Feature 2 */}
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <div className="flex items-center justify-center h-12 w-12 rounded-md bg-green-100 text-green-600 mx-auto">
-                  <BarChart3 className="h-6 w-6" />
-                </div>
-                <h3 className="mt-4 text-lg font-medium text-gray-900 text-center">
-                  Визуализация
-                </h3>
-                <p className="mt-2 text-base text-gray-500 text-center">
-                  Интерактивные дашборды с возможностью сравнения по времени и городам
-                </p>
-              </div>
-
-              {/* Feature 3 */}
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <div className="flex items-center justify-center h-12 w-12 rounded-md bg-purple-100 text-purple-600 mx-auto">
-                  <TrendingUp className="h-6 w-6" />
-                </div>
-                <h3 className="mt-4 text-lg font-medium text-gray-900 text-center">
-                  AI Анализ
-                </h3>
-                <p className="mt-2 text-base text-gray-500 text-center">
-                  Автоматический анализ трендов и уведомления о важных изменениях
-                </p>
-              </div>
-            </div>
+          {/* Основные действия для линейных менеджеров */}
+          <div className="mt-16 grid grid-cols-1 gap-6 sm:grid-cols-2 max-w-3xl mx-auto">
+            <Link
+              href="/dashboard/weekly-report"
+              className="bg-white rounded-lg shadow-md p-6 border hover:border-blue-300 transition-colors"
+            >
+              <h3 className="text-lg font-medium text-gray-900">Внести данные</h3>
+              <p className="mt-2 text-base text-gray-500">Перейти к еженедельному отчёту</p>
+            </Link>
+            <Link
+              href="/dashboard/schedule"
+              className="bg-white rounded-lg shadow-md p-6 border hover:border-blue-300 transition-colors"
+            >
+              <h3 className="text-lg font-medium text-gray-900">Мой график</h3>
+              <p className="mt-2 text-base text-gray-500">Просмотр и редактирование шаблона недели</p>
+            </Link>
           </div>
 
           {/* CTA Section */}
