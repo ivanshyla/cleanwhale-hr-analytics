@@ -56,19 +56,22 @@ model User {
   weeklyReports    WeeklyReport[]
   hrMetrics        HrMetrics[]
   opsMetrics       OpsMetrics[]
-  countryAggregates CountryAggregates[]
+  countryUserInputs CountryUserInput[]
 
   @@map("users")
 }
 
 // Справочник городов
 model CityInfo {
-  id        String   @id @default(cuid())
+  id        Int      @id @default(autoincrement())
   code      City     @unique
   name      String   // Название города на русском
   timezone  String   @default("Europe/Warsaw")
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
+
+  // Связанные данные
+  countryAggregates CountryAggregate[]
 
   @@map("cities")
 }
@@ -198,42 +201,45 @@ model OpsMetrics {
   @@map("ops_metrics")
 }
 
-// Агрегированные данные по стране (заполняет менеджер по стране)
-model CountryAggregates {
-  id            String   @id @default(cuid())
-  managerId     String
-  manager       User     @relation(fields: [managerId], references: [id], onDelete: Cascade)
-  
-  // Период
-  weekIso       String   // ISO неделя
-  weekStartDate DateTime
-  weekEndDate   DateTime
-  
-  // Данные Trengo по людям/городам (JSON)
-  trengoByPeople Json?    // { "userId": { "messages": 100, "tickets": 20 }, ... }
-  trengoByCity   Json?    // { "WARSAW": { "messages": 500, "tickets": 100 }, ... }
-  
-  // Данные CRM по людям/городам (JSON)
-  crmByPeople    Json?    // { "userId": { "tickets": 15, "orders": 50 }, ... }
-  crmByCity      Json?    // { "WARSAW": { "tickets": 75, "orders": 250 }, ... }
-  
-  // Количество нанятых по городам
-  hiresByCity    Json?    // { "WARSAW": 5, "KRAKOW": 3, ... }
-  
-  // Заказы по городам
-  ordersByCity   Json?    // { "WARSAW": 150, "KRAKOW": 89, ... }
-  
-  // Корректировки
-  adjustments    String?  // Корректировки (±, причина)
-  
-  // Комментарии
-  comments       String?  // Общие комментарии
-  
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+// Агрегированные данные по городам (заполняет менеджер по стране)
+model CountryAggregate {
+  id                  Int      @id @default(autoincrement())
+  weekIso             String
+  cityId              Int
+  trengoResponses     Int      @default(0)   // ответы (по городу суммарно)
+  crmComplaintsClosed Int      @default(0)   // жалобы закрытые (по городу суммарно)
+  trengoTickets       Int      @default(0)   // тикеты (по городу суммарно)
+  hiredPeople         Int      @default(0)   // нанятые (по городу)
+  cityOrders          Int      @default(0)   // заказы (по городу)
+  notes               String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
-  @@unique([managerId, weekIso])
+  city                CityInfo @relation(fields: [cityId], references: [id])
+
+  @@unique([weekIso, cityId])
+  @@index([weekIso])
   @@map("country_aggregates")
+}
+
+// Ввод данных по конкретным менеджерам (заполняет менеджер по стране)
+model CountryUserInput {
+  id                  Int      @id @default(autoincrement())
+  weekIso             String
+  userId              String   // только для OPS_MANAGER и MIXED_MANAGER
+  trengoResponses     Int      @default(0)   // «сколько отвечал» в Trengo
+  trengoTickets       Int      @default(0)   // тикеты Trengo на нём
+  crmComplaintsClosed Int      @default(0)   // закрытые жалобы (на нём)
+  ordersHandled       Int      @default(0)   // (если хотите фиксировать по людям)
+  notes               String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  user                User     @relation(fields: [userId], references: [id])
+
+  @@unique([weekIso, userId])
+  @@index([weekIso])
+  @@map("country_user_inputs")
 }
 
 // Настройки системы
