@@ -249,53 +249,66 @@ export default function DashboardPage() {
           <div className="bg-white rounded-lg shadow p-6">
             <h3 className="text-lg font-medium text-gray-900 mb-4">Основные действия</h3>
             <div className="space-y-3">
-              <button 
-                onClick={() => router.push('/dashboard/employee-charts')}
-                className="w-full text-left px-4 py-2 rounded-md border border-blue-200 bg-blue-50 hover:bg-blue-100 transition-colors text-blue-800 flex items-center"
-              >
-                <BarChart3 className="w-4 h-4 mr-2" />
-                Графики всех сотрудников
-              </button>
-              
-              <button 
-                onClick={() => router.push('/dashboard/users')}
-                className="w-full text-left px-4 py-2 rounded-md border border-green-200 bg-green-50 hover:bg-green-100 transition-colors text-green-800 flex items-center"
-              >
-                <Users className="w-4 h-4 mr-2" />
-                Список всех сотрудников
-              </button>
-              
-              <button 
-                onClick={() => router.push('/dashboard/employee-ratings')}
-                className="w-full text-left px-4 py-2 rounded-md border border-yellow-200 bg-yellow-50 hover:bg-yellow-100 transition-colors text-yellow-800 flex items-center"
-              >
-                <TrendingUp className="w-4 h-4 mr-2" />
-                Рейтинг всех сотрудников
-              </button>
-              
-              <button 
-                onClick={() => router.push('/dashboard/weekly-report')}
-                className="w-full text-left px-4 py-2 rounded-md border border-purple-200 bg-purple-50 hover:bg-purple-100 transition-colors text-purple-800 flex items-center"
-              >
-                <Clock className="w-4 h-4 mr-2" />
-                Еженедельный отчет
-              </button>
-              
-              <button 
-                onClick={() => router.push('/dashboard/ai-insights')}
-                className="w-full text-left px-4 py-2 rounded-md border border-pink-200 bg-pink-50 hover:bg-pink-100 transition-colors text-pink-800 flex items-center"
-              >
-                <Brain className="w-4 h-4 mr-2" />
-                ИИ аналитика
-              </button>
-              
-              <button 
-                onClick={() => router.push('/dashboard/metrics/new')}
-                className="w-full text-left px-4 py-2 rounded-md border border-orange-200 bg-orange-50 hover:bg-orange-100 transition-colors text-orange-800 flex items-center"
-              >
-                <Database className="w-4 h-4 mr-2" />
-                Внести данные
-              </button>
+              {/* Для линейных менеджеров */}
+              {['HIRING_MANAGER', 'OPS_MANAGER', 'MIXED_MANAGER'].includes(user?.role) && (
+                <>
+                  <button 
+                    onClick={() => router.push('/dashboard/weekly-report')}
+                    className="w-full text-left px-4 py-2 rounded-md border border-purple-200 bg-purple-50 hover:bg-purple-100 transition-colors text-purple-800 flex items-center"
+                  >
+                    <Clock className="w-4 h-4 mr-2" />
+                    Еженедельный отчет
+                  </button>
+                  
+                  <button 
+                    onClick={() => router.push('/dashboard/schedule')}
+                    className="w-full text-left px-4 py-2 rounded-md border border-blue-200 bg-blue-50 hover:bg-blue-100 transition-colors text-blue-800 flex items-center"
+                  >
+                    <Clock className="w-4 h-4 mr-2" />
+                    Мой график
+                  </button>
+                </>
+              )}
+
+              {/* Для администраторов и менеджеров по стране */}
+              {['ADMIN', 'COUNTRY_MANAGER'].includes(user?.role) && (
+                <>
+                  <button 
+                    onClick={() => router.push('/dashboard/analytics')}
+                    className="w-full text-left px-4 py-2 rounded-md border border-blue-200 bg-blue-50 hover:bg-blue-100 transition-colors text-blue-800 flex items-center"
+                  >
+                    <BarChart3 className="w-4 h-4 mr-2" />
+                    Аналитика
+                  </button>
+                  
+                  <button 
+                    onClick={() => router.push('/dashboard/users')}
+                    className="w-full text-left px-4 py-2 rounded-md border border-green-200 bg-green-50 hover:bg-green-100 transition-colors text-green-800 flex items-center"
+                  >
+                    <Users className="w-4 h-4 mr-2" />
+                    Пользователи
+                  </button>
+                  
+                  <button 
+                    onClick={() => router.push('/dashboard/metrics')}
+                    className="w-full text-left px-4 py-2 rounded-md border border-yellow-200 bg-yellow-50 hover:bg-yellow-100 transition-colors text-yellow-800 flex items-center"
+                  >
+                    <TrendingUp className="w-4 h-4 mr-2" />
+                    Метрики
+                  </button>
+                </>
+              )}
+
+              {/* Только для администраторов */}
+              {user?.role === 'ADMIN' && (
+                <button 
+                  onClick={() => router.push('/dashboard/ai-insights')}
+                  className="w-full text-left px-4 py-2 rounded-md border border-pink-200 bg-pink-50 hover:bg-pink-100 transition-colors text-pink-800 flex items-center"
+                >
+                  <Brain className="w-4 h-4 mr-2" />
+                  AI Инсайты
+                </button>
+              )}
             </div>
           </div>
 
