@@ -47,7 +47,6 @@ const navigation = [
   { name: 'Сравнения', href: '/dashboard/comparison', icon: Scale, roles: ['ADMIN', 'COUNTRY_MANAGER'] },
   { name: 'AI Инсайты', href: '/dashboard/ai-insights', icon: Lightbulb, roles: ['ADMIN'] },
   { name: 'Пользователи', href: '/dashboard/users', icon: Users, roles: ['ADMIN', 'COUNTRY_MANAGER'] },
-  { name: 'Персонал', href: '/dashboard/employees', icon: User, roles: ['ADMIN', 'COUNTRY_MANAGER'] },
   { name: 'Статистика менеджеров', href: '/dashboard/manager-stats', icon: UserRoundCog, roles: ['ADMIN'] },
   { name: 'Расписание звонков', href: '/dashboard/call-schedule', icon: CalendarDays, roles: ['ADMIN'] },
   { name: 'Внешние данные', href: '/dashboard/external-data', icon: Briefcase, roles: ['ADMIN'] },
