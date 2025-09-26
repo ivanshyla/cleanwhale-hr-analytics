@@ -19,10 +19,7 @@ interface HRData {
 }
 
 interface OpsData {
-  trengoMessages: number;
-  trengoTicketsResolved: number;
   crmTicketsResolved: number;
-  crmOrdersCity: number;
   difficultCleanerCases: string;
   difficultClientCases: string;
 }
@@ -63,10 +60,7 @@ export default function WeeklyReportForm({ role, userId, weekIso, onSave }: Week
   });
 
   const [opsData, setOpsData] = useState<OpsData>({
-    trengoMessages: 0,
-    trengoTicketsResolved: 0,
     crmTicketsResolved: 0,
-    crmOrdersCity: 0,
     difficultCleanerCases: '',
     difficultClientCases: ''
   });
@@ -111,10 +105,7 @@ export default function WeeklyReportForm({ role, userId, weekIso, onSave }: Week
         // Загружаем Ops данные если есть доступ
         if (data.opsData && (role === 'ops' || role === 'mixed')) {
           setOpsData({
-            trengoMessages: data.opsData.trengoMessages || 0,
-            trengoTicketsResolved: data.opsData.trengoTicketsResolved || 0,
             crmTicketsResolved: data.opsData.crmTicketsResolved || 0,
-            crmOrdersCity: data.opsData.crmOrdersCity || 0,
             difficultCleanerCases: data.opsData.difficultCleanerCases || '',
             difficultClientCases: data.opsData.difficultClientCases || ''
           });
@@ -399,32 +390,6 @@ export default function WeeklyReportForm({ role, userId, weekIso, onSave }: Week
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Сообщения в Trengo
-              </label>
-              <input
-                type="number"
-                min="0"
-                value={opsData.trengoMessages}
-                onChange={(e) => setOpsData(prev => ({ ...prev, trengoMessages: parseInt(e.target.value) || 0 }))}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Решенные тикеты Trengo
-              </label>
-              <input
-                type="number"
-                min="0"
-                value={opsData.trengoTicketsResolved}
-                onChange={(e) => setOpsData(prev => ({ ...prev, trengoTicketsResolved: parseInt(e.target.value) || 0 }))}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Решенные тикеты CRM
               </label>
               <input
@@ -432,19 +397,6 @@ export default function WeeklyReportForm({ role, userId, weekIso, onSave }: Week
                 min="0"
                 value={opsData.crmTicketsResolved}
                 onChange={(e) => setOpsData(prev => ({ ...prev, crmTicketsResolved: parseInt(e.target.value) || 0 }))}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Заказы города в CRM
-              </label>
-              <input
-                type="number"
-                min="0"
-                value={opsData.crmOrdersCity}
-                onChange={(e) => setOpsData(prev => ({ ...prev, crmOrdersCity: parseInt(e.target.value) || 0 }))}
                 className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>

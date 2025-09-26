@@ -164,10 +164,7 @@ export interface HrMetricsFormData {
 }
 
 export interface OpsMetricsFormData {
-  trengoMessages: number;
-  trengoTicketsResolved: number;
   crmTicketsResolved: number;
-  crmOrdersCity: number;
   difficultCleanerCases?: string;
   difficultClientCases?: string;
 }
