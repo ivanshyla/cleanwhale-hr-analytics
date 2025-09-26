@@ -43,14 +43,15 @@ export default function UsersPage() {
         return;
       }
 
-      const response = await fetch('/api/users/me', {
+      const response = await fetch('/api/auth/me', {
+        cache: 'no-cache',
         headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+          'Cache-Control': 'no-cache'
+        }
       });
 
       if (response.ok) {
-        const userData = await response.json();
+        const { user: userData } = await response.json();
         setCurrentUser(userData);
 
         // Проверяем права доступа
