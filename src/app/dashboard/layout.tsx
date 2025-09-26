@@ -40,6 +40,7 @@ const navigation = [
   { name: 'Дашборд', href: '/dashboard', icon: Home, roles: ['ADMIN', 'COUNTRY_MANAGER', 'HIRING_MANAGER', 'OPS_MANAGER', 'MIXED_MANAGER'] },
   { name: 'Еженедельный отчет', href: '/dashboard/weekly-report', icon: FileText, roles: ['HIRING_MANAGER', 'OPS_MANAGER', 'MIXED_MANAGER'] },
   { name: 'Мой график', href: '/dashboard/schedule', icon: CalendarDays, roles: ['HIRING_MANAGER', 'OPS_MANAGER', 'MIXED_MANAGER'] },
+  { name: 'Графики менеджеров', href: '/dashboard/all-schedules', icon: Users, roles: ['ADMIN', 'COUNTRY_MANAGER'] },
   { name: 'Аналитика', href: '/dashboard/analytics', icon: BarChart3, roles: ['ADMIN', 'COUNTRY_MANAGER'] },
   { name: 'Метрики', href: '/dashboard/metrics', icon: LineChart, roles: ['ADMIN', 'COUNTRY_MANAGER'] },
   { name: 'Сравнения', href: '/dashboard/comparison', icon: Scale, roles: ['ADMIN', 'COUNTRY_MANAGER'] },

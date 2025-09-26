@@ -32,7 +32,11 @@ export default function SchedulePage() {
   const [loading, setLoading] = useState(false);
 
   const { register, handleSubmit, watch, setValue } = useForm<ScheduleForm>({
-    defaultValues: { weekStartDate: getCurrentMonday() }
+    defaultValues: { 
+      weekStartDate: getCurrentMonday(),
+      mondayStart: '09:00',
+      mondayEnd: '18:00'
+    }
   });
 
   const watchedValues = watch();
@@ -186,7 +190,7 @@ export default function SchedulePage() {
                 <h1 className="text-2xl font-bold text-gray-900 mb-2">
                   📅 Настройка графика работы
                 </h1>
-                <p className="text-gray-600">Нажмите на карточку дня для быстрой установки 9:00-18:00</p>
+                <p className="text-gray-600">Нажмите на карточку дня для быстрой установки базового времени 9:00-18:00</p>
               </div>
               <div className="text-right">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Неделя от:</label>
@@ -247,7 +251,7 @@ export default function SchedulePage() {
                         )}
                         {!hasTime && (
                           <p className="text-xs text-gray-500 mt-1">
-                            👆 Нажмите для 9:00-18:00
+                            👆 Нажмите для базового времени 9:00-18:00
                           </p>
                         )}
                       </div>

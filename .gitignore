@@ -110,6 +110,23 @@ temp_*
 *.bak
 prisma/schema.prisma.bak
 
+# Virtual environments (Python)
+backend/.venv/
+backend/venv/
+.venv/
+venv/
+
+# Cookie files
+cookies*.txt
+
+# Build artifacts and caches
+dist/
+.next/
+out/
+build/
+.cache/
+.parcel-cache/
+
 # Lockfiles
 # package-lock.json, yarn.lock, pnpm-lock.yaml
 package-lock.json
