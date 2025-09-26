@@ -324,19 +324,6 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Настройки профиля</h3>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Роль:</span>
-                <span className="text-sm font-medium">{user && getRoleLabel(user.role)}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Город:</span>
-                <span className="text-sm font-medium">{user && getCityLabel(user.city)}</span>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Интерактивные графики */}

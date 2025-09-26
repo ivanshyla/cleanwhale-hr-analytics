@@ -59,6 +59,8 @@ model User {
   countryUserInputs CountryUserInput[]
   userSchedules   UserSchedule[]
   userScheduleExceptions UserScheduleException[]
+  employeeProfile EmployeeProfile?
+  teamCallAttendees TeamCallAttendee[]
 
   @@map("users")
 }
@@ -74,6 +76,7 @@ model CityInfo {
 
   // Связанные данные
   countryAggregates CountryAggregate[]
+  teamCallSlots TeamCallSlot[]
 
   @@map("cities")
 }
@@ -213,6 +216,11 @@ model CountryAggregate {
   trengoTickets       Int      @default(0)   // тикеты (по городу суммарно)
   hiredPeople         Int      @default(0)   // нанятые (по городу)
   cityOrders          Int      @default(0)   // заказы (по городу)
+  // Новые поля для расширенной функциональности
+  trengoMessages      Int      @default(0)   // общее количество сообщений Trengo
+  hiredHR             Int      @default(0)   // нанятые HR
+  hiredOps           Int      @default(0)    // нанятые Ops
+  hiredMixed          Int      @default(0)   // нанятые Mixed
   notes               String?
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
@@ -259,6 +267,53 @@ model UserSchedule {
 
   @@unique([userId, weekday])
   @@index([userId])
+}
+
+// Командные звонки со слотами и участниками
+model TeamCallSlot {
+  id        Int      @id @default(autoincrement())
+  weekIso   String
+  cityId    Int
+  team      String?  // 'HR' | 'OPS' | 'ALL'
+  weekday   Int      // 1..7
+  date      DateTime
+  startMin  Int
+  endMin    Int
+  title     String
+  linkUrl   String?
+  note      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  city      CityInfo @relation(fields: [cityId], references: [id])
+  attendees TeamCallAttendee[]
+
+  @@index([weekIso, cityId])
+  @@map("team_call_slots")
+}
+
+model TeamCallAttendee {
+  id     Int    @id @default(autoincrement())
+  slotId Int
+  userId String
+  slot   TeamCallSlot @relation(fields: [slotId], references: [id], onDelete: Cascade)
+  user   User        @relation(fields: [userId], references: [id])
+  
+  @@unique([slotId, userId])
+  @@map("team_call_attendees")
+}
+
+// Профили сотрудников - стаж и зарплаты
+model EmployeeProfile {
+  id          Int      @id @default(autoincrement())
+  userId      String   @unique
+  yearsWorked Int?
+  salaryGross Int?
+  salaryNet   Int?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@map("employee_profiles")
 }
 
 // Исключения к графику (конкретные даты)

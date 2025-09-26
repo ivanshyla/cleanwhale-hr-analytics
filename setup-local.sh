@@ -20,7 +20,7 @@ TRENGO_API_TOKEN=""
 TRENGO_BASE_URL="https://app.trengo.com/api/v2"
 
 # CRM Integration
-CRM_API_URL=""
+CRM_API_URL=""т
 CRM_API_KEY=""
 
 # App Settings

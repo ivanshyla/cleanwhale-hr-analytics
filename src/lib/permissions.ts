@@ -183,6 +183,16 @@ export function isManager(user: JWTPayload): boolean {
   return ['COUNTRY_MANAGER', 'ADMIN'].includes(user.role);
 }
 
+// Проверка доступа для Country Manager функций
+export function canAccessCountryFeatures(user: JWTPayload): boolean {
+  return ['COUNTRY_MANAGER', 'ADMIN'].includes(user.role);
+}
+
+// Проверка доступа для Employee Management функций
+export function canAccessEmployeeFeatures(user: JWTPayload): boolean {
+  return ['COUNTRY_MANAGER', 'ADMIN'].includes(user.role);
+}
+
 // Проверка, является ли пользователь обычным сотрудником
 export function isRegularEmployee(user: JWTPayload): boolean {
   return ['HIRING_MANAGER', 'OPS_MANAGER', 'MIXED_MANAGER'].includes(user.role);

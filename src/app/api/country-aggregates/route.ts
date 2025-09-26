@@ -62,6 +62,10 @@ export async function GET(request: NextRequest) {
         trengoTickets: aggregate?.trengoTickets || 0,
         hiredPeople: aggregate?.hiredPeople || 0,
         cityOrders: aggregate?.cityOrders || 0,
+        trengoMessages: aggregate?.trengoMessages || 0,
+        hiredHR: aggregate?.hiredHR || 0,
+        hiredOps: aggregate?.hiredOps || 0,
+        hiredMixed: aggregate?.hiredMixed || 0,
         notes: aggregate?.notes || '',
         updatedAt: aggregate?.updatedAt || null
       };
@@ -125,6 +129,10 @@ export async function POST(request: NextRequest) {
           trengoTickets,
           hiredPeople,
           cityOrders,
+          trengoMessages,
+          hiredHR,
+          hiredOps,
+          hiredMixed,
           notes
         } = item;
 
@@ -145,6 +153,10 @@ export async function POST(request: NextRequest) {
             trengoTickets: trengoTickets || 0,
             hiredPeople: hiredPeople || 0,
             cityOrders: cityOrders || 0,
+            trengoMessages: trengoMessages || 0,
+            hiredHR: hiredHR || 0,
+            hiredOps: hiredOps || 0,
+            hiredMixed: hiredMixed || 0,
             notes: notes || null,
             updatedAt: new Date()
           },
@@ -156,6 +168,10 @@ export async function POST(request: NextRequest) {
             trengoTickets: trengoTickets || 0,
             hiredPeople: hiredPeople || 0,
             cityOrders: cityOrders || 0,
+            trengoMessages: trengoMessages || 0,
+            hiredHR: hiredHR || 0,
+            hiredOps: hiredOps || 0,
+            hiredMixed: hiredMixed || 0,
             notes: notes || null
           },
           include: {

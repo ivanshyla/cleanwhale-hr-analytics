@@ -17,6 +17,11 @@ interface CityData {
   trengoTickets: number;
   hiredPeople: number;
   cityOrders: number;
+  // Новые поля для расширенной функциональности
+  trengoMessages: number;          // Общее количество сообщений в Trengo
+  hiredHR: number;                 // Нанятые HR
+  hiredOps: number;               // Нанятые Ops  
+  hiredMixed: number;             // Нанятые Mixed
   notes: string;
   updatedAt: string | null;
 }
@@ -55,11 +60,20 @@ export default function CountryCitiesTab({ weekIso }: CitiesTabProps) {
 
   const handleCityChange = (cityId: number, field: keyof CityData, value: string | number) => {
     setCities(prevCities =>
-      prevCities.map(city =>
-        city.cityId === cityId
-          ? { ...city, [field]: value }
-          : city
-      )
+      prevCities.map(city => {
+        if (city.cityId === cityId) {
+          const updatedCity = { ...city, [field]: value };
+          
+          // Автоматически пересчитываем общее количество нанятых при изменении any из компонент найма
+          if (['hiredHR', 'hiredOps', 'hiredMixed'].includes(field)) {
+            const totalHired = (updatedCity.hiredHR || 0) + (updatedCity.hiredOps || 0) + (updatedCity.hiredMixed || 0);
+            updatedCity.hiredPeople = totalHired;
+          }
+          
+          return updatedCity;
+        }
+        return city;
+      })
     );
   };
 
@@ -76,6 +90,10 @@ export default function CountryCitiesTab({ weekIso }: CitiesTabProps) {
         trengoTickets: city.trengoTickets,
         hiredPeople: city.hiredPeople,
         cityOrders: city.cityOrders,
+        trengoMessages: city.trengoMessages || 0,
+        hiredHR: city.hiredHR || 0,
+        hiredOps: city.hiredOps || 0,
+        hiredMixed: city.hiredMixed || 0,
         notes: city.notes
       }));
 
@@ -158,19 +176,31 @@ export default function CountryCitiesTab({ weekIso }: CitiesTabProps) {
                 Город
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Trengo Ответы
+                Trengo<br/>Ответы
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                CRM Жалобы
+                Trengo<br/>Сообщения
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Trengo Тикеты
+                CRM<br/>Жалобы
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Нанятые
+                Trengo<br/>Тикеты
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Заказы города
+                Нанятые HR
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Нанятые Ops
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Нанятые Mixed
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Всего<br/>нанятые
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Заказы
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Заметки
@@ -186,57 +216,99 @@ export default function CountryCitiesTab({ weekIso }: CitiesTabProps) {
                     <div className="text-sm text-gray-500">{city.cityCode}</div>
                   </div>
                 </td>
+                {/* Trengo Ответы */}
                 <td className="px-6 py-4 whitespace-nowrap">
                   <input
                     type="number"
                     min="0"
                     value={city.trengoResponses}
                     onChange={(e) => handleCityChange(city.cityId, 'trengoResponses', parseInt(e.target.value) || 0)}
-                    className="w-20 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-16 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </td>
+                {/* Trengo Сообщения */}
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <input
+                    type="number"
+                    min="0"
+                    value={city.trengoMessages || 0}
+                    onChange={(e) => handleCityChange(city.cityId, 'trengoMessages', parseInt(e.target.value) || 0)}
+                    className="w-16 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </td>
+                {/* CRM Жалобы */}
                 <td className="px-6 py-4 whitespace-nowrap">
                   <input
                     type="number"
                     min="0"
                     value={city.crmComplaintsClosed}
                     onChange={(e) => handleCityChange(city.cityId, 'crmComplaintsClosed', parseInt(e.target.value) || 0)}
-                    className="w-20 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-16 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </td>
+                {/* Trengo Тикеты */}
                 <td className="px-6 py-4 whitespace-nowrap">
                   <input
                     type="number"
                     min="0"
                     value={city.trengoTickets}
                     onChange={(e) => handleCityChange(city.cityId, 'trengoTickets', parseInt(e.target.value) || 0)}
-                    className="w-20 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-16 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </td>
+                {/* Нанятые HR */}
                 <td className="px-6 py-4 whitespace-nowrap">
                   <input
                     type="number"
                     min="0"
-                    value={city.hiredPeople}
-                    onChange={(e) => handleCityChange(city.cityId, 'hiredPeople', parseInt(e.target.value) || 0)}
-                    className="w-20 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={city.hiredHR || 0}
+                    onChange={(e) => handleCityChange(city.cityId, 'hiredHR', parseInt(e.target.value) || 0)}
+                    className="w-16 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </td>
+                {/* Нанятые Ops */}
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <input
+                    type="number"
+                    min="0"
+                    value={city.hiredOps || 0}
+                    onChange={(e) => handleCityChange(city.cityId, 'hiredOps', parseInt(e.target.value) || 0)}
+                    className="w-16 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </td>
+                {/* Нанятые Mixed */}
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <input
+                    type="number"
+                    min="0"
+                    value={city.hiredMixed || 0}
+                    onChange={(e) => handleCityChange(city.cityId, 'hiredMixed', parseInt(e.target.value) || 0)}
+                    className="w-16 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </td>
+                {/* Всего нанятых */}
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="w-16 px-2 py-1 bg-gray-100 rounded text-sm text-center">
+                    {(city.hiredPeople || 0)}
+                  </div>
+                </td>
+                {/* Заказы */}
                 <td className="px-6 py-4 whitespace-nowrap">
                   <input
                     type="number"
                     min="0"
                     value={city.cityOrders}
                     onChange={(e) => handleCityChange(city.cityId, 'cityOrders', parseInt(e.target.value) || 0)}
-                    className="w-20 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-16 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </td>
+                {/* Заметки */}
                 <td className="px-6 py-4">
                   <input
                     type="text"
                     value={city.notes}
                     onChange={(e) => handleCityChange(city.cityId, 'notes', e.target.value)}
-                    placeholder="Заметки..."
+                    placeholder="..."
                     className="w-40 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </td>
@@ -244,6 +316,37 @@ export default function CountryCitiesTab({ weekIso }: CitiesTabProps) {
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Сводная статистика по стране */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mt-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Сводка по стране (всего)</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-blue-600">{cities.reduce((sum, city) => sum + (city.trengoMessages || 0), 0)}</div>
+            <div className="text-sm text-gray-600">Trengo Сообщения</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-green-600">{cities.reduce((sum, city) => sum + (city.hiredPeople || 0), 0)}</div>
+            <div className="text-sm text-gray-600">Всего Нанятых</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-purple-600">{cities.reduce((sum, city) => sum + ((city.hiredHR || 0) + (city.hiredOps || 0) + (city.hiredMixed || 0)), 0)}</div>
+            <div className="text-sm text-gray-600">По направлениям:</div>
+          </div>
+          <div className="text-center">
+            <div className="text-l font-medium text-indigo-600">{cities.reduce((sum, city) => sum + (city.hiredHR || 0), 0)} HR</div>
+            <div className="text-l font-medium text-orange-600">{cities.reduce((sum, city) => sum + (city.hiredOps || 0), 0)} Ops</div>
+          </div>
+          <div className="text-center">
+            <div className="text-l font-medium text-red-600">{cities.reduce((sum, city) => sum + (city.hiredMixed || 0), 0)} Mixed</div>
+            <div className="text-sm text-gray-600 ml-2">тип найма</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-orange-600">{cities.reduce((sum, city) => sum + (city.cityOrders || 0), 0)}</div>
+            <div className="text-sm text-gray-600">Заказы страны</div>
+          </div>
+        </div>
       </div>
 
       {/* Кнопка сохранения */}

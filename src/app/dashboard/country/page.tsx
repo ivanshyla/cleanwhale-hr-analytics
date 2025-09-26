@@ -30,17 +30,27 @@ export default function CountryPage() {
   const fetchUser = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/auth/me');
+      const response = await fetch('/api/auth/me', {
+        cache: 'no-cache',
+        headers: {
+          'Cache-Control': 'no-cache'
+        }
+      });
+      
       if (response.ok) {
         const data = await response.json();
+        console.log('Country Page: fetched user data', data.user);
+        
         setUser(data.user);
         
         // Проверяем доступ к country функциям
         const allowedRoles = ['COUNTRY_MANAGER', 'ADMIN'];
+        console.log('User role:', data.user.role, 'City:', data.user.city);
         if (!allowedRoles.includes(data.user.role)) {
-          setError('У вас нет доступа к управлению данными по стране');
+          setError(`У вас нет доступа к управлению данными по стране. Ваша роль: ${data.user.role}`);
         }
       } else {
+        console.error('Failed to fetch user, redirecting to login');
         router.push('/login');
       }
     } catch (error) {
@@ -107,7 +117,7 @@ export default function CountryPage() {
               Управление данными по стране
             </h1>
             <p className="text-gray-600 mt-1">
-              {user.name} • {user.role === 'ADMIN' ? 'Администратор' : 'Менеджер по стране'}
+              {user.name} • {user.role === 'ADMIN' ? 'Администратор' : 'Менеджер по стране'} • {user.city}
             </p>
           </div>
           
