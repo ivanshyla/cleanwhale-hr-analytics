@@ -59,6 +59,7 @@ model User {
   countryUserInputs CountryUserInput[]
   userSchedules   UserSchedule[]
   userScheduleExceptions UserScheduleException[]
+  workSchedules   WorkSchedule[]
   employeeProfile EmployeeProfile?
   teamCallAttendees TeamCallAttendee[]
 
@@ -267,6 +268,42 @@ model UserSchedule {
 
   @@unique([userId, weekday])
   @@index([userId])
+}
+
+model WorkSchedule {
+  id             Int      @id @default(autoincrement())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  weekStartDate  DateTime
+  weekEndDate    DateTime
+  mondayStart    String?
+  mondayEnd      String?
+  mondayNote     String?
+  tuesdayStart   String?
+  tuesdayEnd     String?
+  tuesdayNote    String?
+  wednesdayStart String?
+  wednesdayEnd   String?
+  wednesdayNote  String?
+  thursdayStart  String?
+  thursdayEnd    String?
+  thursdayNote   String?
+  fridayStart    String?
+  fridayEnd      String?
+  fridayNote     String?
+  saturdayStart  String?
+  saturdayEnd    String?
+  saturdayNote   String?
+  sundayStart    String?
+  sundayEnd      String?
+  sundayNote     String?
+  weeklyNotes    String?
+  isFlexible     Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([userId, weekStartDate])
+  @@map("work_schedules")
 }
 
 // Командные звонки со слотами и участниками

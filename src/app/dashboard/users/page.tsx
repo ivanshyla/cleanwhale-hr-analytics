@@ -289,10 +289,7 @@ export default function UsersPage() {
                     Город
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    <div className="flex items-center">
-                      <DollarSign className="w-4 h-4 mr-1" />
-                      Зарплата
-                    </div>
+                    Зарплата
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Статус
@@ -341,10 +338,7 @@ export default function UsersPage() {
                       {CITY_LABELS[user.city as keyof typeof CITY_LABELS]}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      <div className="flex items-center">
-                        <DollarSign className="w-4 h-4 mr-1 text-gray-400" />
-                        {formatSalary(user.salaryGross, user.currency)}
-                      </div>
+                      {formatSalary(user.salaryGross, user.currency)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
