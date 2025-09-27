@@ -89,22 +89,39 @@ export default function ManagerSchedulesPage() {
   const fetchUser = async () => {
     try {
       setIsLoading(true);
+      setError(null);
+      
       const response = await fetch('/api/auth/me', {
+        method: 'GET',
         cache: 'no-cache',
         headers: {
-          'Cache-Control': 'no-cache'
-        }
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        },
+        credentials: 'include'
       });
+      
+      console.log('Auth response status:', response.status);
+      
       if (response.ok) {
         const data = await response.json();
+        console.log('User data:', data.user);
         setUser(data.user);
         
         // Проверяем доступ к просмотру всех графиков
         if (!['COUNTRY_MANAGER', 'ADMIN'].includes(data.user.role)) {
-          setError('У вас нет доступа к просмотру всех графиков менеджеров');
+          setError(`У вас нет доступа к просмотру всех графиков менеджеров. Ваша роль: ${data.user.role}`);
         }
       } else {
-        router.push('/login');
+        console.error('Auth failed with status:', response.status);
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Auth error data:', errorData);
+        
+        if (response.status === 401) {
+          router.push('/login');
+        } else {
+          setError(`Ошибка авторизации: ${errorData.message || 'Неизвестная ошибка'}`);
+        }
       }
     } catch (error) {
       console.error('Error fetching user:', error);
@@ -120,15 +137,30 @@ export default function ManagerSchedulesPage() {
       const weekEnd = new Date(weekStart);
       weekEnd.setDate(weekStart.getDate() + 6);
 
+      console.log('Loading schedules for week:', currentWeek);
+      
       const response = await fetch(
-        `/api/work-schedules?include_all=true&since=${weekStart.toISOString()}&until=${weekEnd.toISOString()}`
+        `/api/work-schedules?include_all=true&since=${weekStart.toISOString()}&until=${weekEnd.toISOString()}`,
+        {
+          method: 'GET',
+          cache: 'no-cache',
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          },
+          credentials: 'include'
+        }
       );
+      
+      console.log('Schedules response status:', response.status);
       
       if (response.ok) {
         const data: ManagerSchedulesResponse = await response.json();
+        console.log('Loaded schedules:', data.schedules?.length || 0);
         setSchedules(data.schedules || []);
       } else {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Schedules error:', errorData);
         setError(errorData.message || 'Ошибка загрузки графиков');
       }
     } catch (error) {
@@ -187,6 +219,62 @@ export default function ManagerSchedulesPage() {
   const getAvailableRoles = () => {
     const roles = Array.from(new Set(schedules.map(s => s.user.role))).sort();
     return roles;
+  };
+
+  // Получить статистику работающих менеджеров по дням недели
+  const getWorkingManagersStats = () => {
+    const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+    const dayNames = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье'];
+    
+    return days.map((day, index) => {
+      const workingCount = filteredSchedules.filter(schedule => {
+        const startField = `${day}Start`;
+        const endField = `${day}End`;
+        const start = (schedule as any)[startField] as string | null;
+        const end = (schedule as any)[endField] as string | null;
+        return start && end; // Работает если есть время начала и конца
+      }).length;
+      
+      return {
+        day: dayNames[index],
+        count: workingCount,
+        total: filteredSchedules.length
+      };
+    });
+  };
+
+  // Получить статистику работающих менеджеров сегодня
+  const getTodayWorkingStats = () => {
+    const today = new Date();
+    const dayIndex = today.getDay(); // 0 = воскресенье, 1 = понедельник, ...
+    const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const dayName = days[dayIndex];
+    
+    const workingToday = filteredSchedules.filter(schedule => {
+      const startField = `${dayName}Start`;
+      const endField = `${dayName}End`;
+      const start = (schedule as any)[startField] as string | null;
+      const end = (schedule as any)[endField] as string | null;
+      return start && end;
+    });
+
+    // Группировка по ролям
+    const roleStats = workingToday.reduce((acc, schedule) => {
+      const role = schedule.user.role;
+      const roleLabel = role === 'HIRING_MANAGER' ? 'HR' :
+                       role === 'OPS_MANAGER' ? 'Ops' :
+                       role === 'MIXED_MANAGER' ? 'Mixed' :
+                       role === 'COUNTRY_MANAGER' ? 'Country' : role;
+      
+      acc[roleLabel] = (acc[roleLabel] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    return {
+      total: workingToday.length,
+      roles: roleStats,
+      dayName: ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'][dayIndex]
+    };
   };
 
   if (isLoading) {
@@ -293,6 +381,45 @@ export default function ManagerSchedulesPage() {
               className="mt-1 block px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
+        </div>
+      </div>
+
+      {/* Статистика работающих сегодня */}
+      <div className="bg-green-50 border border-green-200 rounded-lg p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          Работают сегодня ({getTodayWorkingStats().dayName})
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+          <div className="text-center">
+            <div className="text-3xl font-bold text-green-600">{getTodayWorkingStats().total}</div>
+            <div className="text-sm text-gray-600">Всего работают</div>
+          </div>
+          {Object.entries(getTodayWorkingStats().roles).map(([role, count]) => (
+            <div key={role} className="text-center">
+              <div className="text-2xl font-bold text-blue-600">{count}</div>
+              <div className="text-sm text-gray-600">{role} менеджеров</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Статистика по дням недели */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Работающие менеджеры по дням недели</h3>
+        <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
+          {getWorkingManagersStats().map((dayStat) => (
+            <div key={dayStat.day} className="text-center">
+              <div className="text-lg font-bold text-blue-600">{dayStat.count}</div>
+              <div className="text-xs text-gray-500">из {dayStat.total}</div>
+              <div className="text-sm text-gray-700 mt-1">{dayStat.day}</div>
+              <div className="mt-2 bg-gray-200 rounded-full h-2">
+                <div 
+                  className="bg-blue-600 h-2 rounded-full" 
+                  style={{ width: `${(dayStat.count / dayStat.total) * 100}%` }}
+                ></div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
