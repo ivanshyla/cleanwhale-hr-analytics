@@ -131,21 +131,31 @@ export default function DataInputPage() {
       const hrResponse = await fetch('/api/users?role=HIRING_MANAGER');
       if (hrResponse.ok) {
         const hrData = await hrResponse.json();
-        setHrManagers(hrData.users || []);
+        console.log('HR managers loaded:', hrData);
+        setHrManagers(hrData || []); // API возвращает массив напрямую
       }
 
-      // Загружаем города
-      const citiesResponse = await fetch('/api/cities');
-      if (citiesResponse.ok) {
-        const citiesData = await citiesResponse.json();
-        setCities(citiesData.cities || []);
-      }
+      // Загружаем города (пока используем статичный список)
+      const staticCities = [
+        { cityId: 1, cityCode: 'WARSAW', cityName: 'Варшава' },
+        { cityId: 2, cityCode: 'KRAKOW', cityName: 'Краков' },
+        { cityId: 3, cityCode: 'GDANSK', cityName: 'Гданьск' },
+        { cityId: 4, cityCode: 'WROCLAW', cityName: 'Вроцлав' },
+        { cityId: 5, cityCode: 'POZNAN', cityName: 'Познань' },
+        { cityId: 6, cityCode: 'LODZ', cityName: 'Лодзь' },
+        { cityId: 7, cityCode: 'LUBLIN', cityName: 'Люблин' },
+        { cityId: 8, cityCode: 'KATOWICE', cityName: 'Катовице' },
+        { cityId: 9, cityCode: 'BYDGOSZCZ', cityName: 'Быдгощ' },
+        { cityId: 10, cityCode: 'SZCZECIN', cityName: 'Щецин' }
+      ];
+      setCities(staticCities);
 
       // Загружаем OPS менеджеров
       const opsResponse = await fetch('/api/users?role=OPS_MANAGER');
       if (opsResponse.ok) {
         const opsData = await opsResponse.json();
-        setOpsManagers(opsData.users || []);
+        console.log('OPS managers loaded:', opsData);
+        setOpsManagers(opsData || []); // API возвращает массив напрямую
       }
 
       // Загружаем существующие данные за неделю

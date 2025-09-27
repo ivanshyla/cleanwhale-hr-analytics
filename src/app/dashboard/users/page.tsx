@@ -334,7 +334,7 @@ export default function UsersPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       <div className="flex items-center">
                         <DollarSign className="w-4 h-4 mr-1 text-gray-400" />
-                        {formatSalary(user.salary, user.currency)}
+                        {formatSalary(user.salaryGross, user.currency)}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -408,8 +408,8 @@ export default function UsersPage() {
                 <p className="text-sm font-medium text-gray-500">Средняя зарплата</p>
                 <p className="text-2xl font-bold text-gray-900">
                   {formatSalary(
-                    users.filter(u => u.salary).reduce((sum, u) => sum + (u.salary || 0), 0) / 
-                    users.filter(u => u.salary).length
+                    users.filter(u => u.salaryGross).reduce((sum, u) => sum + (u.salaryGross || 0), 0) / 
+                    users.filter(u => u.salaryGross).length
                   )}
                 </p>
               </div>
