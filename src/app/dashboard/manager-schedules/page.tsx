@@ -89,7 +89,12 @@ export default function ManagerSchedulesPage() {
   const fetchUser = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/auth/me');
+      const response = await fetch('/api/auth/me', {
+        cache: 'no-cache',
+        headers: {
+          'Cache-Control': 'no-cache'
+        }
+      });
       if (response.ok) {
         const data = await response.json();
         setUser(data.user);
