@@ -137,9 +137,9 @@ export default function LoginPage() {
         <div className="mt-6 p-4 bg-yellow-50 rounded-md">
           <h3 className="text-sm font-medium text-yellow-800">Демо доступы:</h3>
           <div className="mt-2 text-xs text-yellow-700">
-            <p>HR: hr_manager / password123</p>
-            <p>Операции: ops_manager / password123</p>
-            <p>Смешанный: mixed_manager / password123</p>
+            <p>HR: yuliya.hr / 123456</p>
+            <p>Операции: artem.communication / 123456</p>
+            <p>Смешанный: menedzher.lodz / 123456</p>
             <p>Менеджер по стране: country_manager / password123</p>
             <p>Админ: admin / password123</p>
           </div>
