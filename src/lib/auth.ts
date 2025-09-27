@@ -21,10 +21,17 @@ export function verifyToken(token: string): JWTPayload | null {
 }
 
 export function getTokenFromRequest(request: NextRequest): string | null {
+  // Сначала проверяем Authorization header
   const authHeader = request.headers.get('authorization');
   
   if (authHeader && authHeader.startsWith('Bearer ')) {
     return authHeader.substring(7);
+  }
+  
+  // Если нет в header, проверяем cookies
+  const cookieToken = request.cookies.get('token')?.value;
+  if (cookieToken) {
+    return cookieToken;
   }
   
   return null;
