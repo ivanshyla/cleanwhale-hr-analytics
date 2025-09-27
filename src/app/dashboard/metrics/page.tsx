@@ -127,12 +127,23 @@ export default function DataInputPage() {
 
   const loadData = async () => {
     try {
+      const token = localStorage.getItem('token');
+      const headers = {
+        'Authorization': `Bearer ${token}`,
+        'Cache-Control': 'no-cache'
+      };
+
       // Загружаем HR менеджеров
-      const hrResponse = await fetch('/api/users?role=HIRING_MANAGER');
+      const hrResponse = await fetch('/api/users?role=HIRING_MANAGER', {
+        headers,
+        credentials: 'include'
+      });
       if (hrResponse.ok) {
         const hrData = await hrResponse.json();
         console.log('HR managers loaded:', hrData);
         setHrManagers(hrData || []); // API возвращает массив напрямую
+      } else {
+        console.error('Failed to load HR managers:', hrResponse.status);
       }
 
       // Загружаем города (пока используем статичный список)
@@ -151,11 +162,16 @@ export default function DataInputPage() {
       setCities(staticCities);
 
       // Загружаем OPS менеджеров
-      const opsResponse = await fetch('/api/users?role=OPS_MANAGER');
+      const opsResponse = await fetch('/api/users?role=OPS_MANAGER', {
+        headers,
+        credentials: 'include'
+      });
       if (opsResponse.ok) {
         const opsData = await opsResponse.json();
         console.log('OPS managers loaded:', opsData);
         setOpsManagers(opsData || []); // API возвращает массив напрямую
+      } else {
+        console.error('Failed to load OPS managers:', opsResponse.status);
       }
 
       // Загружаем существующие данные за неделю
@@ -168,25 +184,37 @@ export default function DataInputPage() {
 
   const loadExistingData = async () => {
     try {
+      const token = localStorage.getItem('token');
+      const headers = {
+        'Authorization': `Bearer ${token}`,
+        'Cache-Control': 'no-cache'
+      };
+
       // Загружаем данные по городам
-      const cityResponse = await fetch(`/api/country-aggregates?weekIso=${currentWeek}`);
+      const cityResponse = await fetch(`/api/country-aggregates?weekIso=${currentWeek}`, {
+        headers,
+        credentials: 'include'
+      });
       if (cityResponse.ok) {
         const cityData = await cityResponse.json();
         const cityOrders: Record<number, number> = {};
-        cityData.cities.forEach((city: any) => {
+        cityData.cities?.forEach((city: any) => {
           cityOrders[city.cityId] = city.cityOrders || 0;
         });
         setCityData(cityOrders);
       }
 
       // Загружаем данные по менеджерам
-      const managerResponse = await fetch(`/api/country-user-inputs?weekIso=${currentWeek}`);
+      const managerResponse = await fetch(`/api/country-user-inputs?weekIso=${currentWeek}`, {
+        headers,
+        credentials: 'include'
+      });
       if (managerResponse.ok) {
         const managerData = await managerResponse.json();
         const hrHired: Record<string, number> = {};
         const opsMessages: Record<string, number> = {};
         
-        managerData.users.forEach((user: any) => {
+        managerData.users?.forEach((user: any) => {
           if (user.userRole === 'HIRING_MANAGER') {
             hrHired[user.userId] = user.hiredPeople || 0;
           } else if (user.userRole === 'OPS_MANAGER') {
@@ -208,6 +236,12 @@ export default function DataInputPage() {
       setError(null);
       setSuccess(null);
 
+      const token = localStorage.getItem('token');
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      };
+
       // Сохраняем данные по городам
       const cityItems = cities.map(city => ({
         cityId: city.cityId,
@@ -225,9 +259,8 @@ export default function DataInputPage() {
 
       const cityResponse = await fetch('/api/country-aggregates', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers,
+        credentials: 'include',
         body: JSON.stringify({
           weekIso: currentWeek,
           items: cityItems
@@ -256,9 +289,8 @@ export default function DataInputPage() {
 
       const managerResponse = await fetch('/api/country-user-inputs', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers,
+        credentials: 'include',
         body: JSON.stringify({
           weekIso: currentWeek,
           items: managerItems
@@ -269,6 +301,9 @@ export default function DataInputPage() {
         setSuccess('Данные успешно сохранены!');
         setTimeout(() => setSuccess(null), 3000);
       } else {
+        const cityError = cityResponse.ok ? null : await cityResponse.text();
+        const managerError = managerResponse.ok ? null : await managerResponse.text();
+        console.error('Save errors:', { cityError, managerError });
         setError('Ошибка сохранения данных');
       }
     } catch (error) {
