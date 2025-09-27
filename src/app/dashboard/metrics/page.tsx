@@ -96,14 +96,14 @@ export default function DataInputPage() {
 
   const fetchUser = async () => {
     try {
-      setIsLoading(true);
+    setIsLoading(true);
       const response = await fetch('/api/auth/me', {
         cache: 'no-cache',
         headers: {
           'Cache-Control': 'no-cache'
         }
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         setUser(data.user);
@@ -127,23 +127,25 @@ export default function DataInputPage() {
 
   const loadData = async () => {
     try {
-      const token = localStorage.getItem('token');
       const headers = {
-        'Authorization': `Bearer ${token}`,
-        'Cache-Control': 'no-cache'
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
       };
 
       // Загружаем HR менеджеров
       const hrResponse = await fetch('/api/users?role=HIRING_MANAGER', {
+        method: 'GET',
         headers,
         credentials: 'include'
       });
       if (hrResponse.ok) {
         const hrData = await hrResponse.json();
-        console.log('HR managers loaded:', hrData);
+        console.log('HR managers loaded:', hrData.length, 'users');
         setHrManagers(hrData || []); // API возвращает массив напрямую
       } else {
         console.error('Failed to load HR managers:', hrResponse.status);
+        const errorData = await hrResponse.json().catch(() => ({}));
+        console.error('HR managers error:', errorData);
       }
 
       // Загружаем города (пока используем статичный список)
@@ -163,15 +165,18 @@ export default function DataInputPage() {
 
       // Загружаем OPS менеджеров
       const opsResponse = await fetch('/api/users?role=OPS_MANAGER', {
+        method: 'GET',
         headers,
         credentials: 'include'
       });
       if (opsResponse.ok) {
         const opsData = await opsResponse.json();
-        console.log('OPS managers loaded:', opsData);
+        console.log('OPS managers loaded:', opsData.length, 'users');
         setOpsManagers(opsData || []); // API возвращает массив напрямую
       } else {
         console.error('Failed to load OPS managers:', opsResponse.status);
+        const errorData = await opsResponse.json().catch(() => ({}));
+        console.error('OPS managers error:', errorData);
       }
 
       // Загружаем существующие данные за неделю
@@ -184,14 +189,14 @@ export default function DataInputPage() {
 
   const loadExistingData = async () => {
     try {
-      const token = localStorage.getItem('token');
       const headers = {
-        'Authorization': `Bearer ${token}`,
-        'Cache-Control': 'no-cache'
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
       };
 
       // Загружаем данные по городам
       const cityResponse = await fetch(`/api/country-aggregates?weekIso=${currentWeek}`, {
+        method: 'GET',
         headers,
         credentials: 'include'
       });
@@ -206,6 +211,7 @@ export default function DataInputPage() {
 
       // Загружаем данные по менеджерам
       const managerResponse = await fetch(`/api/country-user-inputs?weekIso=${currentWeek}`, {
+        method: 'GET',
         headers,
         credentials: 'include'
       });
@@ -236,10 +242,8 @@ export default function DataInputPage() {
       setError(null);
       setSuccess(null);
 
-      const token = localStorage.getItem('token');
       const headers = {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
+        'Content-Type': 'application/json'
       };
 
       // Сохраняем данные по городам
@@ -256,6 +260,8 @@ export default function DataInputPage() {
         hiredMixed: 0,
         notes: ''
       }));
+
+      console.log('Saving city data:', cityItems);
 
       const cityResponse = await fetch('/api/country-aggregates', {
         method: 'POST',
@@ -286,6 +292,8 @@ export default function DataInputPage() {
           notes: `Сообщений в Trengo: ${opsData[ops.id] || 0}`
         }))
       ];
+
+      console.log('Saving manager data:', managerItems);
 
       const managerResponse = await fetch('/api/country-user-inputs', {
         method: 'POST',
@@ -346,15 +354,15 @@ export default function DataInputPage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-slate-50 to-indigo-50/40">
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">
-          {/* Header */}
+      {/* Header */}
           <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">Внести данные</h1>
                 <p className="text-gray-600 mt-1">
                   {user.name} • Ввод данных по найму, заказам и операциям
-                </p>
-              </div>
+            </p>
+          </div>
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
                   <Calendar className="h-5 w-5 text-gray-500" />
@@ -382,7 +390,7 @@ export default function DataInputPage() {
                     </>
                   )}
                 </button>
-              </div>
+                </div>
             </div>
           </div>
 
@@ -416,7 +424,7 @@ export default function DataInputPage() {
               <div className="space-y-3">
                 {hrManagers.map(manager => (
                   <div key={manager.id} className="flex items-center justify-between">
-                    <div>
+                  <div>
                       <p className="font-medium text-gray-900">{manager.name}</p>
                       <p className="text-sm text-gray-500">{manager.city}</p>
                     </div>
@@ -446,7 +454,7 @@ export default function DataInputPage() {
               <div className="space-y-3">
                 {cities.map(city => (
                   <div key={city.cityId} className="flex items-center justify-between">
-                    <div>
+                  <div>
                       <p className="font-medium text-gray-900">{city.cityName}</p>
                       <p className="text-sm text-gray-500">{city.cityCode}</p>
                     </div>
@@ -463,8 +471,8 @@ export default function DataInputPage() {
                     />
                   </div>
                 ))}
-              </div>
-            </div>
+                  </div>
+                </div>
 
             {/* OPS Managers - Trengo */}
             <div className="bg-white rounded-xl shadow-lg p-6">
@@ -476,10 +484,10 @@ export default function DataInputPage() {
               <div className="space-y-3">
                 {opsManagers.map(manager => (
                   <div key={manager.id} className="flex items-center justify-between">
-                    <div>
+                  <div>
                       <p className="font-medium text-gray-900">{manager.name}</p>
                       <p className="text-sm text-gray-500">{manager.city}</p>
-                    </div>
+                  </div>
                     <input
                       type="number"
                       min="0"
@@ -495,7 +503,7 @@ export default function DataInputPage() {
                 ))}
               </div>
             </div>
-          </div>
+            </div>
         </div>
       </div>
     </div>

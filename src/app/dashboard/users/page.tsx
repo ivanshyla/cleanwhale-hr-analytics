@@ -37,29 +37,29 @@ export default function UsersPage() {
 
   const loadCurrentUser = async () => {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        router.push('/login');
-        return;
-      }
-
       const response = await fetch('/api/auth/me', {
+        method: 'GET',
         cache: 'no-cache',
         headers: {
-          'Cache-Control': 'no-cache'
-        }
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        },
+        credentials: 'include'
       });
 
       if (response.ok) {
         const { user: userData } = await response.json();
+        console.log('Current user loaded:', userData);
         setCurrentUser(userData);
 
         // Проверяем права доступа
         if (userData.role !== 'ADMIN' && userData.role !== 'COUNTRY_MANAGER') {
+          console.log('Access denied for role:', userData.role);
           router.push('/dashboard');
           return;
         }
       } else {
+        console.error('Failed to load current user:', response.status);
         router.push('/login');
       }
     } catch (error) {
@@ -70,16 +70,24 @@ export default function UsersPage() {
 
   const loadUsers = async () => {
     try {
-      const token = localStorage.getItem('token');
       const response = await fetch('/api/users', {
+        method: 'GET',
+        cache: 'no-cache',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
         },
+        credentials: 'include'
       });
 
       if (response.ok) {
         const usersData = await response.json();
+        console.log('Users loaded:', usersData.length);
         setUsers(usersData);
+      } else {
+        console.error('Failed to load users:', response.status);
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Users error:', errorData);
       }
     } catch (error) {
       console.error('Error loading users:', error);
@@ -130,18 +138,19 @@ export default function UsersPage() {
 
   const toggleUserStatus = async (userId: string, currentStatus: boolean) => {
     try {
-      const token = localStorage.getItem('token');
       const response = await fetch(`/api/users/${userId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
         },
+        credentials: 'include',
         body: JSON.stringify({ isActive: !currentStatus }),
       });
 
       if (response.ok) {
         await loadUsers();
+      } else {
+        console.error('Failed to toggle user status:', response.status);
       }
     } catch (error) {
       console.error('Error toggling user status:', error);
