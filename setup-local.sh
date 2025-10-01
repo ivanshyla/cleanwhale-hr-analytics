@@ -19,10 +19,6 @@ OPENAI_API_KEY=""
 TRENGO_API_TOKEN=""
 TRENGO_BASE_URL="https://app.trengo.com/api/v2"
 
-# CRM Integration
-CRM_API_URL=""т
-CRM_API_KEY=""
-
 # App Settings
 NEXT_PUBLIC_APP_NAME="CleanWhale Analytics"
 NEXT_PUBLIC_APP_URL="http://localhost:3000"

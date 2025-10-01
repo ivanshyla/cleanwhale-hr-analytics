@@ -14,14 +14,22 @@ interface WeeklyReportFormProps {
 interface HRData {
   interviews: number;
   jobPosts: number;
-  registrations: number;
-  difficultCases: string;
+  registered: number;
+  fullDays: number;
+  difficult: string;
+  stress?: number;
+  overtime?: boolean;
 }
 
 interface OpsData {
-  crmTicketsResolved: number;
-  difficultCleanerCases: string;
-  difficultClientCases: string;
+  messages: number;
+  tickets: number;
+  orders: number;
+  fullDays: number;
+  diffCleaners: string;
+  diffClients: string;
+  stress?: number;
+  overtime?: boolean;
 }
 
 interface BaseData {
@@ -55,14 +63,18 @@ export default function WeeklyReportForm({ role, userId, weekIso, onSave }: Week
   const [hrData, setHrData] = useState<HRData>({
     interviews: 0,
     jobPosts: 0,
-    registrations: 0,
-    difficultCases: ''
+    registered: 0,
+    fullDays: 0,
+    difficult: ''
   });
 
   const [opsData, setOpsData] = useState<OpsData>({
-    crmTicketsResolved: 0,
-    difficultCleanerCases: '',
-    difficultClientCases: ''
+    messages: 0,
+    tickets: 0,
+    orders: 0,
+    fullDays: 0,
+    diffCleaners: '',
+    diffClients: ''
   });
 
   // Загрузка существующих данных
@@ -97,17 +109,21 @@ export default function WeeklyReportForm({ role, userId, weekIso, onSave }: Week
           setHrData({
             interviews: data.hrData.interviews || 0,
             jobPosts: data.hrData.jobPosts || 0,
-            registrations: data.hrData.registrations || 0,
-            difficultCases: data.hrData.difficultCases || ''
+            registered: data.hrData.registered || 0,
+            fullDays: data.hrData.fullDays || 0,
+            difficult: data.hrData.difficult || ''
           });
         }
 
         // Загружаем Ops данные если есть доступ
         if (data.opsData && (role === 'ops' || role === 'mixed')) {
           setOpsData({
-            crmTicketsResolved: data.opsData.crmTicketsResolved || 0,
-            difficultCleanerCases: data.opsData.difficultCleanerCases || '',
-            difficultClientCases: data.opsData.difficultClientCases || ''
+            messages: data.opsData.messages || 0,
+            tickets: data.opsData.tickets || 0,
+            orders: data.opsData.orders || 0,
+            fullDays: data.opsData.fullDays || 0,
+            diffCleaners: data.opsData.diffCleaners || '',
+            diffClients: data.opsData.diffClients || ''
           });
         }
       }
@@ -123,22 +139,25 @@ export default function WeeklyReportForm({ role, userId, weekIso, onSave }: Week
       setSaving(true);
       setSaveStatus('saving');
 
-      const payload = {
-        ...baseData,
-        ...(submitRole === 'hr' ? hrData : opsData),
-        isCompleted: true
+      // Формируем данные в правильном формате для API
+      const requestBody: any = {
+        weekIso,
+        role: submitRole,
       };
+
+      // Добавляем HR или Ops данные в соответствии с ролью
+      if (submitRole === 'hr') {
+        requestBody.hr = hrData;
+      } else if (submitRole === 'ops') {
+        requestBody.ops = opsData;
+      }
 
       const response = await fetch('/api/weekly-reports', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          weekIso,
-          role: submitRole,
-          payload
-        })
+        body: JSON.stringify(requestBody)
       });
 
       if (response.ok) {
@@ -347,8 +366,22 @@ export default function WeeklyReportForm({ role, userId, weekIso, onSave }: Week
               <input
                 type="number"
                 min="0"
-                value={hrData.registrations}
-                onChange={(e) => setHrData(prev => ({ ...prev, registrations: parseInt(e.target.value) || 0 }))}
+                value={hrData.registered}
+                onChange={(e) => setHrData(prev => ({ ...prev, registered: parseInt(e.target.value) || 0 }))}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Отработанные дни
+              </label>
+              <input
+                type="number"
+                min="0"
+                max="7"
+                value={hrData.fullDays}
+                onChange={(e) => setHrData(prev => ({ ...prev, fullDays: parseInt(e.target.value) || 0 }))}
                 className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -359,8 +392,8 @@ export default function WeeklyReportForm({ role, userId, weekIso, onSave }: Week
               Сложные ситуации в HR
             </label>
             <textarea
-              value={hrData.difficultCases}
-              onChange={(e) => setHrData(prev => ({ ...prev, difficultCases: e.target.value }))}
+              value={hrData.difficult}
+              onChange={(e) => setHrData(prev => ({ ...prev, difficult: e.target.value }))}
               rows={4}
               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Опишите сложные случаи в найме, проблемы с кандидатами..."
@@ -390,13 +423,53 @@ export default function WeeklyReportForm({ role, userId, weekIso, onSave }: Week
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Решенные тикеты CRM
+                Сообщения (Trengo)
               </label>
               <input
                 type="number"
                 min="0"
-                value={opsData.crmTicketsResolved}
-                onChange={(e) => setOpsData(prev => ({ ...prev, crmTicketsResolved: parseInt(e.target.value) || 0 }))}
+                value={opsData.messages}
+                onChange={(e) => setOpsData(prev => ({ ...prev, messages: parseInt(e.target.value) || 0 }))}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Решенные тикеты
+              </label>
+              <input
+                type="number"
+                min="0"
+                value={opsData.tickets}
+                onChange={(e) => setOpsData(prev => ({ ...prev, tickets: parseInt(e.target.value) || 0 }))}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Заказы города
+              </label>
+              <input
+                type="number"
+                min="0"
+                value={opsData.orders}
+                onChange={(e) => setOpsData(prev => ({ ...prev, orders: parseInt(e.target.value) || 0 }))}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Отработанные дни
+              </label>
+              <input
+                type="number"
+                min="0"
+                max="7"
+                value={opsData.fullDays}
+                onChange={(e) => setOpsData(prev => ({ ...prev, fullDays: parseInt(e.target.value) || 0 }))}
                 className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -408,8 +481,8 @@ export default function WeeklyReportForm({ role, userId, weekIso, onSave }: Week
                 Сложные ситуации с клинерами
               </label>
               <textarea
-                value={opsData.difficultCleanerCases}
-                onChange={(e) => setOpsData(prev => ({ ...prev, difficultCleanerCases: e.target.value }))}
+                value={opsData.diffCleaners}
+                onChange={(e) => setOpsData(prev => ({ ...prev, diffCleaners: e.target.value }))}
                 rows={4}
                 className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Опишите проблемы с клинерами..."
@@ -421,8 +494,8 @@ export default function WeeklyReportForm({ role, userId, weekIso, onSave }: Week
                 Сложные ситуации с клиентами
               </label>
               <textarea
-                value={opsData.difficultClientCases}
-                onChange={(e) => setOpsData(prev => ({ ...prev, difficultClientCases: e.target.value }))}
+                value={opsData.diffClients}
+                onChange={(e) => setOpsData(prev => ({ ...prev, diffClients: e.target.value }))}
                 rows={4}
                 className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Опишите проблемы с клиентами..."
