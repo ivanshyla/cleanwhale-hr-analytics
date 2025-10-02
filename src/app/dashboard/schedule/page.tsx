@@ -60,21 +60,20 @@ export default function SchedulePage() {
 
         // Загружаем сохраненный график для текущей недели
         const monday = getCurrentMonday();
-        const scheduleRes = await fetch(`/api/work-schedules?weekStartDate=${monday}`, {
+        const scheduleRes = await fetch(`/api/work-schedules?since=${monday}&until=${monday}`, {
           credentials: 'include'
         });
 
         if (scheduleRes.ok) {
           const data = await scheduleRes.json();
-          if (data.schedule) {
-            // Заполняем форму сохраненными данными
-            const schedule = data.schedule;
+          // API возвращает массив schedules, берем первый (для текущей недели)
+          if (data.schedules && data.schedules.length > 0) {
+            const schedule = data.schedules[0];
             setValue('weekStartDate', monday);
             
             // Заполняем все дни
             const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
             days.forEach(day => {
-              const capitalDay = day.charAt(0).toUpperCase() + day.slice(1);
               if (schedule[`${day}Start`]) setValue(`${day}Start` as any, schedule[`${day}Start`]);
               if (schedule[`${day}End`]) setValue(`${day}End` as any, schedule[`${day}End`]);
               if (schedule[`${day}Note`]) setValue(`${day}Note` as any, schedule[`${day}Note`]);
