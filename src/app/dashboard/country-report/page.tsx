@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
-import { Calendar, Save, TrendingUp, Globe, MapPin, DollarSign, AlertTriangle, Target } from 'lucide-react';
+import { Calendar, Save, TrendingUp, Globe, MapPin, Wallet, AlertTriangle, Target } from 'lucide-react';
 
 interface CountryReportFormData {
   reportDate: string;
@@ -405,7 +405,7 @@ export default function CountryReportPage() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      <DollarSign className="inline h-4 w-4 mr-1" />
+                      <Wallet className="inline h-4 w-4 mr-1" />
                       Потраченный бюджет за неделю (PLN)
                     </label>
                     <input

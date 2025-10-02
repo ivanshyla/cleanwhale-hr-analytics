@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
-import { Calendar, Save, TrendingUp, Globe, MapPin, DollarSign, AlertTriangle, Target, BarChart3, Clock, Users, Briefcase } from 'lucide-react';
+import { Calendar, Save, TrendingUp, Globe, MapPin, Wallet, AlertTriangle, Target, BarChart3, Clock, Users, Briefcase } from 'lucide-react';
 
 interface WeeklyCountryReportData {
   reportDate: string;
@@ -369,7 +369,7 @@ export default function WeeklyCountryReportPage() {
             {/* Финансовые показатели */}
             <div className="p-6 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg">
               <h3 className="text-lg font-bold text-green-900 mb-4">
-                <DollarSign className="inline h-5 w-5 mr-2" />
+                <Wallet className="inline h-5 w-5 mr-2" />
                 Финансовые показатели
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
