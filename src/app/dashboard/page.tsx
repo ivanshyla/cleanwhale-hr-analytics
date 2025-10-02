@@ -346,10 +346,6 @@ export default function DashboardPage() {
                 <Activity className="h-5 w-5 mr-2 text-blue-600" />
                 Аналитика за последние 7 дней
               </h3>
-              <div className="flex items-center space-x-2 text-sm text-gray-600">
-                <Clock className="h-4 w-4" />
-                <span>Обновляется в реальном времени</span>
-              </div>
             </div>
 
             {isLoadingCharts ? (
