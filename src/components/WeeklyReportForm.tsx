@@ -164,7 +164,10 @@ export default function WeeklyReportForm({ role, userId, weekIso, onSave }: Week
         setSaveStatus('success');
         setTimeout(() => setSaveStatus('idle'), 3000);
         if (onSave) {
-          onSave({ role: submitRole, data: payload });
+          onSave({ 
+            role: submitRole, 
+            data: submitRole === 'hr' ? hrData : opsData 
+          });
         }
       } else {
         setSaveStatus('error');
