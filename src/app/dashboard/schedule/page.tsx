@@ -42,17 +42,20 @@ export default function SchedulePage() {
   const watchedValues = watch();
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) { router.push('/login'); return; }
+    // Проверяем авторизацию через API
+    fetch('/api/auth/me').then(res => {
+      if (!res.ok) router.push('/login');
+    });
   }, [router]);
 
   const onSubmit = async (data: ScheduleForm) => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
+      // Токен в cookies, не нужно передавать в заголовке
       const resp = await fetch('/api/work-schedules', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include', // Важно! Отправляет cookies
         body: JSON.stringify(data),
       });
       const result = await resp.json();
