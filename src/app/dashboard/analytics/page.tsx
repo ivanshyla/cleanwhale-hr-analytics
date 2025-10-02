@@ -39,35 +39,28 @@ export default function AnalyticsPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Проверяем токен и загружаем данные пользователя
-    const token = localStorage.getItem('token');
-    if (!token) {
-      router.push('/login');
-      return;
-    }
-
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      setUser({
-        id: payload.userId,
-        email: payload.email,
-        role: payload.role,
-        city: payload.city,
-      });
-      
-      loadMetricsData(payload.role);
-    } catch (error) {
-      console.error('Invalid token:', error);
-      router.push('/login');
-    }
+    const checkAuth = async () => {
+      try {
+        const response = await fetch('/api/auth/me', { credentials: 'include' });
+        if (!response.ok) {
+          router.push('/login');
+          return;
+        }
+        
+        const userData = await response.json();
+        setUser(userData);
+        loadMetricsData(userData.role);
+      } catch (error) {
+        console.error('Auth error:', error);
+        router.push('/login');
+      }
+    };
+    checkAuth();
   }, [router]);
 
   const loadMetricsData = async (userRole?: string) => {
     setIsLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      if (!token) return;
-
       const params = new URLSearchParams({
         since: dateFilter.since,
         until: dateFilter.until,
@@ -79,9 +72,7 @@ export default function AnalyticsPage() {
       }
 
       const response = await fetch(`/api/metrics?${params.toString()}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        credentials: 'include',
       });
 
       if (response.ok) {

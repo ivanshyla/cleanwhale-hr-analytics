@@ -66,42 +66,34 @@ export default function CountryReportPage() {
   });
 
   useEffect(() => {
-    // Проверяем токен и права доступа
-    const token = localStorage.getItem('token');
-    if (!token) {
-      router.push('/login');
-      return;
-    }
-
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      if (payload.role !== 'COUNTRY_MANAGER') {
-        alert('Доступ запрещен. Только для менеджеров по стране.');
-        router.push('/dashboard');
-        return;
+    const checkAuth = async () => {
+      try {
+        const response = await fetch('/api/auth/me', { credentials: 'include' });
+        if (!response.ok) {
+          router.push('/login');
+          return;
+        }
+        
+        const userData = await response.json();
+        if (!['COUNTRY_MANAGER', 'ADMIN'].includes(userData.role)) {
+          alert('Доступ запрещен. Только для менеджеров по стране.');
+          router.push('/dashboard');
+          return;
+        }
+        
+        setUser(userData);
+      } catch (error) {
+        console.error('Auth error:', error);
+        router.push('/login');
       }
-      
-      setUser({
-        id: payload.userId,
-        email: payload.email,
-        role: payload.role,
-        city: payload.city,
-      });
-    } catch (error) {
-      console.error('Invalid token:', error);
-      router.push('/login');
-    }
+    };
+    
+    checkAuth();
   }, [router]);
 
   const onSubmit = async (data: CountryReportFormData) => {
     setIsLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        router.push('/login');
-        return;
-      }
-
       // Преобразуем данные для отправки на сервер
       const payload = {
         ...data,
@@ -135,8 +127,8 @@ export default function CountryReportPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
         },
+        credentials: 'include',
         body: JSON.stringify(payload),
       });
 

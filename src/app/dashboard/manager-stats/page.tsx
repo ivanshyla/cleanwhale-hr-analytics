@@ -37,47 +37,41 @@ export default function ManagerStatsPage() {
   });
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      router.push('/login');
-      return;
-    }
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      if (!['COUNTRY_MANAGER', 'ADMIN'].includes(payload.role)) {
-        alert('Доступ запрещен. Только для менеджера по стране.');
-        router.push('/dashboard');
-        return;
-      }
-      setUser(payload);
+    const checkAuth = async () => {
+      try {
+        const res = await fetch('/api/auth/me', { credentials: 'include' });
+        if (!res.ok) {
+          router.push('/login');
+          return;
+        }
+        const userData = await res.json();
+        if (!['COUNTRY_MANAGER', 'ADMIN'].includes(userData.role)) {
+          alert('Доступ запрещен. Только для менеджера по стране.');
+          router.push('/dashboard');
+          return;
+        }
+        setUser(userData);
 
-      // load managers
-      fetch('/api/users/manager-list', { headers: { 'Authorization': `Bearer ${token}` } })
-        .then(r => r.json())
-        .then(d => {
-          if (d.managers) setManagers(d.managers);
-        })
-        .catch(() => {});
-    } catch (e) {
-      router.push('/login');
-    }
+        // load managers
+        const mgrs = await fetch('/api/users/manager-list', { credentials: 'include' });
+        const data = await mgrs.json();
+        if (data.managers) setManagers(data.managers);
+      } catch (e) {
+        router.push('/login');
+      }
+    };
+    checkAuth();
   }, [router]);
 
   const onSubmit = async (data: ManagerWeeklyForm) => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        router.push('/login');
-        return;
-      }
-
       const resp = await fetch('/api/manager-stats', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
         },
+        credentials: 'include',
         body: JSON.stringify(data),
       });
 
