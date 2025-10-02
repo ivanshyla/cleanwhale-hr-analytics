@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { Calendar, Save, TrendingUp, Globe, MapPin, Wallet, AlertTriangle, Target, BarChart3, Clock, Users, Briefcase } from 'lucide-react';
+import { isoWeekOf, parseIsoWeek } from '@/lib/week';
 
 interface WeeklyCountryReportData {
   reportDate: string;
@@ -143,11 +144,9 @@ export default function WeeklyCountryReportPage() {
   });
 
   function getCurrentWeekNumber() {
-    const now = new Date();
-    const start = new Date(now.getFullYear(), 0, 1);
-    const diff = (now.getTime() - start.getTime()) + ((start.getTimezoneOffset() - now.getTimezoneOffset()) * 60 * 1000);
-    const oneWeek = 1000 * 60 * 60 * 24 * 7;
-    return Math.floor(diff / oneWeek);
+    // Используем стандартную функцию ISO недели
+    const { week } = parseIsoWeek(isoWeekOf());
+    return week;
   }
 
   useEffect(() => {
