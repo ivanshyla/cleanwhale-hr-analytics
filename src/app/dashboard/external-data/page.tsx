@@ -96,40 +96,30 @@ export default function ExternalDataPage() {
   });
 
   useEffect(() => {
-    // Проверяем токен
-    const token = localStorage.getItem('token');
-    if (!token) {
-      router.push('/login');
-      return;
-    }
+    checkAuth();
+  }, [router]);
 
+  const checkAuth = async () => {
     try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      setUser({
-        id: payload.userId,
-        email: payload.email,
-        role: payload.role,
-        city: payload.city,
-        name: payload.name || payload.email,
-      });
-
+      const response = await fetch('/api/auth/me', { credentials: 'include' });
+      if (!response.ok) {
+        router.push('/login');
+        return;
+      }
+      const data = await response.json();
+      setUser(data.user);
       loadExistingData();
     } catch (error) {
-      console.error('Invalid token:', error);
+      console.error('Auth error:', error);
       router.push('/login');
     }
-  }, [router]);
+  };
 
   const loadExistingData = async () => {
     setIsLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      if (!token) return;
-
       const response = await fetch('/api/external-data?limit=10', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        credentials: 'include',
       });
 
       if (response.ok) {
@@ -164,14 +154,11 @@ export default function ExternalDataPage() {
   const onSubmit = async (data: ExternalDataForm) => {
     setIsSubmitting(true);
     try {
-      const token = localStorage.getItem('token');
-      if (!token) return;
-
       const response = await fetch('/api/external-data', {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify(data),
       });

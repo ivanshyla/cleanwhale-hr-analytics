@@ -100,48 +100,42 @@ export default function ComprehensiveAnalyticsClient() {
   });
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      router.push('/login');
-      return;
-    }
+    checkAuth();
+  }, [router, selectedDateRange]);
 
+  const checkAuth = async () => {
     try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      setUser({
-        id: payload.userId,
-        email: payload.email,
-        role: payload.role,
-        city: payload.city,
-        name: payload.name || payload.email,
-      });
+      const response = await fetch('/api/auth/me', { credentials: 'include' });
+      if (!response.ok) {
+        router.push('/login');
+        return;
+      }
+      const data = await response.json();
+      setUser(data.user);
 
       // Только country manager может видеть комплексную аналитику
-      if (!['COUNTRY_MANAGER', 'ADMIN'].includes(payload.role)) {
+      if (!['COUNTRY_MANAGER', 'ADMIN'].includes(data.user.role)) {
         router.push('/dashboard');
         return;
       }
 
       loadAnalyticsData();
     } catch (error) {
-      console.error('Invalid token:', error);
+      console.error('Auth error:', error);
       router.push('/login');
     }
-  }, [router, selectedDateRange]);
+  };
 
   const loadAnalyticsData = async () => {
     setIsLoading(true);
     try {
-      const token = localStorage.getItem('token');
       const params = new URLSearchParams({
         startDate: selectedDateRange.start,
         endDate: selectedDateRange.end,
       });
 
       const response = await fetch(`/api/unified-analytics?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        credentials: 'include',
       });
 
       if (response.ok) {
@@ -160,12 +154,11 @@ export default function ComprehensiveAnalyticsClient() {
   const onSubmit = async (data: UnifiedAnalyticsForm) => {
     setIsSubmitting(true);
     try {
-      const token = localStorage.getItem('token');
       const response = await fetch('/api/unified-analytics', {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify(data),
       });

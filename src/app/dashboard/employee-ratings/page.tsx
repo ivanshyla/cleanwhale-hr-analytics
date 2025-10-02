@@ -55,42 +55,36 @@ export default function EmployeeRatingsPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Проверяем токен и права доступа
-    const token = localStorage.getItem('token');
-    if (!token) {
-      router.push('/login');
-      return;
-    }
+    checkAuth();
+  }, [router, selectedPeriod]);
 
+  const checkAuth = async () => {
     try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
+      const response = await fetch('/api/auth/me', { credentials: 'include' });
+      if (!response.ok) {
+        router.push('/login');
+        return;
+      }
+      const data = await response.json();
       
       // Проверяем права доступа (только менеджеры и админы)
-      if (!['COUNTRY_MANAGER', 'ADMIN'].includes(payload.role)) {
+      if (!['COUNTRY_MANAGER', 'ADMIN'].includes(data.user.role)) {
         alert('Доступ запрещен. Только для менеджеров по стране и администраторов.');
         router.push('/dashboard');
         return;
       }
       
-      setUser({
-        id: payload.userId,
-        email: payload.email,
-        role: payload.role,
-        city: payload.city,
-      });
-
+      setUser(data.user);
       loadEmployeeRatings();
     } catch (error) {
-      console.error('Invalid token:', error);
+      console.error('Auth error:', error);
       router.push('/login');
     }
-  }, [router, selectedPeriod]);
+  };
 
   const loadEmployeeRatings = async () => {
     setIsLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      if (!token) return;
 
       // Вычисляем период
       const endDate = new Date();
@@ -109,8 +103,8 @@ export default function EmployeeRatingsPage() {
       }
 
       const response = await fetch(`/api/employee-ratings?since=${startDate.toISOString()}&until=${endDate.toISOString()}`, {
+        credentials: 'include',
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
       });
