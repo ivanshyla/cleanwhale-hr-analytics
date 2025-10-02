@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth';
 import { personalAI } from '@/lib/personal-ai-assistant';
+import { isoWeekOf, parseIsoWeek } from '@/lib/week';
 
 export async function GET(request: NextRequest) {
   const authResult = requireAuth(request);
@@ -468,9 +469,7 @@ function calculateTrend(values: number[]): 'up' | 'down' | 'stable' {
 }
 
 function getCurrentWeekNumber() {
-  const now = new Date();
-  const start = new Date(now.getFullYear(), 0, 1);
-  const diff = (now.getTime() - start.getTime()) + ((start.getTimezoneOffset() - now.getTimezoneOffset()) * 60 * 1000);
-  const oneWeek = 1000 * 60 * 60 * 24 * 7;
-  return Math.floor(diff / oneWeek);
+  // Используем стандартную функцию ISO недели
+  const { week } = parseIsoWeek(isoWeekOf());
+  return week;
 }
