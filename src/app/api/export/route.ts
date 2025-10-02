@@ -150,8 +150,8 @@ async function exportUsersWeek(weekIso: string): Promise<{ blob: Buffer; filenam
       countryInput?.trengoTickets || selfReport?.opsMetrics?.tickets || 0,
       countryInput?.crmComplaintsClosed || 0, // Используем только country input
       countryInput?.ordersHandled || selfReport?.opsMetrics?.orders || 0,
-      selfReport?.hrMetrics?.registrations || 0,
-      selfReport?.hrMetrics?.registrations || 0, // Дублируем для совместимости
+      selfReport?.hrMetrics?.registered || 0,
+      selfReport?.hrMetrics?.registered || 0, // Дублируем для совместимости
       countryInput ? 'COUNTRY' : (selfReport ? 'SELF' : 'NONE'),
       finalResport ? finalResport.updatedAt.toISOString() : ''
     ].join(',');

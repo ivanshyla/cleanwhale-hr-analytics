@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
     let metricsFilter: any = {
-      reportDate: {
+      weekStartDate: {
         gte: oneWeekAgo,
       },
     };
@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
 
     // Подсчитываем найм за неделю
     const weeklyHires = weeklyReports.reduce((sum, report) => {
-      return sum + (report.hrMetrics?.registrations || 0);
+      return sum + (report.hrMetrics?.registered || 0);
     }, 0);
 
     const stats = {
