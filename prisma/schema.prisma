@@ -435,3 +435,46 @@ model Report {
 
   @@map("reports")
 }
+
+// Еженедельные отчеты Country Manager
+model CountryManagerData {
+  id                      String   @id @default(cuid())
+  userId                  String
+  reportDate              DateTime
+  weekNumber              Int
+  
+  // Основные метрики
+  totalWorkingDaysCountry Int      @default(0)
+  totalEmployeesActive    Int      @default(0)
+  countryTotalOrders      Int      @default(0)
+  countryTotalHires       Int      @default(0)
+  countryAvgStress        Float    @default(0)
+  countryOvertimeRate     Float    @default(0)
+  
+  // JSON данные по городам
+  cityWorkingDays         Json?    // { WARSAW: {...}, KRAKOW: {...}, ... }
+  cityEmployeeCounts      Json?    // { WARSAW: 10, KRAKOW: 8, ... }
+  citySpecialNotes        Json?    // { summary: "..." }
+  
+  // Стратегические данные
+  marketingCampaigns      String?
+  competitorAnalysis      String?
+  strategicGoals          String?
+  budgetSpent             Float    @default(0)
+  
+  // Проблемы и решения
+  majorIssues             String?
+  solutionsImplemented    String?
+  
+  // HR данные
+  trainingNeeds           String?
+  resourceRequests        String?
+  
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  @@unique([userId, weekNumber])
+  @@index([weekNumber])
+  @@index([reportDate])
+  @@map("country_manager_data")
+}

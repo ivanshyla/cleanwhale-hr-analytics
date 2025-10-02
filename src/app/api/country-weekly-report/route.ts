@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
   const { user } = authResult;
 
   // Проверяем права доступа
-  if (user.role !== 'COUNTRY_MANAGER') {
+  if (!['COUNTRY_MANAGER', 'ADMIN'].includes(user.role)) {
     return NextResponse.json(
       { message: 'Доступ запрещен. Только для менеджеров по стране.' },
       { status: 403 }
