@@ -296,6 +296,14 @@ export default function DashboardPage() {
                     <TrendingUp className="w-4 h-4 mr-2" />
                     Метрики
                   </button>
+                  
+                  <button 
+                    onClick={() => router.push('/dashboard/country-analytics')}
+                    className="w-full text-left px-4 py-2 rounded-md border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 transition-colors text-indigo-800 flex items-center"
+                  >
+                    <PieChart className="w-4 h-4 mr-2" />
+                    Аналитика по стране
+                  </button>
                 </>
               )}
 
