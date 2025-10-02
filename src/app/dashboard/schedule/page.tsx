@@ -30,23 +30,69 @@ function getCurrentMonday(): string {
 export default function SchedulePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [isLoadingSchedule, setIsLoadingSchedule] = useState(true);
 
   const { register, handleSubmit, watch, setValue } = useForm<ScheduleForm>({
     defaultValues: { 
       weekStartDate: getCurrentMonday(),
-      mondayStart: '09:00',
-      mondayEnd: '18:00'
+      // Дефолтное рабочее время 9:00-18:00 для всех дней
+      mondayStart: '09:00', mondayEnd: '18:00',
+      tuesdayStart: '09:00', tuesdayEnd: '18:00',
+      wednesdayStart: '09:00', wednesdayEnd: '18:00',
+      thursdayStart: '09:00', thursdayEnd: '18:00',
+      fridayStart: '09:00', fridayEnd: '18:00',
+      saturdayStart: '09:00', saturdayEnd: '18:00',
+      sundayStart: '09:00', sundayEnd: '18:00',
     }
   });
 
   const watchedValues = watch();
 
   useEffect(() => {
-    // Проверяем авторизацию через API
-    fetch('/api/auth/me').then(res => {
-      if (!res.ok) router.push('/login');
-    });
-  }, [router]);
+    // Проверяем авторизацию и загружаем график
+    const loadSchedule = async () => {
+      try {
+        const authRes = await fetch('/api/auth/me');
+        if (!authRes.ok) {
+          router.push('/login');
+          return;
+        }
+
+        // Загружаем сохраненный график для текущей недели
+        const monday = getCurrentMonday();
+        const scheduleRes = await fetch(`/api/work-schedules?weekStartDate=${monday}`, {
+          credentials: 'include'
+        });
+
+        if (scheduleRes.ok) {
+          const data = await scheduleRes.json();
+          if (data.schedule) {
+            // Заполняем форму сохраненными данными
+            const schedule = data.schedule;
+            setValue('weekStartDate', monday);
+            
+            // Заполняем все дни
+            const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+            days.forEach(day => {
+              const capitalDay = day.charAt(0).toUpperCase() + day.slice(1);
+              if (schedule[`${day}Start`]) setValue(`${day}Start` as any, schedule[`${day}Start`]);
+              if (schedule[`${day}End`]) setValue(`${day}End` as any, schedule[`${day}End`]);
+              if (schedule[`${day}Note`]) setValue(`${day}Note` as any, schedule[`${day}Note`]);
+            });
+            
+            if (schedule.weeklyNotes) setValue('weeklyNotes', schedule.weeklyNotes);
+            if (schedule.isFlexible !== undefined) setValue('isFlexible', schedule.isFlexible);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading schedule:', error);
+      } finally {
+        setIsLoadingSchedule(false);
+      }
+    };
+
+    loadSchedule();
+  }, [router, setValue]);
 
   const onSubmit = async (data: ScheduleForm) => {
     setLoading(true);
