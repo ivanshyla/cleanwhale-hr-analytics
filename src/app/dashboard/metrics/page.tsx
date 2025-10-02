@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { isoWeekOf, formatWeekForDisplay, getPreviousWeek, getNextWeek, isCurrentWeek } from '@/lib/week';
+import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import { 
   Calendar, 
   Save, 
@@ -73,14 +75,7 @@ export default function DataInputPage() {
   const [cityData, setCityData] = useState<Record<number, number>>({});
   const [opsData, setOpsData] = useState<Record<string, number>>({});
   
-  const [currentWeek, setCurrentWeek] = useState<string>(() => {
-    const now = new Date();
-    const monday = new Date(now);
-    monday.setDate(now.getDate() - now.getDay() + 1);
-    const year = monday.getFullYear();
-    const week = Math.ceil(((monday - new Date(year, 0, 1)) / 86400000 + 1) / 7);
-    return `${year}-W${week.toString().padStart(2, '0')}`;
-  });
+  const [currentWeek, setCurrentWeek] = useState<string>(isoWeekOf());
   
   const router = useRouter();
 
@@ -356,41 +351,67 @@ export default function DataInputPage() {
         <div className="max-w-6xl mx-auto">
       {/* Header */}
           <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between mb-4">
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">Внести данные</h1>
                 <p className="text-gray-600 mt-1">
                   {user.name} • Ввод данных по найму, заказам и операциям
-            </p>
-          </div>
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5 text-gray-500" />
-                  <input
-                    type="week"
-                    value={currentWeek}
-                    onChange={(e) => setCurrentWeek(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
+                </p>
+              </div>
+              <button
+                onClick={handleSave}
+                disabled={isSaving}
+                className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {isSaving ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                    Сохранение...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4" />
+                    Сохранить
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Week Navigation */}
+            <div className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
+              <button
+                onClick={() => setCurrentWeek(getPreviousWeek(currentWeek))}
+                className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-white rounded-md transition-colors"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Предыдущая
+              </button>
+              
+              <div className="flex items-center gap-2">
+                <Calendar className="h-5 w-5 text-blue-600" />
+                <span className="font-medium text-gray-900">
+                  {formatWeekForDisplay(currentWeek)}
+                </span>
+              </div>
+              
+              <div className="flex items-center gap-2">
                 <button
-                  onClick={handleSave}
-                  disabled={isSaving}
-                  className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  onClick={() => setCurrentWeek(getNextWeek(currentWeek))}
+                  disabled={isCurrentWeek(currentWeek)}
+                  className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-white rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isSaving ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                      Сохранение...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="h-4 w-4" />
-                      Сохранить
-                    </>
-                  )}
+                  Следующая
+                  <ChevronRight className="h-4 w-4" />
                 </button>
-                </div>
+                {!isCurrentWeek(currentWeek) && (
+                  <button
+                    onClick={() => setCurrentWeek(isoWeekOf())}
+                    className="px-3 py-2 text-blue-600 hover:bg-blue-50 rounded-md transition-colors text-sm font-medium"
+                  >
+                    Текущая неделя
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
