@@ -162,7 +162,7 @@ export default function WeeklyReportForm({ role, userId, weekIso, onSave }: Week
 
       if (response.ok) {
         setSaveStatus('success');
-        setTimeout(() => setSaveStatus('idle'), 3000);
+        // Успешное сообщение остается постоянно
         if (onSave) {
           onSave({ 
             role: submitRole, 
@@ -171,12 +171,12 @@ export default function WeeklyReportForm({ role, userId, weekIso, onSave }: Week
         }
       } else {
         setSaveStatus('error');
-        setTimeout(() => setSaveStatus('idle'), 3000);
+        // Ошибка также остается видимой
       }
     } catch (error) {
       console.error('Error saving report:', error);
       setSaveStatus('error');
-      setTimeout(() => setSaveStatus('idle'), 3000);
+      // Ошибка остается видимой
     } finally {
       setSaving(false);
     }
