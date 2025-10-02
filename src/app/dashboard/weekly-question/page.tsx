@@ -45,38 +45,34 @@ export default function WeeklyQuestionPage() {
   const answerText = watch('answer') || '';
 
   useEffect(() => {
-    // Проверяем токен
-    const token = localStorage.getItem('token');
-    if (!token) {
-      router.push('/login');
-      return;
-    }
+    checkAuth();
+  }, [router]);
 
+  const checkAuth = async () => {
     try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      setUser({
-        id: payload.userId,
-        email: payload.email,
-        role: payload.role,
-        city: payload.city,
-        name: payload.name || payload.email,
+      const response = await fetch('/api/auth/me', {
+        credentials: 'include'
       });
 
-      loadActiveQuestions(payload.userId);
+      if (!response.ok) {
+        router.push('/login');
+        return;
+      }
+
+      const data = await response.json();
+      setUser(data.user);
+      loadActiveQuestions(data.user.id);
     } catch (error) {
-      console.error('Invalid token:', error);
+      console.error('Auth error:', error);
       router.push('/login');
     }
-  }, [router]);
+  };
 
   const loadActiveQuestions = async (userId: string) => {
     setIsLoading(true);
     try {
-      const token = localStorage.getItem('token');
       const response = await fetch(`/api/weekly-questions?active=true&forUser=${userId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        credentials: 'include',
       });
 
       if (response.ok) {
@@ -105,15 +101,14 @@ export default function WeeklyQuestionPage() {
 
     setIsSubmitting(true);
     try {
-      const token = localStorage.getItem('token');
       const responseTime = answerStartTime ? 
         Math.round((new Date().getTime() - answerStartTime.getTime()) / 60000) : null; // в минутах
 
       const response = await fetch('/api/weekly-questions/answers', {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
           questionId: currentQuestion.id,

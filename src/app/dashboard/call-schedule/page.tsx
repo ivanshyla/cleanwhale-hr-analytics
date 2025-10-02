@@ -79,25 +79,26 @@ export default function CallSchedulePage() {
   const selectedCity = watch('city');
 
   useEffect(() => {
-    // Проверяем токен
-    const token = localStorage.getItem('token');
-    if (!token) {
-      router.push('/login');
-      return;
-    }
+    checkAuth();
+  }, [router]);
 
+  const checkAuth = async () => {
     try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      setUser({
-        id: payload.userId,
-        email: payload.email,
-        role: payload.role,
-        city: payload.city,
-        name: payload.name || payload.email,
+      const response = await fetch('/api/auth/me', {
+        credentials: 'include'
       });
 
+      if (!response.ok) {
+        router.push('/login');
+        return;
+      }
+
+      const data = await response.json();
+      const userData = data.user;
+      setUser(userData);
+
       // Только country manager и admin могут видеть эту страницу
-      if (!['COUNTRY_MANAGER', 'ADMIN'].includes(payload.role)) {
+      if (!['COUNTRY_MANAGER', 'ADMIN'].includes(userData.role)) {
         router.push('/dashboard');
         return;
       }
@@ -105,22 +106,19 @@ export default function CallSchedulePage() {
       loadCalls();
       loadManagers();
     } catch (error) {
-      console.error('Invalid token:', error);
+      console.error('Auth error:', error);
       router.push('/login');
     }
-  }, [router]);
+  };
 
   const loadCalls = async () => {
     setIsLoading(true);
     try {
-      const token = localStorage.getItem('token');
       const startDate = getWeekStart(selectedWeek).toISOString().split('T')[0];
       const endDate = getWeekEnd(selectedWeek).toISOString().split('T')[0];
       
       const response = await fetch(`/api/call-schedule?startDate=${startDate}&endDate=${endDate}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        credentials: 'include',
       });
 
       if (response.ok) {
@@ -142,11 +140,8 @@ export default function CallSchedulePage() {
 
   const loadManagers = async () => {
     try {
-      const token = localStorage.getItem('token');
       const response = await fetch('/api/users/manager-list', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        credentials: 'include',
       });
 
       if (response.ok) {
@@ -163,7 +158,6 @@ export default function CallSchedulePage() {
   const onSubmit = async (data: CallForm) => {
     setIsSubmitting(true);
     try {
-      const token = localStorage.getItem('token');
       const url = selectedCall ? `/api/call-schedule/${selectedCall.id}` : '/api/call-schedule';
       const method = selectedCall ? 'PUT' : 'POST';
 
@@ -173,9 +167,9 @@ export default function CallSchedulePage() {
 
       const response = await fetch(url, {
         method,
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
           ...data,
@@ -207,12 +201,9 @@ export default function CallSchedulePage() {
     if (!confirm('Удалить этот звонок?')) return;
 
     try {
-      const token = localStorage.getItem('token');
       const response = await fetch(`/api/call-schedule/${callId}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        credentials: 'include',
       });
 
       if (response.ok) {
@@ -229,12 +220,11 @@ export default function CallSchedulePage() {
 
   const updateCallStatus = async (callId: string, status: string, notes?: string, actualDuration?: number) => {
     try {
-      const token = localStorage.getItem('token');
       const response = await fetch(`/api/call-schedule/${callId}`, {
         method: 'PUT',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
           status,
