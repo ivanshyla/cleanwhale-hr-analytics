@@ -35,7 +35,6 @@ export default function SchedulePage() {
   const { register, handleSubmit, watch, setValue } = useForm<ScheduleForm>({
     defaultValues: { 
       weekStartDate: getCurrentMonday(),
-      // Дефолтное рабочее время 9:00-18:00 для всех дней
       mondayStart: '09:00', mondayEnd: '18:00',
       tuesdayStart: '09:00', tuesdayEnd: '18:00',
       wednesdayStart: '09:00', wednesdayEnd: '18:00',
