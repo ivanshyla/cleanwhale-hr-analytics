@@ -54,25 +54,25 @@ export default function EmployeeDataPage() {
   });
 
   useEffect(() => {
-    // Проверяем токен
-    const token = localStorage.getItem('token');
-    if (!token) {
-      router.push('/login');
-      return;
-    }
+    checkAuth();
+  }, [router]);
 
+  const checkAuth = async () => {
     try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      setUser({
-        id: payload.userId,
-        email: payload.email,
-        role: payload.role,
-        city: payload.city,
-        name: payload.name || payload.email,
+      const response = await fetch('/api/auth/me', {
+        credentials: 'include'
       });
 
+      if (!response.ok) {
+        router.push('/login');
+        return;
+      }
+
+      const data = await response.json();
+      setUser(data.user);
+
       // Только country manager может видеть эту страницу
-      if (payload.role !== 'COUNTRY_MANAGER') {
+      if (data.user.role !== 'COUNTRY_MANAGER') {
         router.push('/dashboard');
         return;
       }
@@ -80,18 +80,15 @@ export default function EmployeeDataPage() {
       loadEmployees();
       loadExistingData();
     } catch (error) {
-      console.error('Invalid token:', error);
+      console.error('Auth error:', error);
       router.push('/login');
     }
-  }, [router]);
+  };
 
   const loadEmployees = async () => {
     try {
-      const token = localStorage.getItem('token');
       const response = await fetch('/api/users/manager-list', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        credentials: 'include',
       });
 
       if (response.ok) {
@@ -112,11 +109,8 @@ export default function EmployeeDataPage() {
   const loadExistingData = async () => {
     setIsLoading(true);
     try {
-      const token = localStorage.getItem('token');
       const response = await fetch('/api/employee-data?limit=50', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        credentials: 'include',
       });
 
       if (response.ok) {
@@ -135,9 +129,6 @@ export default function EmployeeDataPage() {
   const onSubmit = async (data: EmployeeDataForm) => {
     setIsSubmitting(true);
     try {
-      const token = localStorage.getItem('token');
-      if (!token) return;
-
       // Преобразуем данные для отправки
       const submissions = [];
       for (const [userId, employeeData] of Object.entries(data.employeeData)) {
@@ -154,9 +145,9 @@ export default function EmployeeDataPage() {
 
       const response = await fetch('/api/employee-data', {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({ submissions }),
       });

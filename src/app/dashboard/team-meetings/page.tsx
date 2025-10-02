@@ -28,15 +28,20 @@ export default function TeamMeetingsPage() {
   });
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) { router.push('/login'); return; }
-    loadMeetings();
+    checkAuth();
   }, [router]);
+
+  const checkAuth = async () => {
+    try {
+      const resp = await fetch('/api/auth/me', { credentials: 'include' });
+      if (!resp.ok) { router.push('/login'); return; }
+      loadMeetings();
+    } catch { router.push('/login'); }
+  };
 
   const loadMeetings = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const resp = await fetch('/api/team-meetings', { headers: { 'Authorization': `Bearer ${token}` } });
+      const resp = await fetch('/api/team-meetings', { credentials: 'include' });
       const data = await resp.json();
       if (resp.ok) setMeetings(data.meetings || []);
     } catch {}
@@ -45,9 +50,8 @@ export default function TeamMeetingsPage() {
   const onSubmit = async (data: MeetingForm) => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
       const payload = { ...data, participants: data.participants ? data.participants.split(',').map(s => s.trim()) : [] };
-      const resp = await fetch('/api/team-meetings', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify(payload) });
+      const resp = await fetch('/api/team-meetings', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       const result = await resp.json();
       if (resp.ok) {
         reset({ meetingDate: new Date().toISOString().slice(0, 10), meetingType: 'TEAM_STANDUP', startTime: '', endTime: '', topic: '', participants: '' });
