@@ -19,21 +19,15 @@ enum Role {
 }
 
 enum City {
-  WARSAW
-  KRAKOW
-  GDANSK
-  WROCLAW
-  POZNAN
-  LODZ
-  LUBLIN
-  KATOWICE
-  BYDGOSZCZ
-  SZCZECIN
-  TORUN
-  RADOM
-  RZESZOW
-  OLSZTYN
-  BIALYSTOK
+  WARSAW      // Варшава
+  KRAKOW      // Краков
+  WROCLAW     // Вроцлав
+  GDANSK      // Гданьск
+  LODZ        // Лодзь
+  POZNAN      // Познань
+  KATOWICE    // Катовице
+  BIALYSTOK   // Белосток
+  LUBLIN      // Люблин
 }
 
 // Основная таблица пользователей

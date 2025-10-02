@@ -185,19 +185,13 @@ export interface CountryAggregatesFormData {
 export const CITY_LABELS: Record<City, string> = {
   WARSAW: 'Варшава',
   KRAKOW: 'Краков',
-  GDANSK: 'Гданьск',
   WROCLAW: 'Вроцлав',
-  POZNAN: 'Познань',
+  GDANSK: 'Гданьск',
   LODZ: 'Лодзь',
-  LUBLIN: 'Люблин',
+  POZNAN: 'Познань',
   KATOWICE: 'Катовице',
-  BYDGOSZCZ: 'Быдгощ',
-  SZCZECIN: 'Щецин',
-  TORUN: 'Торунь',
-  RADOM: 'Радом',
-  RZESZOW: 'Жешув',
-  OLSZTYN: 'Ольштын',
   BIALYSTOK: 'Белосток',
+  LUBLIN: 'Люблин',
 };
 
 export const ROLE_LABELS: Record<Role, string> = {
