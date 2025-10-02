@@ -1,21 +1,15 @@
 export type Role = 'HIRING_MANAGER' | 'OPS_MANAGER' | 'MIXED_MANAGER' | 'COUNTRY_MANAGER' | 'ADMIN';
 
 export type City = 
-  | 'WARSAW'
-  | 'KRAKOW'
-  | 'GDANSK'
-  | 'WROCLAW'
-  | 'POZNAN'
-  | 'LODZ'
-  | 'LUBLIN'
-  | 'KATOWICE'
-  | 'BYDGOSZCZ'
-  | 'SZCZECIN'
-  | 'TORUN'
-  | 'RADOM'
-  | 'RZESZOW'
-  | 'OLSZTYN'
-  | 'BIALYSTOK';
+  | 'WARSAW'      // Варшава
+  | 'KRAKOW'      // Краков
+  | 'WROCLAW'     // Вроцлав
+  | 'GDANSK'      // Гданьск
+  | 'LODZ'        // Лодзь
+  | 'POZNAN'      // Познань
+  | 'KATOWICE'    // Катовице
+  | 'BIALYSTOK'   // Белосток
+  | 'LUBLIN';     // Люблин
 
 export interface User {
   id: string;
