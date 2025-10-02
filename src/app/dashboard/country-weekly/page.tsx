@@ -150,68 +150,66 @@ export default function WeeklyCountryReportPage() {
   }
 
   useEffect(() => {
-    // Проверяем токен и права доступа
-    const token = localStorage.getItem('token');
-    if (!token) {
-      router.push('/login');
-      return;
-    }
+    // Проверяем авторизацию через API
+    const checkAuth = async () => {
+      try {
+        const response = await fetch('/api/auth/me', {
+          credentials: 'include', // Отправляем httpOnly cookies
+        });
 
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      if (payload.role !== 'COUNTRY_MANAGER') {
-        alert('Доступ запрещен. Только для менеджеров по стране.');
-        router.push('/dashboard');
-        return;
+        if (!response.ok) {
+          router.push('/login');
+          return;
+        }
+
+        const userData = await response.json();
+        
+        // Проверяем права доступа (только Country Manager и Admin)
+        if (!['COUNTRY_MANAGER', 'ADMIN'].includes(userData.role)) {
+          alert('Доступ запрещен. Только для менеджеров по стране.');
+          router.push('/dashboard');
+          return;
+        }
+
+        setUser(userData);
+
+        // Проверяем, пятница ли сегодня
+        const today = new Date();
+        setIsFriday(today.getDay() === 5);
+        setCurrentWeek(getCurrentWeekNumber());
+        setValue('weekNumber', getCurrentWeekNumber());
+      } catch (error) {
+        console.error('Auth error:', error);
+        router.push('/login');
       }
-      
-      setUser({
-        id: payload.userId,
-        email: payload.email,
-        role: payload.role,
-        city: payload.city,
-      });
+    };
 
-      // Проверяем, пятница ли сегодня
-      const today = new Date();
-      setIsFriday(today.getDay() === 5);
-      setCurrentWeek(getCurrentWeekNumber());
-      setValue('weekNumber', getCurrentWeekNumber());
-    } catch (error) {
-      console.error('Invalid token:', error);
-      router.push('/login');
-    }
+    checkAuth();
   }, [router, setValue]);
 
   const onSubmit = async (data: WeeklyCountryReportData) => {
     setIsLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        router.push('/login');
-        return;
-      }
-
       const response = await fetch('/api/country-weekly-report', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
         },
+        credentials: 'include', // Отправляем httpOnly cookies
         body: JSON.stringify(data),
       });
 
       const result = await response.json();
 
       if (response.ok) {
-        alert('Еженедельный отчет успешно сохранен!');
+        alert('✅ Еженедельный отчет успешно сохранен!');
         router.push('/dashboard');
       } else {
-        alert(`Ошибка сохранения: ${result.message}`);
+        alert(`❌ Ошибка сохранения: ${result.message}`);
       }
     } catch (error) {
       console.error('Error saving weekly report:', error);
-      alert('Ошибка сохранения отчета');
+      alert('❌ Ошибка сохранения отчета');
     } finally {
       setIsLoading(false);
     }
