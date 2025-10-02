@@ -60,31 +60,27 @@ export default function NewMetricsPage() {
   });
 
   useEffect(() => {
-    // Проверяем токен и загружаем данные пользователя
-    const token = localStorage.getItem('token');
-    if (!token) {
-      router.push('/login');
-      return;
-    }
-
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      setUser({
-        id: payload.userId,
-        email: payload.email,
-        role: payload.role,
-        city: payload.city,
-      });
-      
-      // Загружаем автоматические данные
-      loadAutoData();
-      
-      // Загружаем AI инсайты
-      loadAIInsights();
-    } catch (error) {
-      console.error('Invalid token:', error);
-      router.push('/login');
-    }
+    const checkAuth = async () => {
+      try {
+        const res = await fetch('/api/auth/me', { credentials: 'include' });
+        if (!res.ok) {
+          router.push('/login');
+          return;
+        }
+        const userData = await res.json();
+        setUser(userData);
+        
+        // Загружаем автоматические данные
+        loadAutoData();
+        
+        // Загружаем AI инсайты
+        loadAIInsights();
+      } catch (error) {
+        console.error('Auth error:', error);
+        router.push('/login');
+      }
+    };
+    checkAuth();
   }, [router]);
 
   const loadAutoData = async () => {
@@ -102,18 +98,12 @@ export default function NewMetricsPage() {
   const onSubmit = async (data: NewMetricsFormData) => {
     setIsLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        router.push('/login');
-        return;
-      }
-
       const response = await fetch('/api/metrics', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
         },
+        credentials: 'include',
         body: JSON.stringify(data),
       });
 
@@ -136,13 +126,8 @@ export default function NewMetricsPage() {
   const loadAIInsights = async () => {
     setIsLoadingAI(true);
     try {
-      const token = localStorage.getItem('token');
-      if (!token) return;
-
       const response = await fetch('/api/personal-insights', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        credentials: 'include',
       });
 
       if (response.ok) {
