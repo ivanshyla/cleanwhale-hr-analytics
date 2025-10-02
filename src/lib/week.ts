@@ -8,12 +8,17 @@
  * @returns строка в формате "2025-W03"
  */
 export const isoWeekOf = (d = new Date()): string => {
-  const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-  const day = t.getUTCDay() || 7; 
-  if (day !== 1) t.setUTCDate(t.getUTCDate() + (1 - day));
-  const yearStart = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
-  const week = Math.ceil((((t.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
-  return `${t.getUTCFullYear()}-W${String(week).padStart(2, '0')}`;
+  // ISO 8601 стандарт: неделя начинается в понедельник
+  const target = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  // Получаем день недели (0 = воскресенье, 1 = понедельник, ..., 6 = суббота)
+  const dayNum = target.getUTCDay() || 7; // Воскресенье = 7
+  // Устанавливаем дату на четверг текущей недели
+  target.setUTCDate(target.getUTCDate() + 4 - dayNum);
+  // Получаем год четверга (важно для граничных недель)
+  const yearStart = new Date(Date.UTC(target.getUTCFullYear(), 0, 1));
+  // Вычисляем номер недели
+  const weekNo = Math.ceil((((target.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+  return `${target.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`;
 };
 
 /**
