@@ -2,12 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth';
 
-export async function POST(request: NextRequest) {
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   const authResult = requireAuth(request);
   if (authResult.error) return authResult.error;
   const { user } = authResult;
 
-  // Только Country Manager и Admin могут создавать встречи
+  // Только Country Manager и Admin
   if (!['COUNTRY_MANAGER', 'ADMIN'].includes(user.role)) {
     return NextResponse.json({ message: 'Недостаточно прав' }, { status: 403 });
   }
@@ -18,26 +21,19 @@ export async function POST(request: NextRequest) {
       meetingName,
       meetingDate,
       category,
-      attendees, // string[]
-      attendeeNames, // string[]
+      attendees,
+      attendeeNames,
       summary,
     } = body;
 
-    if (!meetingName || !meetingDate || !category || !attendees || !summary) {
-      return NextResponse.json(
-        { message: 'Обязательные поля: meetingName, meetingDate, category, attendees, summary' },
-        { status: 400 }
-      );
-    }
-
-    const meeting = await prisma.teamMeeting.create({
+    const meeting = await prisma.teamMeeting.update({
+      where: { id: params.id },
       data: {
-        userId: user.userId,
         meetingName,
-        meetingDate: new Date(meetingDate),
+        meetingDate: meetingDate ? new Date(meetingDate) : undefined,
         category,
-        attendees: JSON.stringify(attendees),
-        attendeeNames: JSON.stringify(attendeeNames || []),
+        attendees: attendees ? JSON.stringify(attendees) : undefined,
+        attendeeNames: attendeeNames ? JSON.stringify(attendeeNames) : undefined,
         summary,
       },
       include: {
@@ -52,7 +48,7 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json({
-      message: 'Встреча создана',
+      message: 'Встреча обновлена',
       meeting: {
         ...meeting,
         attendees: JSON.parse(meeting.attendees),
@@ -60,47 +56,33 @@ export async function POST(request: NextRequest) {
       }
     });
   } catch (error) {
-    console.error('team-meetings POST error:', error);
+    console.error('team-meetings PUT error:', error);
     return NextResponse.json({ message: 'Внутренняя ошибка сервера' }, { status: 500 });
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   const authResult = requireAuth(request);
   if (authResult.error) return authResult.error;
   const { user } = authResult;
 
-  // Только Country Manager и Admin могут просматривать встречи
+  // Только Country Manager и Admin
   if (!['COUNTRY_MANAGER', 'ADMIN'].includes(user.role)) {
     return NextResponse.json({ message: 'Недостаточно прав' }, { status: 403 });
   }
 
   try {
-    const meetings = await prisma.teamMeeting.findMany({
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            role: true,
-          }
-        }
-      },
-      orderBy: {
-        meetingDate: 'desc'
-      }
+    await prisma.teamMeeting.delete({
+      where: { id: params.id }
     });
 
-    const formattedMeetings = meetings.map(meeting => ({
-      ...meeting,
-      attendees: JSON.parse(meeting.attendees),
-      attendeeNames: JSON.parse(meeting.attendeeNames),
-    }));
-
-    return NextResponse.json({ meetings: formattedMeetings, total: formattedMeetings.length });
+    return NextResponse.json({ message: 'Встреча удалена' });
   } catch (error) {
-    console.error('team-meetings GET error:', error);
+    console.error('team-meetings DELETE error:', error);
     return NextResponse.json({ message: 'Внутренняя ошибка сервера' }, { status: 500 });
   }
 }
+

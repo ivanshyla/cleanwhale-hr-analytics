@@ -56,6 +56,7 @@ model User {
   workSchedules   WorkSchedule[]
   employeeProfile EmployeeProfile?
   teamCallAttendees TeamCallAttendee[]
+  teamMeetings    TeamMeeting[]
 
   @@map("users")
 }
@@ -428,6 +429,32 @@ model Report {
   updatedAt   DateTime @updatedAt
 
   @@map("reports")
+}
+
+// Встречи команды (для Country Manager)
+model TeamMeeting {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Основные данные
+  meetingName     String   // Название встречи
+  meetingDate     DateTime // Дата встречи
+  category        String   // Категория (TEAM_STANDUP, ONE_ON_ONE, etc.)
+  
+  // Участники
+  attendees       String   // JSON array с ID участников
+  attendeeNames   String   // JSON array с именами участников
+  
+  // Содержание
+  summary         String   @db.Text // Краткое содержание встречи
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId])
+  @@index([meetingDate])
+  @@map("team_meetings")
 }
 
 // Еженедельные отчеты Country Manager

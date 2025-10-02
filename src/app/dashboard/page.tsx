@@ -304,6 +304,14 @@ export default function DashboardPage() {
                     <PieChart className="w-4 h-4 mr-2" />
                     Аналитика по стране
                   </button>
+                  
+                  <button 
+                    onClick={() => router.push('/dashboard/team-meetings')}
+                    className="w-full text-left px-4 py-2 rounded-md border border-orange-200 bg-orange-50 hover:bg-orange-100 transition-colors text-orange-800 flex items-center"
+                  >
+                    <MessageCircle className="w-4 h-4 mr-2" />
+                    Встречи команды
+                  </button>
                 </>
               )}
 
