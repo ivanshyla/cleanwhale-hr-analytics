@@ -315,12 +315,24 @@ export default function DashboardPage() {
           <div className="bg-white rounded-lg shadow p-6">
             <h3 className="text-lg font-medium text-gray-900 mb-4">Последние уведомления</h3>
             <div className="space-y-3">
-              <div className="p-3 bg-yellow-50 rounded-md">
-                <p className="text-sm text-yellow-800">Напоминание: внести данные за прошлую неделю</p>
-              </div>
-              <div className="p-3 bg-blue-50 rounded-md">
-                <p className="text-sm text-blue-800">Новый отчет по городу доступен</p>
-              </div>
+              {/* Напоминание для обычных менеджеров */}
+              {['HIRING_MANAGER', 'OPS_MANAGER', 'MIXED_MANAGER'].includes(user?.role) && (
+                <div className="p-3 bg-yellow-50 rounded-md">
+                  <p className="text-sm text-yellow-800">Напоминание: внести еженедельный отчет</p>
+                </div>
+              )}
+              
+              {/* Напоминание для Country Manager и Admin */}
+              {['ADMIN', 'COUNTRY_MANAGER'].includes(user?.role) && (
+                <>
+                  <div className="p-3 bg-yellow-50 rounded-md">
+                    <p className="text-sm text-yellow-800">Напоминание: внести данные за прошлую неделю</p>
+                  </div>
+                  <div className="p-3 bg-blue-50 rounded-md">
+                    <p className="text-sm text-blue-800">Новый отчет по городу доступен</p>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
