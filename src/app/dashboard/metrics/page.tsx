@@ -134,15 +134,34 @@ export default function DataInputPage() {
         headers,
         credentials: 'include'
       });
+      let hrManagersList: UserData[] = [];
       if (hrResponse.ok) {
         const hrData = await hrResponse.json();
         console.log('HR managers loaded:', hrData.length, 'users');
-        setHrManagers(hrData || []); // API возвращает массив напрямую
+        hrManagersList = hrData || [];
       } else {
         console.error('Failed to load HR managers:', hrResponse.status);
         const errorData = await hrResponse.json().catch(() => ({}));
         console.error('HR managers error:', errorData);
       }
+
+      // Загружаем смешанных менеджеров (они и нанимают, и работают с операциями)
+      const mixedResponse = await fetch('/api/users?role=MIXED_MANAGER', {
+        method: 'GET',
+        headers,
+        credentials: 'include'
+      });
+      let mixedManagersList: UserData[] = [];
+      if (mixedResponse.ok) {
+        const mixedData = await mixedResponse.json();
+        console.log('Mixed managers loaded:', mixedData.length, 'users');
+        mixedManagersList = mixedData || [];
+      } else {
+        console.error('Failed to load Mixed managers:', mixedResponse.status);
+      }
+
+      // Смешанные менеджеры добавляются к HR менеджерам
+      setHrManagers([...hrManagersList, ...mixedManagersList]);
 
       // Загружаем города (пока используем статичный список)
       const staticCities = [
@@ -165,15 +184,19 @@ export default function DataInputPage() {
         headers,
         credentials: 'include'
       });
+      let opsManagersList: UserData[] = [];
       if (opsResponse.ok) {
         const opsData = await opsResponse.json();
         console.log('OPS managers loaded:', opsData.length, 'users');
-        setOpsManagers(opsData || []); // API возвращает массив напрямую
+        opsManagersList = opsData || [];
       } else {
         console.error('Failed to load OPS managers:', opsResponse.status);
         const errorData = await opsResponse.json().catch(() => ({}));
         console.error('OPS managers error:', errorData);
       }
+
+      // Смешанные менеджеры добавляются и к OPS менеджерам
+      setOpsManagers([...opsManagersList, ...mixedManagersList]);
 
       // Загружаем существующие данные за неделю
       await loadExistingData();
