@@ -99,6 +99,11 @@ export default function UsersPage() {
   const filterUsers = () => {
     let filtered = users;
 
+    // Исключаем ADMIN и COUNTRY_MANAGER из отображения
+    filtered = filtered.filter(user => 
+      user.role !== 'ADMIN' && user.role !== 'COUNTRY_MANAGER'
+    );
+
     // Поиск по имени или логину
     if (searchTerm) {
       filtered = filtered.filter(user => 

@@ -15,10 +15,15 @@ export async function GET(request: NextRequest) {
     const allowedCities = getAllowedCities(user);
 
     // Фильтр для пользователей
-    let userFilter: any = {};
+    let userFilter: any = {
+      // Исключаем ADMIN и COUNTRY_MANAGER из подсчета
+      role: {
+        notIn: ['ADMIN', 'COUNTRY_MANAGER']
+      }
+    };
     if (!isCountryManager) {
       // Обычные менеджеры видят только пользователей своего города
-      userFilter = { city: user.city };
+      userFilter.city = user.city;
     }
 
     // Получаем статистику пользователей
