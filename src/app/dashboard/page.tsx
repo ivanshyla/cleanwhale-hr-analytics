@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { BarChart3, Users, TrendingUp, MessageSquare, UserCheck, Clock, Settings, LogOut, UserPlus, PieChart, Activity, MessageCircle, Brain, Database, PhoneCall } from 'lucide-react';
 import MetricsChart from '@/components/MetricsChart';
+import AiAnalyticsChat from '@/components/AiAnalyticsChat';
 
 interface DashboardStats {
   totalUsers: number;
@@ -352,7 +353,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Информационный блок вместо графиков */}
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-white rounded-lg shadow p-6 mb-8">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-medium text-gray-900 flex items-center">
               <Activity className="h-5 w-5 mr-2 text-blue-600" />
@@ -387,6 +388,22 @@ export default function DashboardPage() {
                 Еженедельный отчет
               </button>
             </div>
+          </div>
+        </div>
+
+        {/* AI Analytics Chat */}
+        <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg p-6 mb-8">
+          <div className="mb-4">
+            <h3 className="text-xl font-bold text-gray-900 flex items-center">
+              <Brain className="h-6 w-6 mr-2 text-purple-600" />
+              AI Аналитический Ассистент
+            </h3>
+            <p className="text-sm text-gray-600 mt-1">
+              Задайте вопрос о данных вашей команды за неделю или месяц
+            </p>
+          </div>
+          <div className="h-[600px]">
+            <AiAnalyticsChat />
           </div>
         </div>
     </div>
