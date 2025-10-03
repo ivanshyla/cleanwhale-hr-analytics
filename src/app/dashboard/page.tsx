@@ -34,9 +34,6 @@ export default function DashboardPage() {
           
           // Загружаем статистику после получения пользователя
           loadDashboardStats();
-          
-          // Загружаем данные для графиков
-          loadAnalyticsData();
         } else {
           router.push('/login');
         }
@@ -220,7 +217,7 @@ export default function DashboardPage() {
                   </div>
                   <div className="ml-4">
                     <p className="text-sm font-medium text-gray-600">
-                      Пользователей в Варшава
+                      Всего сотрудников
                     </p>
                     <p className="text-2xl font-bold text-gray-900">{stats.totalUsers}</p>
                   </div>
