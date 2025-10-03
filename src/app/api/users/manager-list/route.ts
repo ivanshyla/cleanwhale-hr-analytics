@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
   const city = searchParams.get('city') || undefined;
 
   const where: any = {
-    role: { in: ['HR', 'OPERATIONS', 'MIXED'] },
+    role: { in: ['HIRING_MANAGER', 'OPS_MANAGER', 'MIXED_MANAGER'] },
     isActive: true,
   };
   if (city) where.city = city as any;
