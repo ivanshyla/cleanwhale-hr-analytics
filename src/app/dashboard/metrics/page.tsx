@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { isoWeekOf, formatWeekForDisplay, getPreviousWeek, getNextWeek, isCurrentWeek } from '@/lib/week';
-import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import { 
-  Calendar, 
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
   Save, 
   Users, 
   MessageSquare, 
