@@ -351,109 +351,43 @@ export default function DashboardPage() {
 
         </div>
 
-        {/* Интерактивные графики */}
-        <div className="space-y-8">
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-medium text-gray-900 flex items-center">
-                <Activity className="h-5 w-5 mr-2 text-blue-600" />
-                Аналитика за последние 7 дней
-              </h3>
-            </div>
-
-            {isLoadingCharts ? (
-              <div className="h-64 bg-gray-50 rounded-lg flex items-center justify-center">
-                <div className="text-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-                  <p className="text-gray-500">Загрузка графиков...</p>
-                </div>
-              </div>
-            ) : analyticsData && analyticsData.length > 0 ? (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* График найма (для HR и менеджеров) */}
-                {(user?.role === 'HR' || user?.role === 'MIXED' || user?.role === 'COUNTRY_MANAGER' || user?.role === 'ADMIN') && (
-                  <MetricsChart
-                    data={analyticsData}
-                    chartType="line"
-                    metric="hiredPeople"
-                    title="Динамика найма"
-                    color="#10B981"
-                    height={250}
-                  />
-                )}
-
-                {/* График заказов (для Operations и менеджеров) */}
-                {(user?.role === 'OPERATIONS' || user?.role === 'MIXED' || user?.role === 'COUNTRY_MANAGER' || user?.role === 'ADMIN') && (
-                  <MetricsChart
-                    data={analyticsData}
-                    chartType="bar"
-                    metric="ordersProcessed"
-                    title="Обработанные заказы"
-                    color="#3B82F6"
-                    height={250}
-                  />
-                )}
-
-                {/* График переработок (для всех) */}
-                <MetricsChart
-                  data={analyticsData}
-                  chartType="line"
-                  metric="overtimeHours"
-                  title="Переработки (часы)"
-                  color="#EF4444"
-                  height={250}
-                />
-
-                {/* График встреч команды (для всех) */}
-                <MetricsChart
-                  data={analyticsData}
-                  chartType="bar"
-                  metric="teamMeetings"
-                  title="Встречи команды"
-                  color="#8B5CF6"
-                  height={250}
-                />
-              </div>
-            ) : (
-              <div className="h-64 bg-gray-50 rounded-lg flex items-center justify-center">
-                <div className="text-center">
-                  <PieChart className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-500">Нет данных для отображения графиков</p>
-                  <p className="text-sm text-gray-400 mt-2">
-                    Добавьте метрики, чтобы увидеть аналитику
-                  </p>
-                </div>
-              </div>
-            )}
+        {/* Информационный блок вместо графиков */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-medium text-gray-900 flex items-center">
+              <Activity className="h-5 w-5 mr-2 text-blue-600" />
+              Аналитика и отчеты
+            </h3>
           </div>
-
-          {/* Дополнительная аналитика для менеджеров */}
-          {(user?.role === 'COUNTRY_MANAGER' || user?.role === 'ADMIN') && analyticsData && analyticsData.length > 0 && (
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-6 flex items-center">
-                <TrendingUp className="h-5 w-5 mr-2 text-purple-600" />
-                Расширенная аналитика (только для директора)
-              </h3>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <MetricsChart
-                  data={analyticsData}
-                  chartType="line"
-                  metric="interviews"
-                  title="Тренд интервью по стране"
-                  color="#06B6D4"
-                  height={250}
-                />
-                <MetricsChart
-                  data={analyticsData}
-                  chartType="pie"
-                  metric="hiredPeople"
-                  title="Распределение найма по регионам"
-                  color="#F59E0B"
-                  height={250}
-                />
-              </div>
+          
+          <div className="text-center py-8">
+            <BarChart3 className="h-16 w-16 mx-auto mb-4 text-blue-600" />
+            <p className="text-gray-700 mb-2">Детальная аналитика доступна в разделах:</p>
+            <div className="flex flex-wrap gap-3 justify-center mt-4">
+              {(user?.role === 'COUNTRY_MANAGER' || user?.role === 'ADMIN') && (
+                <>
+                  <button
+                    onClick={() => router.push('/dashboard/country-analytics')}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                  >
+                    Аналитика по стране
+                  </button>
+                  <button
+                    onClick={() => router.push('/dashboard/metrics')}
+                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                  >
+                    Метрики
+                  </button>
+                </>
+              )}
+              <button
+                onClick={() => router.push('/dashboard/weekly-report')}
+                className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
+              >
+                Еженедельный отчет
+              </button>
             </div>
-          )}
+          </div>
         </div>
     </div>
   );

@@ -22,6 +22,7 @@ import {
   Building2,
   UserRoundCog,
   User,
+  MessageCircle,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -44,6 +45,7 @@ const navigation = [
   { name: 'Графики работы', href: '/dashboard/manager-schedules', icon: Calendar, roles: ['ADMIN', 'COUNTRY_MANAGER'] },
   { name: 'Аналитика', href: '/dashboard/analytics', icon: BarChart3, roles: ['ADMIN', 'COUNTRY_MANAGER'] },
   { name: 'Внести данные', href: '/dashboard/metrics', icon: LineChart, roles: ['ADMIN', 'COUNTRY_MANAGER'] },
+  { name: 'Встречи команды', href: '/dashboard/team-meetings', icon: MessageCircle, roles: ['ADMIN', 'COUNTRY_MANAGER'] },
   { name: 'Пользователи', href: '/dashboard/users', icon: Users, roles: ['ADMIN', 'COUNTRY_MANAGER'] },
   { name: 'Статистика менеджеров', href: '/dashboard/manager-stats', icon: UserRoundCog, roles: ['ADMIN'] },
   { name: 'Расписание звонков', href: '/dashboard/call-schedule', icon: CalendarDays, roles: ['ADMIN'] },
