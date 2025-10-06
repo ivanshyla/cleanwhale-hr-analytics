@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { BarChart3, Users, TrendingUp, MessageSquare, UserCheck, Clock, Settings, LogOut, UserPlus, PieChart, Activity, MessageCircle, Brain, Database, PhoneCall } from 'lucide-react';
+import { BarChart3, Users, TrendingUp, MessageSquare, UserCheck, Clock, Settings, LogOut, UserPlus, PieChart, Activity, MessageCircle, Brain, Database, PhoneCall, Building2 } from 'lucide-react';
 import MetricsChart from '@/components/MetricsChart';
 import AiAnalyticsChat from '@/components/AiAnalyticsChat';
 
@@ -171,12 +171,6 @@ export default function DashboardPage() {
       LODZ: 'Лодзь',
       LUBLIN: 'Люблин',
       KATOWICE: 'Катовице',
-      BYDGOSZCZ: 'Быдгощ',
-      SZCZECIN: 'Щецин',
-      TORUN: 'Торунь',
-      RADOM: 'Радом',
-      RZESZOW: 'Жешув',
-      OLSZTYN: 'Ольштын',
       BIALYSTOK: 'Белосток',
     };
     return labels[city] || city.charAt(0) + city.slice(1).toLowerCase();
@@ -272,27 +266,11 @@ export default function DashboardPage() {
               {['ADMIN', 'COUNTRY_MANAGER'].includes(user?.role) && (
                 <>
                   <button 
-                    onClick={() => router.push('/dashboard/analytics')}
+                    onClick={() => router.push('/dashboard/country')}
                     className="w-full text-left px-4 py-2 rounded-md border border-blue-200 bg-blue-50 hover:bg-blue-100 transition-colors text-blue-800 flex items-center"
                   >
-                    <BarChart3 className="w-4 h-4 mr-2" />
-                    Аналитика
-                  </button>
-                  
-                  <button 
-                    onClick={() => router.push('/dashboard/users')}
-                    className="w-full text-left px-4 py-2 rounded-md border border-green-200 bg-green-50 hover:bg-green-100 transition-colors text-green-800 flex items-center"
-                  >
-                    <Users className="w-4 h-4 mr-2" />
-                    Пользователи
-                  </button>
-                  
-                  <button 
-                    onClick={() => router.push('/dashboard/metrics')}
-                    className="w-full text-left px-4 py-2 rounded-md border border-yellow-200 bg-yellow-50 hover:bg-yellow-100 transition-colors text-yellow-800 flex items-center"
-                  >
-                    <TrendingUp className="w-4 h-4 mr-2" />
-                    Метрики
+                    <Building2 className="w-4 h-4 mr-2" />
+                    Управление по стране
                   </button>
                   
                   <button 
@@ -301,6 +279,14 @@ export default function DashboardPage() {
                   >
                     <PieChart className="w-4 h-4 mr-2" />
                     Аналитика по стране
+                  </button>
+                  
+                  <button 
+                    onClick={() => router.push('/dashboard/users')}
+                    className="w-full text-left px-4 py-2 rounded-md border border-green-200 bg-green-50 hover:bg-green-100 transition-colors text-green-800 flex items-center"
+                  >
+                    <Users className="w-4 h-4 mr-2" />
+                    Пользователи
                   </button>
                   
                   <button 
@@ -365,28 +351,29 @@ export default function DashboardPage() {
             <BarChart3 className="h-16 w-16 mx-auto mb-4 text-blue-600" />
             <p className="text-gray-700 mb-2">Детальная аналитика доступна в разделах:</p>
             <div className="flex flex-wrap gap-3 justify-center mt-4">
-              {(user?.role === 'COUNTRY_MANAGER' || user?.role === 'ADMIN') && (
+              {(user?.role === 'COUNTRY_MANAGER' || user?.role === 'ADMIN') ? (
                 <>
                   <button
-                    onClick={() => router.push('/dashboard/country-analytics')}
+                    onClick={() => router.push('/dashboard/country')}
                     className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                  >
+                    Управление по стране
+                  </button>
+                  <button
+                    onClick={() => router.push('/dashboard/country-analytics')}
+                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
                   >
                     Аналитика по стране
                   </button>
-                  <button
-                    onClick={() => router.push('/dashboard/metrics')}
-                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
-                  >
-                    Метрики
-                  </button>
                 </>
+              ) : (
+                <button
+                  onClick={() => router.push('/dashboard/weekly-report')}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
+                >
+                  Еженедельный отчет
+                </button>
               )}
-              <button
-                onClick={() => router.push('/dashboard/weekly-report')}
-                className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
-              >
-                Еженедельный отчет
-              </button>
             </div>
           </div>
         </div>

@@ -243,7 +243,7 @@ export default function CountryAnalyticsPage() {
     link.click();
   };
 
-  if (loading || !data) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
@@ -251,9 +251,44 @@ export default function CountryAnalyticsPage() {
     );
   }
 
+  // Проверяем, есть ли данные
+  const hasData = data && data.byEmployee && data.byEmployee.length > 0;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-6">
       <div className="max-w-7xl mx-auto">
+        {/* Предупреждение если нет данных */}
+        {!hasData && (
+          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-6 mb-6 rounded-lg">
+            <div className="flex items-start">
+              <AlertTriangle className="h-6 w-6 text-yellow-600 mr-3 mt-0.5" />
+              <div>
+                <h3 className="text-lg font-semibold text-yellow-900 mb-2">
+                  Данные отсутствуют за выбранную неделю
+                </h3>
+                <p className="text-yellow-800 mb-3">
+                  Аналитика по стране формируется на основе еженедельных отчетов менеджеров. 
+                  Для выбранной недели {formatWeekForDisplay(currentWeek)} отчеты ещё не заполнены.
+                </p>
+                <div className="text-sm text-yellow-700 bg-yellow-100 rounded p-3 mb-3">
+                  <p className="font-medium mb-2">Что делать:</p>
+                  <ol className="list-decimal list-inside space-y-1">
+                    <li>Попросите менеджеров заполнить еженедельные отчеты</li>
+                    <li>Используйте страницу "Управление по стране" для ввода агрегированных данных по городам</li>
+                    <li>После заполнения отчетов данные появятся здесь автоматически</li>
+                  </ol>
+                </div>
+                <button
+                  onClick={() => router.push('/dashboard/country')}
+                  className="bg-yellow-600 text-white px-4 py-2 rounded-md hover:bg-yellow-700 transition-colors"
+                >
+                  Перейти к управлению данными
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Заголовок */}
         <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
@@ -367,7 +402,13 @@ export default function CountryAnalyticsPage() {
         </div>
 
         {/* Контент табов */}
-        {activeTab === 'poland' && (
+        {!hasData ? (
+          <div className="bg-white rounded-xl shadow-lg p-12 text-center">
+            <BarChart3 className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-gray-700 mb-2">Нет данных для отображения</h3>
+            <p className="text-gray-500">Выберите другую неделю или заполните отчеты</p>
+          </div>
+        ) : activeTab === 'poland' && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Сотрудники */}
             <div className="bg-white rounded-xl shadow-lg p-6">
@@ -489,7 +530,7 @@ export default function CountryAnalyticsPage() {
           </div>
         )}
 
-        {activeTab === 'cities' && (
+        {hasData && activeTab === 'cities' && (
           <div className="bg-white rounded-xl shadow-lg overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -534,7 +575,7 @@ export default function CountryAnalyticsPage() {
           </div>
         )}
 
-        {activeTab === 'types' && (
+        {hasData && activeTab === 'types' && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {data.byType.map((type, idx) => (
               <div key={idx} className="bg-white rounded-xl shadow-lg p-6">
@@ -576,7 +617,7 @@ export default function CountryAnalyticsPage() {
           </div>
         )}
 
-        {activeTab === 'employees' && (
+        {hasData && activeTab === 'employees' && (
           <div className="bg-white rounded-xl shadow-lg overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">

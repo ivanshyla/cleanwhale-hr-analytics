@@ -1,11 +1,18 @@
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { prisma } from '@/lib/prisma';
+import { logger } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   try {
     const { login, password } = await request.json();
+    
+    console.log('=== LOGIN DEBUG START ===');
+    console.log('Login received:', login);
+    console.log('Password provided:', password ? 'YES' : 'NO');
 
     if (!login || !password) {
       return NextResponse.json(
@@ -15,34 +22,48 @@ export async function POST(request: NextRequest) {
     }
 
     // Поиск пользователя
-    console.log(`[Login Attempt] Searching for user: ${login}`);
+    logger.info('Login attempt', { login });
+    console.log('Searching for user with login:', login);
+    
     const user = await prisma.user.findUnique({
       where: { login },
     });
+    
+    console.log('User found:', user ? `YES (id: ${user.id}, active: ${user.isActive})` : 'NO');
 
     if (!user || !user.isActive) {
-      console.error(`[Login Failed] User not found or inactive: ${login}`);
+      console.log('Login FAILED - user not found or inactive');
+      logger.warn('Login failed - user not found or inactive', { login });
       return NextResponse.json(
         { message: 'Неверные учетные данные' },
         { status: 401 }
       );
     }
-    console.log(`[Login Success] User found: ${user.login}`);
+    
+    console.log('User validated, checking password...');
+    logger.debug('User found', { userId: user.id, login: user.login });
 
     // Проверка пароля
-    console.log(`[Login Attempt] Comparing password for user: ${login}`);
+    logger.debug('Verifying password', { login });
     const isPasswordValid = await bcrypt.compare(password, user.password);
+    
+    console.log('Password valid:', isPasswordValid ? 'YES' : 'NO');
 
     if (!isPasswordValid) {
-      console.error(`[Login Failed] Invalid password for user: ${login}`);
+      console.log('Login FAILED - invalid password');
+      logger.warn('Login failed - invalid password', { login });
       return NextResponse.json(
         { message: 'Неверные учетные данные' },
         { status: 401 }
       );
     }
-    console.log(`[Login Success] Password is valid for user: ${login}`);
+    
+    console.log('Login SUCCESS!');
+    console.log('=== LOGIN DEBUG END ===');
+    logger.authEvent('login', { userId: user.id, login: user.login, role: user.role, city: user.city });
 
     // Создание JWT токена
+    const { getJwtSecret } = require('@/lib/env');
     const token = jwt.sign(
       { 
         userId: user.id, 
@@ -50,7 +71,7 @@ export async function POST(request: NextRequest) {
         role: user.role,
         city: user.city 
       },
-      process.env.JWT_SECRET || 'fallback-secret',
+      getJwtSecret(),
       { expiresIn: '7d' }
     );
 
@@ -76,7 +97,7 @@ export async function POST(request: NextRequest) {
     return response;
 
   } catch (error) {
-    console.error('Login error:', error);
+    logger.error('Login error', error, { endpoint: '/api/auth/login' });
     return NextResponse.json(
       { message: 'Внутренняя ошибка сервера' },
       { status: 500 }

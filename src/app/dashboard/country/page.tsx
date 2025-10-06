@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Calendar, ChevronLeft, ChevronRight, Building2, Users, AlertCircle } from 'lucide-react';
+import { Calendar, ChevronLeft, ChevronRight, Building2, Users, AlertCircle, BarChart3, PieChart } from 'lucide-react';
 import { isoWeekOf, formatWeekForDisplay, getPreviousWeek, getNextWeek, isCurrentWeek } from '@/lib/week';
 import CountryCitiesTab from './CountryCitiesTab';
 import CountryUsersTab from './CountryUsersTab';
@@ -176,18 +176,36 @@ export default function CountryPage() {
       </div>
 
       {/* Информационная панель */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <div className="flex items-start">
-          <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" />
-          <div className="text-sm text-blue-800">
-            <p className="font-medium mb-1">Инструкции по управлению данными:</p>
-            <ul className="list-disc list-inside space-y-1">
-              <li><strong>По городам:</strong> Введите агрегированные данные Trengo/CRM по каждому городу</li>
-              <li><strong>По менеджерам:</strong> Уточните данные конкретных Ops/Mixed менеджеров</li>
-              <li><strong>Приоритет:</strong> Данные от country manager имеют приоритет над самоотчетами</li>
-              <li><strong>Источники:</strong> COUNTRY (желтый бейдж) vs SELF (серый бейдж)</li>
-              <li>Все изменения сохраняются автоматически и влияют на дашборды и экспорты</li>
-            </ul>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-start">
+            <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" />
+            <div className="text-sm text-blue-800">
+              <p className="font-medium mb-1">Инструкции по управлению данными:</p>
+              <ul className="list-disc list-inside space-y-1">
+                <li><strong>По городам:</strong> Введите агрегированные данные Trengo/CRM по каждому городу</li>
+                <li><strong>По менеджерам:</strong> Уточните данные конкретных Ops/Mixed менеджеров</li>
+                <li><strong>Приоритет:</strong> Данные от country manager имеют приоритет над самоотчетами</li>
+                <li>Все изменения сохраняются автоматически и влияют на дашборды и экспорты</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <div className="flex items-start">
+            <BarChart3 className="h-5 w-5 text-green-600 mt-0.5 mr-3 flex-shrink-0" />
+            <div className="text-sm text-green-800">
+              <p className="font-medium mb-2">Аналитика и отчеты</p>
+              <p className="mb-3">После заполнения данных они автоматически появятся в аналитике по стране.</p>
+              <button
+                onClick={() => router.push('/dashboard/country-analytics')}
+                className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors flex items-center text-sm"
+              >
+                <PieChart className="h-4 w-4 mr-2" />
+                Посмотреть аналитику
+              </button>
+            </div>
           </div>
         </div>
       </div>
