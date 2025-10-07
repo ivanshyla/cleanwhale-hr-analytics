@@ -188,7 +188,6 @@ export default function CountryAnalyticsPage() {
     csvRows.push(`Вакансии,${data.totalPoland.totalJobPosts}`);
     csvRows.push(`Регистрации,${data.totalPoland.totalRegistered}`);
     csvRows.push(`Сообщения,${data.totalPoland.totalMessages}`);
-    csvRows.push(`Тикеты,${data.totalPoland.totalTickets}`);
     csvRows.push(`Заказы,${data.totalPoland.totalOrders}`);
     csvRows.push(`Средний стресс,${data.totalPoland.avgStress}`);
     csvRows.push(`Переработка (часов),${data.totalPoland.totalOvertime}`);
@@ -196,7 +195,7 @@ export default function CountryAnalyticsPage() {
     
     // По городам
     csvRows.push('СТАТИСТИКА ПО ГОРОДАМ');
-    csvRows.push('Город,Сотрудники,HR,Ops,Смеш.,Собес.,Вакансии,Регистр.,Сообщ.,Тикеты,Заказы,Стресс');
+    csvRows.push('Город,Сотрудники,HR,Ops,Смеш.,Собес.,Вакансии,Регистр.,Сообщ.,Заказы,Стресс');
     data.byCity.forEach(city => {
       csvRows.push([
         CITY_LABELS[city.city] || city.city,
@@ -208,7 +207,6 @@ export default function CountryAnalyticsPage() {
         city.totalJobPosts,
         city.totalRegistered,
         city.totalMessages,
-        city.totalTickets,
         city.totalOrders,
         city.avgStress
       ].join(','));
@@ -217,7 +215,7 @@ export default function CountryAnalyticsPage() {
     
     // По сотрудникам
     csvRows.push('ДЕТАЛИЗАЦИЯ ПО СОТРУДНИКАМ');
-    csvRows.push('Имя,Логин,Роль,Город,Собес.,Вакансии,Регистр.,Сообщ.,Тикеты,Заказы,Раб.дни,Стресс,Переработка');
+    csvRows.push('Имя,Логин,Роль,Город,Собес.,Вакансии,Регистр.,Сообщ.,Заказы,Раб.дни,Стресс,Переработка');
     data.byEmployee.forEach(emp => {
       csvRows.push([
         emp.name,
@@ -228,7 +226,6 @@ export default function CountryAnalyticsPage() {
         emp.jobPosts,
         emp.registered,
         emp.messages,
-        emp.tickets,
         emp.orders,
         emp.workdays,
         emp.stressLevel,
@@ -484,10 +481,6 @@ export default function CountryAnalyticsPage() {
                 <div className="flex justify-between">
                   <span className="text-gray-600">Сообщений:</span>
                   <span className="font-medium">{data.totalPoland.totalMessages}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Тикетов:</span>
-                  <span className="font-medium">{data.totalPoland.totalTickets}</span>
                 </div>
               </div>
             </div>

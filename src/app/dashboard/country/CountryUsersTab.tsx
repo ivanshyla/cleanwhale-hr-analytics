@@ -229,9 +229,6 @@ export default function CountryUsersTab({ weekIso }: UsersTabProps) {
                 Trengo Ответы
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Trengo Тикеты
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Заметки
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -255,15 +252,6 @@ export default function CountryUsersTab({ weekIso }: UsersTabProps) {
                     min="0"
                     value={user.trengoResponses}
                     onChange={(e) => handleUserChange(user.userId, 'trengoResponses', parseInt(e.target.value) || 0)}
-                    className="w-20 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <input
-                    type="number"
-                    min="0"
-                    value={user.trengoTickets}
-                    onChange={(e) => handleUserChange(user.userId, 'trengoTickets', parseInt(e.target.value) || 0)}
                     className="w-20 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </td>

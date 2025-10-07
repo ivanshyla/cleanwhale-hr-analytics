@@ -446,10 +446,6 @@ export default function DashboardPage() {
                       <span className="text-gray-600">Сообщений:</span>
                       <span className="font-medium">{countryAnalytics.totalPoland.totalMessages}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Тикетов:</span>
-                      <span className="font-medium">{countryAnalytics.totalPoland.totalTickets}</span>
-                    </div>
                   </div>
                 </div>
 
