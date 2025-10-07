@@ -12,6 +12,14 @@ export async function POST(request: NextRequest) {
 
   const { user } = authResult;
 
+  // AI аналитика доступна только для ADMIN и COUNTRY_MANAGER
+  if (user.role !== 'ADMIN' && user.role !== 'COUNTRY_MANAGER') {
+    return NextResponse.json(
+      { message: 'Доступ запрещен. AI аналитика доступна только для администраторов и менеджеров по стране.' },
+      { status: 403 }
+    );
+  }
+
   try {
     const { question, period = 'week' } = await request.json();
 
