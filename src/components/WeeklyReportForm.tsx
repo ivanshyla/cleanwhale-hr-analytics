@@ -37,8 +37,6 @@ interface BaseData {
   stressLevel: number;
   overtime: boolean;
   overtimeHours: number;
-  goodWorkWith: string;
-  badWorkWith: string;
   teamComment: string;
   notes: string;
 }
@@ -54,8 +52,6 @@ export default function WeeklyReportForm({ role, userId, weekIso, onSave }: Week
     stressLevel: 5,
     overtime: false,
     overtimeHours: 0,
-    goodWorkWith: '',
-    badWorkWith: '',
     teamComment: '',
     notes: ''
   });
@@ -97,8 +93,6 @@ export default function WeeklyReportForm({ role, userId, weekIso, onSave }: Week
             stressLevel: data.baseReport.stressLevel || 5,
             overtime: data.baseReport.overtime || false,
             overtimeHours: data.baseReport.overtimeHours || 0,
-            goodWorkWith: data.baseReport.goodWorkWith || '',
-            badWorkWith: data.baseReport.badWorkWith || '',
             teamComment: data.baseReport.teamComment || '',
             notes: data.baseReport.notes || ''
           });
@@ -288,33 +282,6 @@ export default function WeeklyReportForm({ role, userId, weekIso, onSave }: Week
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              С кем хорошо работалось
-            </label>
-            <textarea
-              value={baseData.goodWorkWith}
-              onChange={(e) => setBaseData(prev => ({ ...prev, goodWorkWith: e.target.value }))}
-              rows={3}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Укажите коллег и что было хорошо..."
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              С кем были проблемы
-            </label>
-            <textarea
-              value={baseData.badWorkWith}
-              onChange={(e) => setBaseData(prev => ({ ...prev, badWorkWith: e.target.value }))}
-              rows={3}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Укажите проблемы в работе с командой..."
-            />
-          </div>
-        </div>
 
         <div className="mt-6">
           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -418,108 +385,6 @@ export default function WeeklyReportForm({ role, userId, weekIso, onSave }: Week
         </div>
       )}
 
-      {/* Ops секция */}
-      {(role === 'ops' || role === 'mixed') && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Operations Метрики</h3>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Сообщения (Trengo)
-              </label>
-              <input
-                type="number"
-                min="0"
-                value={opsData.messages}
-                onChange={(e) => setOpsData(prev => ({ ...prev, messages: parseInt(e.target.value) || 0 }))}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Решенные тикеты
-              </label>
-              <input
-                type="number"
-                min="0"
-                value={opsData.tickets}
-                onChange={(e) => setOpsData(prev => ({ ...prev, tickets: parseInt(e.target.value) || 0 }))}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Заказы города
-              </label>
-              <input
-                type="number"
-                min="0"
-                value={opsData.orders}
-                onChange={(e) => setOpsData(prev => ({ ...prev, orders: parseInt(e.target.value) || 0 }))}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Отработанные дни
-              </label>
-              <input
-                type="number"
-                min="0"
-                max="7"
-                value={opsData.fullDays}
-                onChange={(e) => setOpsData(prev => ({ ...prev, fullDays: parseInt(e.target.value) || 0 }))}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Сложные ситуации с клинерами
-              </label>
-              <textarea
-                value={opsData.diffCleaners}
-                onChange={(e) => setOpsData(prev => ({ ...prev, diffCleaners: e.target.value }))}
-                rows={4}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Опишите проблемы с клинерами..."
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Сложные ситуации с клиентами
-              </label>
-              <textarea
-                value={opsData.diffClients}
-                onChange={(e) => setOpsData(prev => ({ ...prev, diffClients: e.target.value }))}
-                rows={4}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Опишите проблемы с клиентами..."
-              />
-            </div>
-          </div>
-
-          {role !== 'mixed' && (
-            <div className="mt-6">
-              <button
-                onClick={() => handleSave('ops')}
-                disabled={isSaving}
-                className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 disabled:opacity-50 flex items-center"
-              >
-                <Save className="h-4 w-4 mr-2" />
-                {isSaving ? 'Сохранение...' : 'Сохранить Ops отчет'}
-              </button>
-            </div>
-          )}
-        </div>
-      )}
 
       {/* Кнопки для mixed роли */}
       {role === 'mixed' && (
