@@ -32,7 +32,10 @@ export async function POST(request: NextRequest) {
     // Создаем отчеты за текущую и прошлую неделю
     for (const user of users) {
       for (const weekIso of [currentWeek, lastWeek]) {
-        const weekStart = new Date(weekIso.split('-W')[0], 0, 1 + (parseInt(weekIso.split('-W')[1]) - 1) * 7);
+        const [yearStr, weekStr] = weekIso.split('-W');
+        const year = parseInt(yearStr);
+        const weekNum = parseInt(weekStr);
+        const weekStart = new Date(year, 0, 1 + (weekNum - 1) * 7);
         const weekEnd = new Date(weekStart);
         weekEnd.setDate(weekStart.getDate() + 6);
 
