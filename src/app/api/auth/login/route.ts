@@ -24,6 +24,15 @@ export async function POST(request: NextRequest) {
     // Поиск пользователя
     logger.info('Login attempt', { login });
     console.log('Searching for user with login:', login);
+    console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL);
+    console.log('DATABASE_URL starts with:', process.env.DATABASE_URL?.substring(0, 30));
+    
+    // Сначала проверим что вообще есть в БД
+    const allUsers = await prisma.user.findMany({
+      select: { login: true, isActive: true }
+    });
+    console.log('Total users in DB:', allUsers.length);
+    console.log('All logins:', allUsers.map(u => u.login).join(', '));
     
     const user = await prisma.user.findUnique({
       where: { login },
@@ -31,9 +40,18 @@ export async function POST(request: NextRequest) {
     
     console.log('User found:', user ? `YES (id: ${user.id}, active: ${user.isActive})` : 'NO');
 
-    if (!user || !user.isActive) {
-      console.log('Login FAILED - user not found or inactive');
-      logger.warn('Login failed - user not found or inactive', { login });
+    if (!user) {
+      console.log('Login FAILED - USER NOT FOUND');
+      logger.warn('Login failed - user not found', { login, availableUsers: allUsers.length });
+      return NextResponse.json(
+        { message: 'Неверные учетные данные' },
+        { status: 401 }
+      );
+    }
+    
+    if (!user.isActive) {
+      console.log('Login FAILED - USER INACTIVE');
+      logger.warn('Login failed - user inactive', { login });
       return NextResponse.json(
         { message: 'Неверные учетные данные' },
         { status: 401 }
