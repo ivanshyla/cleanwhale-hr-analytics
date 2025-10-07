@@ -14,62 +14,28 @@ import {
   Wallet
 } from 'lucide-react';
 import { User, CITY_LABELS, ROLE_LABELS } from '@/types';
+import { useAuth, withAuth } from '@/contexts/AuthContext';
 
-export default function UsersPage() {
+function UsersPage() {
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [isLoadingData, setIsLoadingData] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCity, setFilterCity] = useState('');
   const [filterRole, setFilterRole] = useState('');
   const [filterActive, setFilterActive] = useState('all');
-  const [currentUser, setCurrentUser] = useState<any>(null);
   const router = useRouter();
 
   useEffect(() => {
-    loadCurrentUser();
-    loadUsers();
-  }, []);
+    if (currentUser) {
+      loadUsers();
+    }
+  }, [currentUser]);
 
   useEffect(() => {
     filterUsers();
   }, [users, searchTerm, filterCity, filterRole, filterActive]);
-
-  const loadCurrentUser = async () => {
-    try {
-      const response = await fetch('/api/auth/me', {
-        method: 'GET',
-        cache: 'no-cache',
-        headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        },
-        credentials: 'include'
-      });
-
-      if (response.ok) {
-        const { user: userData } = await response.json();
-        console.log('Current user loaded:', userData);
-        setCurrentUser(userData);
-
-        // Проверяем права доступа
-        if (userData.role !== 'ADMIN' && userData.role !== 'COUNTRY_MANAGER') {
-          console.log('Access denied for role:', userData.role);
-          router.push('/dashboard');
-          return;
-        }
-      } else {
-        console.error('Failed to load current user:', response.status);
-        router.push('/login');
-      }
-    } catch (error) {
-      console.error('Error loading current user:', error);
-      router.push('/login');
-    } finally {
-      setIsCheckingAuth(false);
-    }
-  };
 
   const loadUsers = async () => {
     try {
@@ -95,7 +61,7 @@ export default function UsersPage() {
     } catch (error) {
       console.error('Error loading users:', error);
     } finally {
-      setIsLoading(false);
+      setIsLoadingData(false);
     }
   };
 
@@ -165,13 +131,13 @@ export default function UsersPage() {
     }
   };
 
-  // Показываем загрузку пока проверяем авторизацию
-  if (isCheckingAuth || isLoading) {
+  // Показываем загрузку пока загружаем данные
+  if (isLoadingData) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Загрузка...</p>
+          <p className="text-gray-600">Загружаем пользователей...</p>
         </div>
       </div>
     );
@@ -434,3 +400,6 @@ export default function UsersPage() {
     </div>
   );
 }
+
+// Защита страницы: только для ADMIN и COUNTRY_MANAGER
+export default withAuth(UsersPage, ['ADMIN', 'COUNTRY_MANAGER']);
