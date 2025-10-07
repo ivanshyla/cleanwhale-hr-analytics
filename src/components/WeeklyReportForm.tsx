@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Save, AlertCircle, CheckCircle } from 'lucide-react';
 import { formatWeekForDisplay } from '@/lib/week';
 
@@ -42,6 +43,7 @@ interface BaseData {
 }
 
 export default function WeeklyReportForm({ role, userId, weekIso, onSave }: WeeklyReportFormProps) {
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
@@ -163,6 +165,11 @@ export default function WeeklyReportForm({ role, userId, weekIso, onSave }: Week
             data: submitRole === 'hr' ? hrData : opsData 
           });
         }
+        
+        // Перенаправляем на дашборд через 1.5 секунды
+        setTimeout(() => {
+          router.push('/dashboard');
+        }, 1500);
       } else {
         setSaveStatus('error');
         // Ошибка также остается видимой
@@ -199,7 +206,7 @@ export default function WeeklyReportForm({ role, userId, weekIso, onSave }: Week
         {saveStatus === 'success' && (
           <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-md flex items-center">
             <CheckCircle className="h-5 w-5 text-green-600 mr-2" />
-            <span className="text-green-800">Отчет успешно сохранен!</span>
+            <span className="text-green-800">Отчет успешно сохранен! Возвращаемся на дашборд...</span>
           </div>
         )}
         
