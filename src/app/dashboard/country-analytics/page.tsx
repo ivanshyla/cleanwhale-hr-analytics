@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { 
   Users, Building2, Briefcase, TrendingUp, 
   Calendar, FileDown, ChevronLeft, ChevronRight,
@@ -9,6 +8,7 @@ import {
   Package, Clock, AlertTriangle, BarChart3, Brain
 } from 'lucide-react';
 import { isoWeekOf, formatWeekForDisplay, getPreviousWeek, getNextWeek, isCurrentWeek } from '@/lib/week';
+import { useAuth, withAuth } from '@/contexts/AuthContext';
 
 interface EmployeeData {
   userId: number;
@@ -109,50 +109,21 @@ const CITY_LABELS: Record<string, string> = {
   'LUBLIN': 'Люблин'
 };
 
-export default function CountryAnalyticsPage() {
-  const router = useRouter();
-  const [loading, setLoading] = useState(true);
+function CountryAnalyticsPage() {
+  const { user } = useAuth();
   const [data, setData] = useState<AnalyticsData | null>(null);
+  const [isLoadingData, setIsLoadingData] = useState(true);
   const [currentWeek, setCurrentWeek] = useState<string>(isoWeekOf());
   const [activeTab, setActiveTab] = useState<'poland' | 'cities' | 'types' | 'employees'>('poland');
 
   useEffect(() => {
-    checkAuth();
-  }, []);
-
-  useEffect(() => {
-    if (!loading) {
+    if (user) {
       loadData();
     }
-  }, [currentWeek]);
-
-  const checkAuth = async () => {
-    try {
-      const response = await fetch('/api/auth/me', {
-        credentials: 'include'
-      });
-
-      if (!response.ok) {
-        router.push('/login');
-        return;
-      }
-
-      const userData = await response.json();
-      const userRole = userData.user?.role || userData.role;
-      if (!['COUNTRY_MANAGER', 'ADMIN'].includes(userRole)) {
-        router.push('/dashboard');
-        return;
-      }
-
-      setLoading(false);
-      loadData();
-    } catch (error) {
-      console.error('Auth error:', error);
-      router.push('/login');
-    }
-  };
+  }, [currentWeek, user]);
 
   const loadData = async () => {
+    setIsLoadingData(true);
     try {
       const response = await fetch(`/api/country-analytics?weekIso=${currentWeek}`, {
         credentials: 'include'
@@ -164,6 +135,8 @@ export default function CountryAnalyticsPage() {
       setData(analyticsData);
     } catch (error) {
       console.error('Error loading analytics:', error);
+    } finally {
+      setIsLoadingData(false);
     }
   };
 
@@ -210,10 +183,13 @@ export default function CountryAnalyticsPage() {
     }
   };
 
-  if (loading) {
+  if (isLoadingData) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent mx-auto mb-4"></div>
+          <p className="text-gray-600">Загружаем аналитику...</p>
+        </div>
       </div>
     );
   }
@@ -650,4 +626,7 @@ export default function CountryAnalyticsPage() {
     </div>
   );
 }
+
+// Защита страницы: только для ADMIN и COUNTRY_MANAGER
+export default withAuth(CountryAnalyticsPage, ['ADMIN', 'COUNTRY_MANAGER']);
 
