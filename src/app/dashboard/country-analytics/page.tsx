@@ -6,7 +6,7 @@ import {
   Users, Building2, Briefcase, TrendingUp, 
   Calendar, FileDown, ChevronLeft, ChevronRight,
   Wallet, UserCheck, ClipboardList, MessageSquare,
-  Package, Clock, AlertTriangle, BarChart3
+  Package, Clock, AlertTriangle, BarChart3, Brain
 } from 'lucide-react';
 import { isoWeekOf, formatWeekForDisplay, getPreviousWeek, getNextWeek, isCurrentWeek } from '@/lib/week';
 
@@ -167,78 +167,47 @@ export default function CountryAnalyticsPage() {
     }
   };
 
-  const exportToExcel = () => {
-    if (!data) return;
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
 
-    const csvRows: string[] = [];
+  const exportToExcel = async () => {
+    if (!data) return;
     
-    // Заголовок
-    csvRows.push(`Аналитика по Польше - ${formatWeekForDisplay(currentWeek)}`);
-    csvRows.push('');
+    setIsGeneratingReport(true);
     
-    // Общие данные
-    csvRows.push('ОБЩАЯ СТАТИСТИКА ПО ПОЛЬШЕ');
-    csvRows.push(`Всего сотрудников,${data.totalPoland.totalEmployees}`);
-    csvRows.push(`Городов,${data.totalPoland.totalCities}`);
-    csvRows.push(`HR менеджеры,${data.totalPoland.hrManagersCount}`);
-    csvRows.push(`Ops менеджеры,${data.totalPoland.opsManagersCount}`);
-    csvRows.push(`Смешанные,${data.totalPoland.mixedManagersCount}`);
-    csvRows.push('');
-    csvRows.push(`Собеседования,${data.totalPoland.totalInterviews}`);
-    csvRows.push(`Вакансии,${data.totalPoland.totalJobPosts}`);
-    csvRows.push(`Регистрации,${data.totalPoland.totalRegistered}`);
-    csvRows.push(`Сообщения,${data.totalPoland.totalMessages}`);
-    csvRows.push(`Заказы,${data.totalPoland.totalOrders}`);
-    csvRows.push(`Средний стресс,${data.totalPoland.avgStress}`);
-    csvRows.push(`Переработка (часов),${data.totalPoland.totalOvertime}`);
-    csvRows.push('');
-    
-    // По городам
-    csvRows.push('СТАТИСТИКА ПО ГОРОДАМ');
-    csvRows.push('Город,Сотрудники,HR,Ops,Смеш.,Собес.,Вакансии,Регистр.,Сообщ.,Заказы,Стресс');
-    data.byCity.forEach(city => {
-      csvRows.push([
-        CITY_LABELS[city.city] || city.city,
-        city.totalEmployees,
-        city.hrManagers,
-        city.opsManagers,
-        city.mixedManagers,
-        city.totalInterviews,
-        city.totalJobPosts,
-        city.totalRegistered,
-        city.totalMessages,
-        city.totalOrders,
-        city.avgStress
-      ].join(','));
-    });
-    csvRows.push('');
-    
-    // По сотрудникам
-    csvRows.push('ДЕТАЛИЗАЦИЯ ПО СОТРУДНИКАМ');
-    csvRows.push('Имя,Логин,Роль,Город,Собес.,Вакансии,Регистр.,Сообщ.,Заказы,Раб.дни,Стресс,Переработка');
-    data.byEmployee.forEach(emp => {
-      csvRows.push([
-        emp.name,
-        emp.login,
-        ROLE_LABELS[emp.role] || emp.role,
-        CITY_LABELS[emp.city] || emp.city,
-        emp.interviews,
-        emp.jobPosts,
-        emp.registered,
-        emp.messages,
-        emp.orders,
-        emp.workdays,
-        emp.stressLevel,
-        emp.overtimeHours
-      ].join(','));
-    });
-    
-    const csv = csvRows.join('\n');
-    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `country-analytics-${currentWeek}.csv`;
-    link.click();
+    try {
+      const response = await fetch('/api/export/ai-report', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          weekIso: currentWeek
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate report');
+      }
+
+      const result = await response.json();
+      
+      if (result.success && result.report) {
+        // Скачиваем как markdown файл
+        const blob = new Blob([result.report], { type: 'text/markdown;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `ai-report-${currentWeek}.md`;
+        link.click();
+      } else {
+        alert('Ошибка генерации отчета');
+      }
+    } catch (error) {
+      console.error('Error generating AI report:', error);
+      alert('Ошибка при генерации отчета. Попробуйте еще раз.');
+    } finally {
+      setIsGeneratingReport(false);
+    }
   };
 
   if (loading) {
@@ -296,10 +265,20 @@ export default function CountryAnalyticsPage() {
             </div>
             <button
               onClick={exportToExcel}
-              className="px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 flex items-center gap-2"
+              disabled={isGeneratingReport}
+              className="px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <FileDown className="h-4 w-4" />
-              Экспорт для правления
+              {isGeneratingReport ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                  Генерация отчета...
+                </>
+              ) : (
+                <>
+                  <Brain className="h-4 w-4" />
+                  AI Отчет для правления
+                </>
+              )}
             </button>
           </div>
 
