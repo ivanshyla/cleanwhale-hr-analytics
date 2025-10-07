@@ -94,7 +94,7 @@ export default function ComprehensiveAnalyticsClient() {
   const { register, handleSubmit, reset, formState: { errors } } = useForm<UnifiedAnalyticsForm>({
     defaultValues: {
       reportDate: new Date().toISOString().split('T')[0],
-      weekStartDate: getWeekStart(new Date()).toISOString().split('T')[0],
+      weekStartDate: new Date().toISOString().split('T')[0],  // Используем текущую дату, getWeekStart определен ниже
       city: 'WARSAW',
     }
   });

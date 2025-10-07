@@ -9,10 +9,10 @@ interface UsersTabProps {
 
 interface UserData {
   userId: string;
-  login: string;
-  name: string;
-  role: string;
-  city: string;
+  userName: string;
+  userEmail: string;
+  userCity: string;
+  userRole: string;
   weekIso: string;
   trengoResponses: number;
   trengoTickets: number;
@@ -20,7 +20,6 @@ interface UserData {
   ordersHandled: number;
   notes: string;
   hasCountryData: boolean; // флаг наличия данных от country manager
-  updatedAt: string | null;
 }
 
 export default function CountryUsersTab({ weekIso }: UsersTabProps) {
@@ -33,7 +32,7 @@ export default function CountryUsersTab({ weekIso }: UsersTabProps) {
   const [error, setError] = useState<string | null>(null);
 
   // Список городов для фильтра
-  const availableCities = Array.from(new Set(users.map(u => u.city))).sort();
+  const availableCities = Array.from(new Set(users.map(u => u.userCity))).sort();
 
   useEffect(() => {
     loadUsersData();
@@ -42,7 +41,7 @@ export default function CountryUsersTab({ weekIso }: UsersTabProps) {
   useEffect(() => {
     // Фильтрация пользователей по городу
     if (cityFilter) {
-      setFilteredUsers(users.filter(user => user.city === cityFilter));
+      setFilteredUsers(users.filter(user => user.userCity === cityFilter));
     } else {
       setFilteredUsers(users);
     }
@@ -233,12 +232,6 @@ export default function CountryUsersTab({ weekIso }: UsersTabProps) {
                 Trengo Тикеты
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                CRM Жалобы
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Заказы обработал
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Заметки
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -251,9 +244,9 @@ export default function CountryUsersTab({ weekIso }: UsersTabProps) {
               <tr key={user.userId} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div>
-                    <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                    <div className="text-sm text-gray-500">{user.login} • {user.city}</div>
-                    <div className="mt-1">{getRoleBadge(user.role)}</div>
+                    <div className="text-sm font-medium text-gray-900">{user.userName}</div>
+                    <div className="text-sm text-gray-500">{user.userEmail} • {user.userCity}</div>
+                    <div className="mt-1">{getRoleBadge(user.userRole)}</div>
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
@@ -271,24 +264,6 @@ export default function CountryUsersTab({ weekIso }: UsersTabProps) {
                     min="0"
                     value={user.trengoTickets}
                     onChange={(e) => handleUserChange(user.userId, 'trengoTickets', parseInt(e.target.value) || 0)}
-                    className="w-20 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <input
-                    type="number"
-                    min="0"
-                    value={user.crmComplaintsClosed}
-                    onChange={(e) => handleUserChange(user.userId, 'crmComplaintsClosed', parseInt(e.target.value) || 0)}
-                    className="w-20 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <input
-                    type="number"
-                    min="0"
-                    value={user.ordersHandled}
-                    onChange={(e) => handleUserChange(user.userId, 'ordersHandled', parseInt(e.target.value) || 0)}
                     className="w-20 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </td>

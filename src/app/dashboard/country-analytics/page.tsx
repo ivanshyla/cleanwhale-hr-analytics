@@ -6,7 +6,7 @@ import {
   Users, Building2, Briefcase, TrendingUp, 
   Calendar, FileDown, ChevronLeft, ChevronRight,
   Wallet, UserCheck, ClipboardList, MessageSquare,
-  Package, Clock, AlertTriangle
+  Package, Clock, AlertTriangle, BarChart3
 } from 'lucide-react';
 import { isoWeekOf, formatWeekForDisplay, getPreviousWeek, getNextWeek, isCurrentWeek } from '@/lib/week';
 
@@ -138,7 +138,8 @@ export default function CountryAnalyticsPage() {
       }
 
       const userData = await response.json();
-      if (!['COUNTRY_MANAGER', 'ADMIN'].includes(userData.role)) {
+      const userRole = userData.user?.role || userData.role;
+      if (!['COUNTRY_MANAGER', 'ADMIN'].includes(userRole)) {
         router.push('/dashboard');
         return;
       }
@@ -274,7 +275,7 @@ export default function CountryAnalyticsPage() {
                   <p className="font-medium mb-2">Что делать:</p>
                   <ol className="list-decimal list-inside space-y-1">
                     <li>Попросите менеджеров заполнить еженедельные отчеты</li>
-                    <li>Используйте страницу "Управление по стране" для ввода агрегированных данных по городам</li>
+                    <li>Используйте страницу "Внести данные" для ввода агрегированных данных по городам</li>
                     <li>После заполнения отчетов данные появятся здесь автоматически</li>
                   </ol>
                 </div>
@@ -282,7 +283,7 @@ export default function CountryAnalyticsPage() {
                   onClick={() => router.push('/dashboard/country')}
                   className="bg-yellow-600 text-white px-4 py-2 rounded-md hover:bg-yellow-700 transition-colors"
                 >
-                  Перейти к управлению данными
+                  Внести данные
                 </button>
               </div>
             </div>
@@ -344,62 +345,64 @@ export default function CountryAnalyticsPage() {
         </div>
 
         {/* Табы */}
-        <div className="bg-white rounded-xl shadow-lg mb-6">
-          <div className="flex border-b">
-            <button
-              onClick={() => setActiveTab('poland')}
-              className={`flex-1 px-6 py-4 font-medium transition-colors ${
-                activeTab === 'poland'
-                  ? 'text-blue-600 border-b-2 border-blue-600'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              <div className="flex items-center justify-center gap-2">
-                <TrendingUp className="h-5 w-5" />
-                Общая по Польше
-              </div>
-            </button>
-            <button
-              onClick={() => setActiveTab('cities')}
-              className={`flex-1 px-6 py-4 font-medium transition-colors ${
-                activeTab === 'cities'
-                  ? 'text-blue-600 border-b-2 border-blue-600'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              <div className="flex items-center justify-center gap-2">
-                <Building2 className="h-5 w-5" />
-                По городам ({data.byCity.length})
-              </div>
-            </button>
-            <button
-              onClick={() => setActiveTab('types')}
-              className={`flex-1 px-6 py-4 font-medium transition-colors ${
-                activeTab === 'types'
-                  ? 'text-blue-600 border-b-2 border-blue-600'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              <div className="flex items-center justify-center gap-2">
-                <Briefcase className="h-5 w-5" />
-                По типам ({data.byType.length})
-              </div>
-            </button>
-            <button
-              onClick={() => setActiveTab('employees')}
-              className={`flex-1 px-6 py-4 font-medium transition-colors ${
-                activeTab === 'employees'
-                  ? 'text-blue-600 border-b-2 border-blue-600'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              <div className="flex items-center justify-center gap-2">
-                <Users className="h-5 w-5" />
-                По сотрудникам ({data.byEmployee.length})
-              </div>
-            </button>
+        {hasData && (
+          <div className="bg-white rounded-xl shadow-lg mb-6">
+            <div className="flex border-b">
+              <button
+                onClick={() => setActiveTab('poland')}
+                className={`flex-1 px-6 py-4 font-medium transition-colors ${
+                  activeTab === 'poland'
+                    ? 'text-blue-600 border-b-2 border-blue-600'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <TrendingUp className="h-5 w-5" />
+                  Общая по Польше
+                </div>
+              </button>
+              <button
+                onClick={() => setActiveTab('cities')}
+                className={`flex-1 px-6 py-4 font-medium transition-colors ${
+                  activeTab === 'cities'
+                    ? 'text-blue-600 border-b-2 border-blue-600'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <Building2 className="h-5 w-5" />
+                  По городам ({data?.byCity?.length || 0})
+                </div>
+              </button>
+              <button
+                onClick={() => setActiveTab('types')}
+                className={`flex-1 px-6 py-4 font-medium transition-colors ${
+                  activeTab === 'types'
+                    ? 'text-blue-600 border-b-2 border-blue-600'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <Briefcase className="h-5 w-5" />
+                  По типам ({data?.byType?.length || 0})
+                </div>
+              </button>
+              <button
+                onClick={() => setActiveTab('employees')}
+                className={`flex-1 px-6 py-4 font-medium transition-colors ${
+                  activeTab === 'employees'
+                    ? 'text-blue-600 border-b-2 border-blue-600'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <Users className="h-5 w-5" />
+                  По сотрудникам ({data?.byEmployee?.length || 0})
+                </div>
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Контент табов */}
         {!hasData ? (
@@ -538,7 +541,6 @@ export default function CountryAnalyticsPage() {
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Город</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Сотрудники</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">HR/Ops/Смеш</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Регистрации</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Заказы</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Стресс</th>
@@ -554,9 +556,6 @@ export default function CountryAnalyticsPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{city.totalEmployees}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {city.hrManagers}/{city.opsManagers}/{city.mixedManagers}
-                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">{city.totalRegistered}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">{city.totalOrders}</td>
                       <td className="px-6 py-4 whitespace-nowrap">

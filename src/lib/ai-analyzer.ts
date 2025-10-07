@@ -5,7 +5,7 @@ export class AIAnalyzer {
   /**
    * Анализирует данные и генерирует отчет для владельцев бизнеса
    */
-  async generateExecutiveSummary(data: AnalysisData): Promise<string> {
+  async generateExecutiveSummary(data: any): Promise<string> {
     const prompt = `
 Ты - бизнес-аналитик для польской клининговой компании. Проанализируй данные за неделю ${data.weekNumber} и создай краткий отчет для владельцев бизнеса.
 
@@ -36,7 +36,7 @@ export class AIAnalyzer {
 - Жалобы: ${data.complaintRate}%
 
 🏙️ По городам:
-${Object.entries(data.cityData).map(([city, cityInfo]) => 
+${Object.entries(data.cityData || {}).map(([city, cityInfo]: [string, any]) => 
   `${city}: ${cityInfo.orders} заказов, ${cityInfo.revenue} PLN, ${cityInfo.hires} найма`
 ).join('\n')}
 
@@ -91,7 +91,7 @@ ${data.achievements ? `🎯 Достижения: ${data.achievements}` : ''}
   /**
    * Анализирует данные и предоставляет инсайты для менеджера по стране
    */
-  async generateManagerInsights(data: AnalysisData): Promise<{
+  async generateManagerInsights(data: any): Promise<{
     insights: string[];
     correlations: string[];
     anomalies: string[];
@@ -167,7 +167,7 @@ ${JSON.stringify(data, null, 2)}
   /**
    * Предсказывает тренды на следующую неделю
    */
-  async predictNextWeekTrends(historicalData: AnalysisData[]): Promise<{
+  async predictNextWeekTrends(historicalData: any[]): Promise<{
     predictions: Record<string, number>;
     confidence: number;
     reasoning: string;
@@ -239,7 +239,7 @@ ${JSON.stringify(historicalData, null, 2)}
   /**
    * Определяет критические проблемы, требующие немедленного внимания
    */
-  async identifyCriticalIssues(data: AnalysisData): Promise<{
+  async identifyCriticalIssues(data: any): Promise<{
     critical: string[];
     medium: string[];
     recommendations: string[];
@@ -294,7 +294,7 @@ ${JSON.stringify(historicalData, null, 2)}
   /**
    * Генерирует автоматический email-отчет
    */
-  async generateEmailReport(data: AnalysisData, recipientType: 'owner' | 'manager'): Promise<{
+  async generateEmailReport(data: any, recipientType: 'owner' | 'manager'): Promise<{
     subject: string;
     body: string;
     priority: 'low' | 'medium' | 'high';

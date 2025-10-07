@@ -1,8 +1,15 @@
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
+import { guardDebugEndpoint, logDebugAccess } from '@/lib/debug-guard';
 
 export async function POST(request: NextRequest) {
+  const guardError = guardDebugEndpoint();
+  if (guardError) return guardError;
+  logDebugAccess('/api/debug/init-db', 'POST');
+  
   try {
     console.log('🌱 Начинаем инициализацию базы данных...');
 

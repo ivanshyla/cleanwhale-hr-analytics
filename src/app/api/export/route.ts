@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import { prisma } from '@/lib/prisma';
@@ -15,10 +17,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ message: 'Не авторизован' }, { status: 401 });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as any;
+    const { getJwtSecret } = require('@/lib/env');
+    const decoded = jwt.verify(token, getJwtSecret()) as any;
 
     // Проверяем доступ к Country Manager функциям
-    if (!canAccessCountryFeatures({ userId: decoded.userId, role: decoded.role })) {
+    if (!canAccessCountryFeatures(decoded)) {
       return NextResponse.json({ message: 'Нет доступа к экспорту данных' }, { status: 403 });
     }
 
@@ -32,7 +35,7 @@ export async function GET(request: NextRequest) {
 
     const { blob, filename } = await generateExport(type, weekIso);
 
-    return new NextResponse(blob, {
+    return new NextResponse(blob as any, {
       status: 200,
       headers: {
         'Content-Type': 'text/csv',
@@ -150,8 +153,8 @@ async function exportUsersWeek(weekIso: string): Promise<{ blob: Buffer; filenam
       countryInput?.trengoTickets || selfReport?.opsMetrics?.tickets || 0,
       countryInput?.crmComplaintsClosed || 0, // Используем только country input
       countryInput?.ordersHandled || selfReport?.opsMetrics?.orders || 0,
-      selfReport?.hrMetrics?.registered || 0,
-      selfReport?.hrMetrics?.registered || 0, // Дублируем для совместимости
+      selfReport?.hrMetrics?.registrations || 0,
+      selfReport?.hrMetrics?.registrations || 0, // Дублируем для совместимости
       countryInput ? 'COUNTRY' : (selfReport ? 'SELF' : 'NONE'),
       finalResport ? finalResport.updatedAt.toISOString() : ''
     ].join(',');

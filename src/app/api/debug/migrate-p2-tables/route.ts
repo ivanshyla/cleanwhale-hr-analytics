@@ -1,7 +1,14 @@
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server';
 import { Client } from 'pg';
+import { guardDebugEndpoint, logDebugAccess } from '@/lib/debug-guard';
 
 export async function POST(request: NextRequest) {
+  const guardError = guardDebugEndpoint();
+  if (guardError) return guardError;
+  logDebugAccess('/api/debug/migrate-p2-tables', 'POST');
+  
   try {
     console.log('🚀 Создаем таблицы для P2 (CountryAggregate, CountryUserInput)...');
 

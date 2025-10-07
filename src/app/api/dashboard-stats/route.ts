@@ -1,7 +1,14 @@
+export const dynamic = 'force-dynamic';
+export const revalidate = 60; // кэш на 60 секунд
+
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth';
 import { hasPermission, Permission, getAllowedCities } from '@/lib/permissions';
+
+// Простой кэш
+const cache = new Map<string, { data: any; timestamp: number }>();
+const CACHE_TTL = 60000; // 60 секунд
 
 export async function GET(request: NextRequest) {
   const authResult = requireAuth(request);
@@ -12,6 +19,17 @@ export async function GET(request: NextRequest) {
   try {
     const { user } = authResult;
     const isCountryManager = user.role === 'COUNTRY_MANAGER' || user.role === 'ADMIN';
+    
+    // Проверяем кэш
+    const cacheKey = `dashboard-stats-${user.userId}-${user.role}`;
+    const cached = cache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      return NextResponse.json({
+        ...cached.data,
+        cached: true,
+      });
+    }
+    
     const allowedCities = getAllowedCities(user);
 
     // Фильтр для пользователей
@@ -46,18 +64,27 @@ export async function GET(request: NextRequest) {
       metricsFilter.user = { city: user.city };
     }
 
+    // ОПТИМИЗАЦИЯ: загружаем только нужные поля!
     const weeklyReports = await prisma.weeklyReport.findMany({
       where: metricsFilter,
-      include: {
-        user: true,
-        hrMetrics: true,
-        opsMetrics: true,
+      select: {
+        id: true,
+        user: {
+          select: {
+            city: true,
+          }
+        },
+        hrMetrics: {
+          select: {
+            registrations: true,
+          }
+        },
       },
     });
 
     // Подсчитываем найм за неделю
     const weeklyHires = weeklyReports.reduce((sum, report) => {
-      return sum + (report.hrMetrics?.registered || 0);
+      return sum + (report.hrMetrics?.registrations || 0);
     }, 0);
 
     const stats = {
@@ -68,6 +95,12 @@ export async function GET(request: NextRequest) {
       allowedCities,
       isCountryManager,
     };
+
+    // Сохраняем в кэш
+    cache.set(cacheKey, {
+      data: stats,
+      timestamp: Date.now(),
+    });
 
     return NextResponse.json(stats);
 

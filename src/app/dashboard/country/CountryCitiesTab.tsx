@@ -60,20 +60,11 @@ export default function CountryCitiesTab({ weekIso }: CitiesTabProps) {
 
   const handleCityChange = (cityId: number, field: keyof CityData, value: string | number) => {
     setCities(prevCities =>
-      prevCities.map(city => {
-        if (city.cityId === cityId) {
-          const updatedCity = { ...city, [field]: value };
-          
-          // Автоматически пересчитываем общее количество нанятых при изменении any из компонент найма
-          if (['hiredHR', 'hiredOps', 'hiredMixed'].includes(field)) {
-            const totalHired = (updatedCity.hiredHR || 0) + (updatedCity.hiredOps || 0) + (updatedCity.hiredMixed || 0);
-            updatedCity.hiredPeople = totalHired;
-          }
-          
-          return updatedCity;
-        }
-        return city;
-      })
+      prevCities.map(city => 
+        city.cityId === cityId 
+          ? { ...city, [field]: value }
+          : city
+      )
     );
   };
 
@@ -176,28 +167,7 @@ export default function CountryCitiesTab({ weekIso }: CitiesTabProps) {
                 Город
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Trengo<br/>Ответы
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Trengo<br/>Сообщения
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                CRM<br/>Жалобы
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Trengo<br/>Тикеты
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Нанятые HR
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Нанятые Ops
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Нанятые Mixed
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Всего<br/>нанятые
+                Регистрации
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Заказы
@@ -216,81 +186,15 @@ export default function CountryCitiesTab({ weekIso }: CitiesTabProps) {
                     <div className="text-sm text-gray-500">{city.cityCode}</div>
                   </div>
                 </td>
-                {/* Trengo Ответы */}
+                {/* Регистрации */}
                 <td className="px-6 py-4 whitespace-nowrap">
                   <input
                     type="number"
                     min="0"
-                    value={city.trengoResponses}
-                    onChange={(e) => handleCityChange(city.cityId, 'trengoResponses', parseInt(e.target.value) || 0)}
-                    className="w-16 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={city.hiredPeople}
+                    onChange={(e) => handleCityChange(city.cityId, 'hiredPeople', parseInt(e.target.value) || 0)}
+                    className="w-24 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
-                </td>
-                {/* Trengo Сообщения */}
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <input
-                    type="number"
-                    min="0"
-                    value={city.trengoMessages || 0}
-                    onChange={(e) => handleCityChange(city.cityId, 'trengoMessages', parseInt(e.target.value) || 0)}
-                    className="w-16 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </td>
-                {/* CRM Жалобы */}
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <input
-                    type="number"
-                    min="0"
-                    value={city.crmComplaintsClosed}
-                    onChange={(e) => handleCityChange(city.cityId, 'crmComplaintsClosed', parseInt(e.target.value) || 0)}
-                    className="w-16 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </td>
-                {/* Trengo Тикеты */}
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <input
-                    type="number"
-                    min="0"
-                    value={city.trengoTickets}
-                    onChange={(e) => handleCityChange(city.cityId, 'trengoTickets', parseInt(e.target.value) || 0)}
-                    className="w-16 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </td>
-                {/* Нанятые HR */}
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <input
-                    type="number"
-                    min="0"
-                    value={city.hiredHR || 0}
-                    onChange={(e) => handleCityChange(city.cityId, 'hiredHR', parseInt(e.target.value) || 0)}
-                    className="w-16 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </td>
-                {/* Нанятые Ops */}
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <input
-                    type="number"
-                    min="0"
-                    value={city.hiredOps || 0}
-                    onChange={(e) => handleCityChange(city.cityId, 'hiredOps', parseInt(e.target.value) || 0)}
-                    className="w-16 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </td>
-                {/* Нанятые Mixed */}
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <input
-                    type="number"
-                    min="0"
-                    value={city.hiredMixed || 0}
-                    onChange={(e) => handleCityChange(city.cityId, 'hiredMixed', parseInt(e.target.value) || 0)}
-                    className="w-16 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </td>
-                {/* Всего нанятых */}
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="w-16 px-2 py-1 bg-gray-100 rounded text-sm text-center">
-                    {(city.hiredPeople || 0)}
-                  </div>
                 </td>
                 {/* Заказы */}
                 <td className="px-6 py-4 whitespace-nowrap">
@@ -299,7 +203,7 @@ export default function CountryCitiesTab({ weekIso }: CitiesTabProps) {
                     min="0"
                     value={city.cityOrders}
                     onChange={(e) => handleCityChange(city.cityId, 'cityOrders', parseInt(e.target.value) || 0)}
-                    className="w-16 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-24 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </td>
                 {/* Заметки */}
@@ -308,8 +212,8 @@ export default function CountryCitiesTab({ weekIso }: CitiesTabProps) {
                     type="text"
                     value={city.notes}
                     onChange={(e) => handleCityChange(city.cityId, 'notes', e.target.value)}
-                    placeholder="..."
-                    className="w-40 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Заметки..."
+                    className="w-48 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </td>
               </tr>

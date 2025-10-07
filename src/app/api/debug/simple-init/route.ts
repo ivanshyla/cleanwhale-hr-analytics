@@ -1,6 +1,13 @@
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server';
+import { guardDebugEndpoint, logDebugAccess } from '@/lib/debug-guard';
 
 export async function POST(request: NextRequest) {
+  const guardError = guardDebugEndpoint();
+  if (guardError) return guardError;
+  logDebugAccess('/api/debug/simple-init', 'POST');
+  
   try {
     // Используем прямое подключение к PostgreSQL
     const { Client } = require('pg');

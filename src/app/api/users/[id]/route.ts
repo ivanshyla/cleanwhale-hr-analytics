@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireRole } from '@/lib/auth';
@@ -91,7 +93,7 @@ export async function PUT(
       name: name ?? existingUser.name,
       role: role ?? existingUser.role,
       city: city ?? existingUser.city,
-      salary: salary ?? existingUser.salary,
+      salaryGross: salary ?? existingUser.salaryGross,
       currency: currency ?? existingUser.currency,
       isActive: isActive ?? existingUser.isActive,
     };

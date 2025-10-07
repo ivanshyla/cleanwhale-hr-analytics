@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import { prisma } from '@/lib/prisma';
@@ -12,10 +14,11 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       return NextResponse.json({ message: 'Не авторизован' }, { status: 401 });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as any;
+    const { getJwtSecret } = require('@/lib/env');
+    const decoded = jwt.verify(token, getJwtSecret()) as any;
 
     // Проверяем доступ к Country Manager функциям
-    if (!canAccessCountryFeatures({ userId: decoded.userId, role: decoded.role })) {
+    if (!canAccessCountryFeatures(decoded)) {
       return NextResponse.json({ message: 'Нет доступа к удалению звонков' }, { status: 403 });
     }
 

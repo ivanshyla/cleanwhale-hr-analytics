@@ -58,10 +58,9 @@ export default function UnitComparison({
   };
 
   const chartData = units.map(unit => ({
+    ...unit,
     name: getUnitLabel(unit),
-    value: unit.value,
     change: unit.change || 0,
-    ...unit
   }));
 
   const maxValue = Math.max(...units.map(u => u.value));

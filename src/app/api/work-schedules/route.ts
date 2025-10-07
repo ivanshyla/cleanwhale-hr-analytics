@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth';
@@ -104,7 +106,6 @@ export async function POST(request: NextRequest) {
       error: error instanceof Error ? error.message : error,
       stack: error instanceof Error ? error.stack : undefined,
       userId: user.userId,
-      weekStartDate,
     });
     return NextResponse.json({ 
       message: 'Внутренняя ошибка сервера',

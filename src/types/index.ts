@@ -19,7 +19,8 @@ export interface User {
   name: string;
   role: Role;
   city: City;
-  salary?: number;
+  salaryGross?: number;
+  salaryNet?: number;
   currency: string;
   isActive: boolean;
   createdAt: Date;

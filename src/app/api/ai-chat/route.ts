@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { getOpenAIClient } from '@/lib/openai';
@@ -53,7 +55,7 @@ export async function POST(request: NextRequest) {
 
     // Если обычный менеджер - показываем только его данные
     if (!isCountryManager) {
-      whereClause.userId = user.id;
+      whereClause.userId = user.userId;
     }
 
     const weeklyReports = await prisma.weeklyReport.findMany({
@@ -78,12 +80,14 @@ export async function POST(request: NextRequest) {
     // Получаем агрегированные данные по стране (если доступно)
     let countryData = null;
     if (isCountryManager) {
+      // Преобразуем weekIso в weekNumber для запроса
+      const weekNumbers = weekIsos.map(w => parseInt(w.split('-W')[1]));
       countryData = await prisma.countryManagerData.findMany({
         where: {
-          weekIso: { in: weekIsos }
+          weekNumber: { in: weekNumbers }
         },
         orderBy: {
-          weekIso: 'desc'
+          weekNumber: 'desc'
         }
       });
     }
@@ -93,7 +97,7 @@ export async function POST(request: NextRequest) {
       period: period === 'week' ? 'за текущую неделю' : 'за последний месяц',
       weekIsos,
       user: {
-        name: user.name,
+        login: user.login,  // JWT содержит login, не name
         role: user.role,
         city: user.city,
       },
@@ -109,9 +113,9 @@ export async function POST(request: NextRequest) {
         hr: r.hrMetrics ? {
           interviews: r.hrMetrics.interviews,
           jobPosts: r.hrMetrics.jobPosts,
-          registered: r.hrMetrics.registered,
+          registrations: r.hrMetrics.registrations,  // Правильное имя поля из схемы
           fullDays: r.hrMetrics.fullDays,
-          difficult: r.hrMetrics.difficult,
+          difficultCases: r.hrMetrics.difficultCases,  // Правильное имя поля из схемы
           stress: r.hrMetrics.stress,
           overtime: r.hrMetrics.overtime,
         } : null,
@@ -127,18 +131,20 @@ export async function POST(request: NextRequest) {
         } : null,
       })),
       countryData: countryData?.map(cd => ({
-        week: cd.weekIso,
-        totalRevenue: cd.totalRevenue,
-        averageSalary: cd.averageSalary,
-        employeeCount: cd.employeeCount,
-        clientSatisfaction: cd.clientSatisfaction,
+        week: cd.weekNumber,
+        totalWorkingDays: cd.totalWorkingDaysCountry,
+        totalEmployees: cd.totalEmployeesActive,
+        totalOrders: cd.countryTotalOrders,
+        totalHires: cd.countryTotalHires,
+        avgStress: cd.countryAvgStress,
+        overtimeRate: cd.countryOvertimeRate,
       })) || null,
     };
 
     // Считаем общую статистику
     const stats = {
       totalReports: weeklyReports.length,
-      totalHired: weeklyReports.reduce((sum, r) => sum + (r.hrMetrics?.registered || 0), 0),
+      totalHired: weeklyReports.reduce((sum, r) => sum + (r.hrMetrics?.registrations || 0), 0),
       totalMessages: weeklyReports.reduce((sum, r) => sum + (r.opsMetrics?.messages || 0), 0),
       totalTickets: weeklyReports.reduce((sum, r) => sum + (r.opsMetrics?.tickets || 0), 0),
       totalOrders: weeklyReports.reduce((sum, r) => sum + (r.opsMetrics?.orders || 0), 0),

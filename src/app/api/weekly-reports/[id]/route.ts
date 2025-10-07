@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import { prisma } from '@/lib/prisma';
@@ -15,7 +17,8 @@ export async function GET(
       return NextResponse.json({ message: 'Не авторизован' }, { status: 401 });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as any;
+    const { getJwtSecret } = require('@/lib/env');
+    const decoded = jwt.verify(token, getJwtSecret()) as any;
     const userId = decoded.userId;
 
     const { searchParams } = new URL(request.url);

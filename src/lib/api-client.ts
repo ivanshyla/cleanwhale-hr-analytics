@@ -10,13 +10,13 @@ export async function apiRequest(endpoint: string, options: ApiRequestOptions = 
   
   const url = API_BASE_URL ? `${API_BASE_URL}${endpoint}` : endpoint;
   
-  const headers: HeadersInit = {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...fetchOptions.headers,
+    ...(fetchOptions.headers as Record<string, string>),
   };
 
   if (token) {
-    headers.Authorization = `Bearer ${token}`;
+    headers['Authorization'] = `Bearer ${token}`;
   }
 
   const response = await fetch(url, {

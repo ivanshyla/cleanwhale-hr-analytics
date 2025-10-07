@@ -1,6 +1,9 @@
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import { prisma } from '@/lib/prisma';
+import { logger } from '@/lib/logger';
 
 export async function GET(request: NextRequest) {
   try {
@@ -14,7 +17,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Проверяем токен
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as any;
+    const { getJwtSecret } = require('@/lib/env');
+    const decoded = jwt.verify(token, getJwtSecret()) as any;
     
     // Получаем актуальные данные пользователя из базы
     const user = await prisma.user.findUnique({
@@ -40,7 +44,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ user });
 
   } catch (error) {
-    console.error('Auth check error:', error);
+    logger.warn('Auth check failed', { error: error instanceof Error ? error.message : String(error) });
     return NextResponse.json(
       { message: 'Невалидный токен' },
       { status: 401 }

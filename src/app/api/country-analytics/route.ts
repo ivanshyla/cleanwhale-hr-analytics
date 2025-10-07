@@ -1,7 +1,14 @@
+export const dynamic = 'force-dynamic';
+export const revalidate = 60; // кэшировать на 60 секунд
+
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth';
 import { isoWeekOf } from '@/lib/week';
+
+// Кэш для результатов (простой in-memory кэш)
+const cache = new Map<string, { data: any; timestamp: number }>();
+const CACHE_TTL = 60000; // 60 секунд
 
 export async function GET(request: NextRequest) {
   const authResult = requireAuth(request);
@@ -18,24 +25,56 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const weekIso = searchParams.get('weekIso') || isoWeekOf();
 
+    // Проверяем кэш
+    const cacheKey = `country-analytics-${weekIso}`;
+    const cached = cache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      return NextResponse.json({
+        ...cached.data,
+        cached: true,
+      });
+    }
+
     // Получаем все отчеты за неделю с метриками и данными пользователей
+    // Оптимизируем select - загружаем только нужные поля
     const weeklyReports = await prisma.weeklyReport.findMany({
       where: { weekIso },
-      include: {
+      select: {
+        id: true,
+        weekIso: true,
+        workdays: true,
+        stressLevel: true,
+        overtime: true,
+        overtimeHours: true,
         user: {
           select: {
             id: true,
             name: true,
             login: true,
-            email: true,
             role: true,
             city: true,
-            salaryGross: true,
-            salaryNet: true,
           }
         },
-        hrMetrics: true,
-        opsMetrics: true,
+        hrMetrics: {
+          select: {
+            interviews: true,
+            jobPosts: true,
+            registrations: true,
+            fullDays: true,
+            stress: true,
+            overtime: true,
+          }
+        },
+        opsMetrics: {
+          select: {
+            messages: true,
+            tickets: true,
+            orders: true,
+            fullDays: true,
+            stress: true,
+            overtime: true,
+          }
+        },
       }
     });
 
@@ -50,7 +89,7 @@ export async function GET(request: NextRequest) {
       // HR метрики
       interviews: report.hrMetrics?.interviews || 0,
       jobPosts: report.hrMetrics?.jobPosts || 0,
-      registered: report.hrMetrics?.registered || 0,
+      registered: report.hrMetrics?.registrations || 0,
       hrFullDays: report.hrMetrics?.fullDays || 0,
       hrStress: report.hrMetrics?.stress || 0,
       hrOvertime: report.hrMetrics?.overtime || false,
@@ -112,7 +151,7 @@ export async function GET(request: NextRequest) {
       if (report.hrMetrics) {
         cityData.totalInterviews += report.hrMetrics.interviews || 0;
         cityData.totalJobPosts += report.hrMetrics.jobPosts || 0;
-        cityData.totalRegistered += report.hrMetrics.registered || 0;
+        cityData.totalRegistered += report.hrMetrics.registrations || 0;
       }
       
       // Ops метрики
@@ -157,7 +196,7 @@ export async function GET(request: NextRequest) {
       
       if (report.hrMetrics) {
         typeData.totalInterviews += report.hrMetrics.interviews || 0;
-        typeData.totalRegistered += report.hrMetrics.registered || 0;
+        typeData.totalRegistered += report.hrMetrics.registrations || 0;
       }
       
       if (report.opsMetrics) {
@@ -203,14 +242,22 @@ export async function GET(request: NextRequest) {
       mixedManagersCount: byType.find(t => t.type === 'MIXED_MANAGER')?.count || 0,
     };
 
-    return NextResponse.json({
+    const result = {
       weekIso,
       byEmployee,
       byCity,
       byType,
       totalPoland,
       generatedAt: new Date().toISOString(),
+    };
+
+    // Сохраняем в кэш
+    cache.set(cacheKey, {
+      data: result,
+      timestamp: Date.now(),
     });
+
+    return NextResponse.json(result);
 
   } catch (error) {
     console.error('Error fetching country analytics:', error);

@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import { prisma } from '@/lib/prisma';
@@ -12,10 +14,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ message: 'Не авторизован' }, { status: 401 });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as any;
+    const { getJwtSecret } = require('@/lib/env');
+    const decoded = jwt.verify(token, getJwtSecret()) as any;
 
     // Проверяем доступ к Country Manager функциям
-    if (!canAccessCountryFeatures({ userId: decoded.userId, role: decoded.role })) {
+    if (!canAccessCountryFeatures(decoded)) {
       return NextResponse.json({ message: 'Нет доступа к данным менеджеров' }, { status: 403 });
     }
 
@@ -27,9 +30,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ message: 'Параметр weekIso обязателен' }, { status: 400 });
     }
 
-    // Получаем OPS/MIXED пользователей с возможностью фильтрации по городу
+    // Получаем всех менеджеров (HR, OPS, MIXED) с возможностью фильтрации по городу
     const whereClause: any = {
-      role: { in: ['OPS_MANAGER', 'MIXED_MANAGER'] },
+      role: { in: ['HIRING_MANAGER', 'OPS_MANAGER', 'MIXED_MANAGER'] },
       isActive: true
     };
 
@@ -104,10 +107,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Не авторизован' }, { status: 401 });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as any;
+    const { getJwtSecret } = require('@/lib/env');
+    const decoded = jwt.verify(token, getJwtSecret()) as any;
 
     // Проверяем доступ к Country Manager функциям
-    if (!canAccessCountryFeatures({ userId: decoded.userId, role: decoded.role })) {
+    if (!canAccessCountryFeatures(decoded)) {
       return NextResponse.json({ message: 'Нет доступа к редактированию данных менеджеров' }, { status: 403 });
     }
 

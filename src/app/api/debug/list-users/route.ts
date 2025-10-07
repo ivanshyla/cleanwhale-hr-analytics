@@ -1,6 +1,13 @@
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server';
+import { guardDebugEndpoint, logDebugAccess } from '@/lib/debug-guard';
 
 export async function GET(request: NextRequest) {
+  const guardError = guardDebugEndpoint();
+  if (guardError) return guardError;
+  logDebugAccess('/api/debug/list-users', 'GET');
+  
   try {
     const { Client } = require('pg');
     const client = new Client({

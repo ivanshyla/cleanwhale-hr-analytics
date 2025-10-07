@@ -1,7 +1,14 @@
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server';
 import { Client } from 'pg';
+import { guardDebugEndpoint, logDebugAccess } from '@/lib/debug-guard';
 
 export async function POST(request: NextRequest) {
+  const guardError = guardDebugEndpoint();
+  if (guardError) return guardError;
+  logDebugAccess('/api/debug/migrate-schema-v2', 'POST');
+  
   try {
     console.log('🔄 Мигрируем схему к версии 2 (добавляем индексы и поля)...');
 

@@ -1,0 +1,24 @@
+# ДОБАВИТЬ ЭТИ СТРОКИ В .gitignore
+
+# Test files with credentials
+quick-test.js
+test-supabase.js
+test-db.js
+vercel-env.txt
+
+# Scripts with secrets
+add-openai-key.sh
+*.secret.sh
+
+# Local environment files (already there, but ensure)
+.env
+.env.local
+.env.*.local
+
+# Additional security
+*.pem
+*.key
+*.crt
+secrets/
+credentials/
+

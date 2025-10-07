@@ -207,7 +207,7 @@ ${JSON.stringify(metrics.previous, null, 2)}
     // Проверяем паттерны за несколько недель
     if (metrics.previous.length >= 3) {
       const stressLevels = metrics.previous.slice(0, 3).map(p => 
-        metrics.user.role === 'HR' ? p.hrStressLevel : p.opsStressLevel
+        metrics.user.role === 'HIRING_MANAGER' ? p.hrStressLevel : p.opsStressLevel
       ).filter(Boolean);
       
       if (stressLevels.length >= 3 && stressLevels.every(level => level && level > 6)) {
@@ -255,7 +255,7 @@ ${JSON.stringify(metrics.previous, null, 2)}
     let score = 0;
     let totalComparisons = 0;
 
-    if (role === 'HR' || role === 'MIXED') {
+    if (role === 'HIRING_MANAGER' || role === 'MIXED_MANAGER') {
       // Сравнение собеседований
       const userInterviews = userMetrics.current.hrInterviews || 0;
       const peerInterviews = peerMetrics.map(p => p.current.hrInterviews || 0);
@@ -287,7 +287,7 @@ ${JSON.stringify(metrics.previous, null, 2)}
       totalComparisons++;
     }
 
-    if (role === 'OPERATIONS' || role === 'MIXED') {
+    if (role === 'OPS_MANAGER' || role === 'MIXED_MANAGER') {
       // Сравнение заказов
       const userOrders = userMetrics.current.opsOrdersWeek || 0;
       const peerOrders = peerMetrics.map(p => p.current.opsOrdersWeek || 0);
@@ -376,8 +376,9 @@ ${JSON.stringify(metrics.previous, null, 2)}
 
   private getRoleLabel(role: string): string {
     const labels = {
-      'HR': 'HR/Найм',
-      'OPERATIONS': 'Операционный',
+      'HIRING_MANAGER': 'HR/Найм',
+      'OPS_MANAGER': 'Операционный',
+      'MIXED_MANAGER': 'Смешанная роль',
       'MIXED': 'Смешанный (HR + Операции)'
     };
     return labels[role as keyof typeof labels] || role;

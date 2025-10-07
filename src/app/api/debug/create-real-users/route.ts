@@ -1,7 +1,16 @@
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
+import { guardDebugEndpoint, logDebugAccess } from '@/lib/debug-guard';
 
 export async function POST(request: NextRequest) {
+  // Защита от доступа в production
+  const guardError = guardDebugEndpoint();
+  if (guardError) return guardError;
+  
+  logDebugAccess('/api/debug/create-real-users', 'POST');
+  
   try {
     const { Client } = require('pg');
     const client = new Client({

@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { City } from '@prisma/client';
 import { guardDebugEndpoint, logDebugAccess } from '@/lib/debug-guard';
 
 export async function POST(request: NextRequest) {
@@ -13,45 +14,57 @@ export async function POST(request: NextRequest) {
     console.log('🏙️ Инициализируем города в базе данных...');
 
     // Список всех городов согласно enum City в schema.prisma
-    const cities = [
-      { code: 'WARSAW', name: 'Варшава' },
-      { code: 'KRAKOW', name: 'Краков' },
-      { code: 'WROCLAW', name: 'Вроцлав' },
-      { code: 'GDANSK', name: 'Гданьск' },
-      { code: 'LODZ', name: 'Лодзь' },
-      { code: 'POZNAN', name: 'Познань' },
-      { code: 'KATOWICE', name: 'Катовице' },
-      { code: 'BIALYSTOK', name: 'Белосток' },
-      { code: 'LUBLIN', name: 'Люблин' },
+    const cities: Array<{ code: City, name: string }> = [
+      { code: City.WARSAW, name: 'Варшава' },
+      { code: City.KRAKOW, name: 'Краков' },
+      { code: City.WROCLAW, name: 'Вроцлав' },
+      { code: City.GDANSK, name: 'Гданьск' },
+      { code: City.LODZ, name: 'Лодзь' },
+      { code: City.POZNAN, name: 'Познань' },
+      { code: City.KATOWICE, name: 'Катовице' },
+      { code: City.BIALYSTOK, name: 'Белосток' },
+      { code: City.LUBLIN, name: 'Люблин' },
     ];
 
     const results = [];
 
-    // Используем raw SQL для обхода проблем с типами
+    // Используем Prisma ORM для создания городов
     for (const city of cities) {
-      // Проверяем, существует ли город
-      const existing = await prisma.$queryRaw<any[]>`
-        SELECT id FROM cities WHERE code = ${city.code}::"City"
-      `;
-      
-      if (existing.length === 0) {
-        // Создаем новый город
-        await prisma.$executeRaw`
-          INSERT INTO cities (code, name, timezone, "isActive", "createdAt")
-          VALUES (${city.code}::"City", ${city.name}, 'Europe/Warsaw', true, NOW())
-        `;
-        console.log(`✅ Город ${city.name} (${city.code}) - создан`);
-      } else {
-        // Обновляем существующий
-        await prisma.$executeRaw`
-          UPDATE cities 
-          SET name = ${city.name}, "isActive" = true
-          WHERE code = ${city.code}::"City"
-        `;
-        console.log(`✅ Город ${city.name} (${city.code}) - обновлен`);
+      try {
+        // Пробуем найти существующий город
+        const existing = await prisma.cityInfo.findFirst({
+          where: { code: city.code }
+        });
+        
+        if (existing) {
+          // Обновляем
+          await prisma.cityInfo.update({
+            where: { id: existing.id },
+            data: {
+              name: city.name,
+              isActive: true
+            }
+          });
+          console.log(`✅ Город ${city.name} (${city.code}) - обновлен (id: ${existing.id})`);
+          results.push({ code: String(city.code), name: city.name, id: existing.id });
+        } else {
+          // Создаем новый
+          const created = await prisma.cityInfo.create({
+            data: {
+              code: city.code,
+              name: city.name,
+              timezone: 'Europe/Warsaw',
+              isActive: true
+            }
+          });
+          console.log(`✅ Город ${city.name} (${city.code}) - создан (id: ${created.id})`);
+          results.push({ code: String(city.code), name: city.name, id: created.id });
+        }
+      } catch (cityError: any) {
+        console.error(`❌ Ошибка для города ${city.name}:`, cityError.message);
+        console.error('Полная ошибка:', cityError);
+        // Продолжаем даже если один город не удалось создать
       }
-      
-      results.push({ code: city.code, name: city.name });
     }
 
     // Проверяем сколько городов в базе

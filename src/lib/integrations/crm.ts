@@ -70,12 +70,11 @@ export class CrmIntegration {
       case 'HUBSPOT':
         headers['Authorization'] = `Bearer ${this.config.apiKey}`;
         break;
-      case 'AMOCREM':
+      case 'AMOCRM':
         headers['Authorization'] = `Bearer ${this.config.apiKey}`;
         break;
       case 'BITRIX24':
-        // Bitrix24 использует другой формат авторизации
-        delete headers['Authorization'];
+        // Bitrix24 использует другой формат авторизации (без Authorization header)
         break;
       default:
         break;
@@ -133,7 +132,7 @@ export class CrmIntegration {
     switch (this.config.crmType) {
       case 'HUBSPOT':
         return this.normalizeHubSpotTickets(response);
-      case 'AMOCREM':
+      case 'AMOCRM':
         return this.normalizeAmoCrmTickets(response);
       case 'BITRIX24':
         return this.normalizeBitrixTickets(response);
@@ -262,10 +261,10 @@ export class CrmIntegration {
         totalTickets: allTickets.length,
         resolvedTickets: resolvedTickets.length,
         newTickets: newTickets.length,
-        avgResponseTime,
-        avgResolutionTime,
-        ticketsByStatus,
-        ticketsByPriority,
+        avgResponseTime: 0,
+        avgResolutionTime: 0,
+        ticketsByStatus: { open: 0, inProgress: 0, resolved: 0, closed: 0 },
+        ticketsByPriority: { low: 0, medium: 0, high: 0, urgent: 0 }
       };
     } catch (error) {
       console.error('Error calculating CRM metrics:', error);

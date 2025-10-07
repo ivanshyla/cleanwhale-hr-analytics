@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import { prisma } from '@/lib/prisma';
@@ -13,7 +15,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ message: 'Не авторизован' }, { status: 401 });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as any;
+    const { getJwtSecret } = require('@/lib/env');
+    const decoded = jwt.verify(token, getJwtSecret()) as any;
     const userId = decoded.userId;
 
     // Проверяем права доступа (только для админов и country manager)
@@ -101,7 +104,7 @@ async function getWeekAggregates(weekIso: string): Promise<CityAggregate[]> {
     fullDays: parseFloat(row.fullDays) || 0,
     interviews: parseInt(row.interviews) || 0,
     jobPosts: parseInt(row.jobPosts) || 0,
-    registered: parseInt(row.registered) || 0,
+    registered: parseInt(row.registrations) || 0,
     messages: parseInt(row.messages) || 0,
     tickets: parseInt(row.tickets) || 0,
     orders: parseInt(row.orders) || 0

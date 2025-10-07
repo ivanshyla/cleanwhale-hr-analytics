@@ -114,7 +114,7 @@ export default function CountryPage() {
           <div>
             <h1 className="text-2xl font-bold text-gray-900 flex items-center">
               <Building2 className="h-8 w-8 mr-3 text-blue-600" />
-              Управление данными по стране
+              Внести данные по стране
             </h1>
             <p className="text-gray-600 mt-1">
               {user.name} • {user.role === 'ADMIN' ? 'Администратор' : 'Менеджер по стране'} • {user.city}

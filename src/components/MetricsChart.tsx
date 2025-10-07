@@ -216,7 +216,7 @@ export default function MetricsChart({
     <div className="bg-white p-6 rounded-lg shadow-md">
       <h3 className="text-lg font-medium text-gray-900 mb-4">{title}</h3>
       <ResponsiveContainer width="100%" height={height}>
-        {renderChart()}
+        {renderChart() || <div>Нет данных</div>}
       </ResponsiveContainer>
       
       {/* Статистика под графиком */}

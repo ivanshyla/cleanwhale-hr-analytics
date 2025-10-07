@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import { prisma } from '@/lib/prisma';
@@ -12,7 +14,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ message: 'Не авторизован' }, { status: 401 });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as any;
+    const { getJwtSecret } = require('@/lib/env');
+    const decoded = jwt.verify(token, getJwtSecret()) as any;
     const userId = decoded.userId;
 
     // Получаем параметры
@@ -120,7 +123,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Не авторизован' }, { status: 401 });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as any;
+    const { getJwtSecret } = require('@/lib/env');
+    const decoded = jwt.verify(token, getJwtSecret()) as any;
     const userId = decoded.userId;
 
     // Получаем данные из тела запроса согласно новому контракту
@@ -210,7 +214,7 @@ export async function POST(request: NextRequest) {
           update: {
             interviews: hr.interviews ?? undefined,
             jobPosts: hr.jobPosts ?? undefined,
-            registrations: hr.registered ?? undefined, // mapping
+            registrations: hr.registrations ?? undefined, // mapping
             fullDays: hr.fullDays ?? undefined,
             difficultCases: hr.difficult ?? undefined, // mapping
             stress: hr.stress ?? undefined,
@@ -223,7 +227,7 @@ export async function POST(request: NextRequest) {
             weekIso,
             interviews: hr.interviews || 0,
             jobPosts: hr.jobPosts || 0,
-            registrations: hr.registered || 0,
+            registrations: hr.registrations || 0,
             fullDays: hr.fullDays || 0,
             difficultCases: hr.difficult || null,
             stress: hr.stress || null,

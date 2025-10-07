@@ -19,6 +19,7 @@ export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCity, setFilterCity] = useState('');
   const [filterRole, setFilterRole] = useState('');
@@ -65,6 +66,8 @@ export default function UsersPage() {
     } catch (error) {
       console.error('Error loading current user:', error);
       router.push('/login');
+    } finally {
+      setIsCheckingAuth(false);
     }
   };
 
@@ -162,21 +165,14 @@ export default function UsersPage() {
     }
   };
 
-  if (!currentUser || (currentUser.role !== 'ADMIN' && currentUser.role !== 'COUNTRY_MANAGER')) {
+  // Показываем загрузку пока проверяем авторизацию
+  if (isCheckingAuth || isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Доступ запрещен</h1>
-          <p className="text-gray-600">У вас нет прав для просмотра этой страницы.</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Загрузка...</p>
         </div>
-      </div>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
   }
@@ -330,9 +326,9 @@ export default function UsersPage() {
                           ? 'bg-red-100 text-red-800'
                           : user.role === 'COUNTRY_MANAGER'
                           ? 'bg-purple-100 text-purple-800'
-                          : user.role === 'MIXED'
+                          : user.role === 'MIXED_MANAGER'
                           ? 'bg-blue-100 text-blue-800'
-                          : user.role === 'HR'
+                          : user.role === 'HIRING_MANAGER'
                           ? 'bg-green-100 text-green-800'
                           : 'bg-yellow-100 text-yellow-800'
                       }`}>

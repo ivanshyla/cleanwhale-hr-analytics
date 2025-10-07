@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import { prisma } from '@/lib/prisma';
@@ -12,10 +14,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ message: 'Не авторизован' }, { status: 401 });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as any;
+    const { getJwtSecret } = require('@/lib/env');
+    const decoded = jwt.verify(token, getJwtSecret()) as any;
 
     // Проверяем доступ к Country Manager функциям
-    if (!canAccessCountryFeatures({ userId: decoded.userId, role: decoded.role })) {
+    if (!canAccessCountryFeatures(decoded)) {
       return NextResponse.json({ message: 'Нет доступа к данным сводки' }, { status: 403 });
     }
 
@@ -103,8 +106,8 @@ export async function GET(request: NextRequest) {
       ...weeklyReports.map(w => w.updatedAt)
     ].filter(Boolean);
 
-    const lastUpdatedAt = timestamps.length > 0 
-      ? new Date(Math.max.apply(null, timestamps as number[]))
+    const lastUpdatedAt = timestamps.length > 0
+      ? new Date(Math.max(...timestamps.map(d => d.getTime())))
       : null;
 
     return NextResponse.json({
@@ -166,7 +169,7 @@ function calculateKPIs(current: any, previous: any) {
 
   const result: any = {};
   
-  ['orders', 'hired', 'messages', 'tickets', 'complaints'].forEach(key => {
+  (['orders', 'hired', 'messages', 'tickets', 'complaints'] as const).forEach(key => {
     const currentValue = data[key];
     const prevValue = prevData[key];
     const source = getSource(current, key);
@@ -193,8 +196,9 @@ function calculateByCity(current: any, previous: any) {
     
     return {
       city: cityName,
-      ...cityData,
-      delta: calculateDelta(cityData.value, prevCityData.value),
+      orders: cityData.orders,
+      messages: cityData.messages,
+      // cityData не имеет value, это aggregate объект
       stressAvg: getStressAvg(current.weeklyReports.filter((wr: any) => wr.user.city === cityName)),
       fullDays: getFullDaysAvg(current.weeklyReports.filter((wr: any) => wr.user.city === cityName))
     };

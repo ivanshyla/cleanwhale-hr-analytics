@@ -131,3 +131,10 @@ build/
 # package-lock.json, yarn.lock, pnpm-lock.yaml
 package-lock.json
 .vercel
+
+# Test files with credentials (added by security audit)
+quick-test.js
+test-supabase.js
+test-db.js
+vercel-env.txt
+add-openai-key.sh

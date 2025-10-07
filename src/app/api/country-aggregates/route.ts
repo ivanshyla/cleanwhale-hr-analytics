@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import { prisma } from '@/lib/prisma';
@@ -11,7 +13,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ message: 'Не авторизован' }, { status: 401 });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as any;
+    const { getJwtSecret } = require('@/lib/env');
+    const decoded = jwt.verify(token, getJwtSecret()) as any;
     const userId = decoded.userId;
 
     // Проверяем права доступа (COUNTRY_MANAGER или ADMIN)
@@ -31,22 +34,22 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ message: 'Параметр weekIso обязателен' }, { status: 400 });
     }
 
-    // Получаем агрегаты по городам
-    const aggregates = await prisma.countryAggregate.findMany({
-      where: { weekIso },
-      include: {
-        city: true
-      },
-      orderBy: {
-        city: { code: 'asc' }
-      }
-    });
-
+    console.log('📊 Fetching country aggregates for week:', weekIso);
+    
     // Получаем список всех городов для полной картины
+    console.log('1️⃣ Fetching all cities...');
     const allCities = await prisma.cityInfo.findMany({
       where: { isActive: true },
       orderBy: { code: 'asc' }
     });
+    console.log(`✅ Found ${allCities.length} cities`);
+
+    // Получаем агрегаты по городам
+    console.log('2️⃣ Fetching aggregates for week:', weekIso);
+    const aggregates = await prisma.countryAggregate.findMany({
+      where: { weekIso }
+    });
+    console.log(`✅ Found ${aggregates.length} aggregates`);
 
     // Формируем ответ с полным списком городов (заполненные + пустые)
     const response = allCities.map(city => {
@@ -76,10 +79,17 @@ export async function GET(request: NextRequest) {
       cities: response
     });
 
-  } catch (error) {
-    console.error('Error fetching country aggregates:', error);
+  } catch (error: any) {
+    console.error('❌ Error fetching country aggregates:', error);
+    console.error('Error name:', error.name);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
     return NextResponse.json(
-      { message: 'Ошибка получения данных по городам' },
+      { 
+        message: 'Ошибка получения данных по городам',
+        error: error.message,
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      },
       { status: 500 }
     );
   }
@@ -94,7 +104,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Не авторизован' }, { status: 401 });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as any;
+    const { getJwtSecret } = require('@/lib/env');
+    const decoded = jwt.verify(token, getJwtSecret()) as any;
     const userId = decoded.userId;
 
     // Проверяем права доступа (COUNTRY_MANAGER или ADMIN)
