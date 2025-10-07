@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { BarChart3, Users, TrendingUp, MessageSquare, UserCheck, Clock, Settings, LogOut, UserPlus, PieChart, Activity, MessageCircle, Brain, Database, PhoneCall, Building2, Package, AlertTriangle } from 'lucide-react';
 import MetricsChart from '@/components/MetricsChart';
 import AiAnalyticsChat from '@/components/AiAnalyticsChat';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface DashboardStats {
   totalUsers: number;
@@ -12,49 +13,31 @@ interface DashboardStats {
 }
 
 export default function DashboardPage() {
-  const [user, setUser] = useState<any>(null);
+  const { user, isLoading: isAuthLoading } = useAuth();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [countryAnalytics, setCountryAnalytics] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingData, setIsLoadingData] = useState(true);
   const [isLoadingCharts, setIsLoadingCharts] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    // Получаем данные пользователя из API (так же как layout)
-    const fetchUser = async () => {
-      try {
-        const response = await fetch('/api/auth/me', {
-          cache: 'no-cache',
-          headers: {
-            'Cache-Control': 'no-cache'
-          }
-        });
-        if (response.ok) {
-          const data = await response.json();
-          setUser(data.user);
-          
-          // Загружаем все данные параллельно
-          const promises = [loadDashboardStats()];
-          
-          // Загружаем аналитику для Country Manager и Admin
-          if (data.user.role === 'COUNTRY_MANAGER' || data.user.role === 'ADMIN') {
-            promises.push(loadCountryAnalytics());
-          }
-          
-          // Выполняем все запросы параллельно
-          await Promise.all(promises);
-        } else {
-          router.push('/login');
-        }
-      } catch (error) {
-        console.error('Error fetching user:', error);
-        router.push('/login');
+    if (user) {
+      // Загружаем все данные параллельно
+      const promises = [loadDashboardStats()];
+      
+      // Загружаем аналитику для Country Manager и Admin
+      if (user.role === 'COUNTRY_MANAGER' || user.role === 'ADMIN') {
+        promises.push(loadCountryAnalytics());
       }
-    };
-
-    fetchUser();
-  }, [router]);
+      
+      // Выполняем все запросы параллельно
+      Promise.all(promises).catch(error => {
+        console.error('Error loading dashboard data:', error);
+        setIsLoadingData(false);
+      });
+    }
+  }, [user]);
 
   const loadDashboardStats = async () => {
     try {
@@ -79,7 +62,7 @@ export default function DashboardPage() {
       const mockStats = getMockStatsForRole(user?.role);
       setStats(mockStats);
     } finally {
-      setIsLoading(false);
+      setIsLoadingData(false);
     }
   };
 
@@ -202,10 +185,28 @@ export default function DashboardPage() {
     return labels[city] || city.charAt(0) + city.slice(1).toLowerCase();
   };
 
-  if (isLoading) {
+  if (isAuthLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Проверяем авторизацию...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null; // AuthProvider делает redirect
+  }
+
+  if (isLoadingData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Загружаем дашборд...</p>
+        </div>
       </div>
     );
   }
