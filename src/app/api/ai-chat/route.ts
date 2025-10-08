@@ -227,10 +227,19 @@ ${JSON.stringify(context, null, 2)}
       }
     });
 
-  } catch (error) {
-    console.error('Error in AI chat:', error);
+  } catch (error: any) {
+    console.error('❌ Error in AI chat:');
+    console.error('Error name:', error?.name);
+    console.error('Error message:', error?.message);
+    console.error('Error stack:', error?.stack);
+    console.error('Full error:', error);
+    
     return NextResponse.json(
-      { message: 'Ошибка при обработке запроса к AI' },
+      { 
+        message: 'Ошибка при обработке запроса к AI',
+        error: error?.message || 'Unknown error',
+        details: process.env.NODE_ENV === 'development' ? error?.stack : undefined
+      },
       { status: 500 }
     );
   }

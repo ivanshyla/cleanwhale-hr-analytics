@@ -58,7 +58,9 @@ export default function AiAnalyticsChat() {
       });
 
       if (!response.ok) {
-        throw new Error('Ошибка при обращении к AI');
+        const errorData = await response.json().catch(() => ({}));
+        console.error('AI Chat API Error:', response.status, errorData);
+        throw new Error(errorData.error || errorData.message || 'Ошибка при обращении к AI');
       }
 
       const data = await response.json();
