@@ -7,6 +7,7 @@ import {
   Phone, Calendar, Clock, Users, MapPin, Plus, Edit, Trash2, CheckCircle, 
   XCircle, AlertCircle, PhoneCall, FileText, Target, Star, Save
 } from 'lucide-react';
+import { useAuth, withAuth } from '@/contexts/AuthContext';
 
 interface CallForm {
   callDate: string;
@@ -53,8 +54,8 @@ interface Manager {
   role: string;
 }
 
-export default function CallSchedulePage() {
-  const [user, setUser] = useState<any>(null);
+function CallSchedulePage() {
+  const { user } = useAuth();
   const [calls, setCalls] = useState<CallSchedule[]>([]);
   const [managers, setManagers] = useState<Manager[]>([]);
   const [selectedCall, setSelectedCall] = useState<CallSchedule | null>(null);
@@ -79,37 +80,10 @@ export default function CallSchedulePage() {
   const selectedCity = watch('city');
 
   useEffect(() => {
-    checkAuth();
-  }, [router]);
-
-  const checkAuth = async () => {
-    try {
-      const response = await fetch('/api/auth/me', {
-        credentials: 'include'
-      });
-
-      if (!response.ok) {
-        router.push('/login');
-        return;
-      }
-
-      const data = await response.json();
-      const userData = data.user;
-      setUser(userData);
-
-      // Только country manager и admin могут видеть эту страницу
-      if (!['COUNTRY_MANAGER', 'ADMIN'].includes(userData.role)) {
-        router.push('/dashboard');
-        return;
-      }
-
-      loadCalls();
-      loadManagers();
-    } catch (error) {
-      console.error('Auth error:', error);
-      router.push('/login');
-    }
-  };
+    if (!user) return;
+    loadCalls();
+    loadManagers();
+  }, [user]);
 
   const loadCalls = async () => {
     setIsLoading(true);
@@ -679,3 +653,5 @@ export default function CallSchedulePage() {
     </div>
   );
 }
+
+export default withAuth(CallSchedulePage, ['ADMIN', 'COUNTRY_MANAGER']);

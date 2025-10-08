@@ -56,7 +56,7 @@ function CountryPage() {
               Внести данные по стране
             </h1>
             <p className="text-gray-600 mt-1">
-              {user.name} • {user.role === 'ADMIN' ? 'Администратор' : 'Менеджер по стране'} • {user.city}
+              {user?.name || user?.login} • {user?.role === 'ADMIN' ? 'Администратор' : 'Менеджер по стране'} • {user?.city}
             </p>
           </div>
           

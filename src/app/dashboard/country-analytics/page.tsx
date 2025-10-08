@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { 
   Users, Building2, Briefcase, TrendingUp, 
   Calendar, FileDown, ChevronLeft, ChevronRight,
@@ -111,6 +112,7 @@ const CITY_LABELS: Record<string, string> = {
 
 function CountryAnalyticsPage() {
   const { user } = useAuth();
+  const router = useRouter();
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [currentWeek, setCurrentWeek] = useState<string>(isoWeekOf());

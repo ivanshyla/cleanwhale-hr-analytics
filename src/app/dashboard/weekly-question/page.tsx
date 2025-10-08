@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { MessageCircle, Clock, User, Brain, Send, Lightbulb, CheckCircle, ArrowLeft } from 'lucide-react';
+import { useAuth, withAuth } from '@/contexts/AuthContext';
 
 interface WeeklyQuestion {
   id: string;
@@ -26,8 +27,8 @@ interface AnswerFormData {
   confidence: number;
 }
 
-export default function WeeklyQuestionPage() {
-  const [user, setUser] = useState<any>(null);
+function WeeklyQuestionPage() {
+  const { user } = useAuth();
   const [questions, setQuestions] = useState<WeeklyQuestion[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState<WeeklyQuestion | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -45,28 +46,10 @@ export default function WeeklyQuestionPage() {
   const answerText = watch('answer') || '';
 
   useEffect(() => {
-    checkAuth();
-  }, [router]);
-
-  const checkAuth = async () => {
-    try {
-      const response = await fetch('/api/auth/me', {
-        credentials: 'include'
-      });
-
-      if (!response.ok) {
-        router.push('/login');
-        return;
-      }
-
-      const data = await response.json();
-      setUser(data.user);
-      loadActiveQuestions(data.user.id);
-    } catch (error) {
-      console.error('Auth error:', error);
-      router.push('/login');
+    if (user) {
+      loadActiveQuestions(user.id);
     }
-  };
+  }, [user]);
 
   const loadActiveQuestions = async (userId: string) => {
     setIsLoading(true);
@@ -439,3 +422,5 @@ export default function WeeklyQuestionPage() {
     </div>
   );
 }
+
+export default withAuth(WeeklyQuestionPage, ['HIRING_MANAGER', 'OPS_MANAGER', 'MIXED_MANAGER', 'COUNTRY_MANAGER', 'ADMIN']);

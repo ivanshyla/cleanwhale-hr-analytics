@@ -1,58 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { Calendar, ChevronLeft, ChevronRight, FileText, AlertCircle } from 'lucide-react';
 import WeeklyReportForm from '@/components/WeeklyReportForm';
 import { isoWeekOf, formatWeekForDisplay, getPreviousWeek, getNextWeek, isCurrentWeek } from '@/lib/week';
+import { useAuth, withAuth } from '@/contexts/AuthContext';
 
-interface User {
-  id: string;
-  login: string;
-  name: string;
-  role: 'HIRING_MANAGER' | 'OPS_MANAGER' | 'MIXED_MANAGER' | 'COUNTRY_MANAGER' | 'ADMIN';
-  city: string;
-}
-
-export default function WeeklyReportPage() {
-  const [user, setUser] = useState<User | null>(null);
+function WeeklyReportPage() {
+  const { user } = useAuth();
   const [currentWeek, setCurrentWeek] = useState<string>(isoWeekOf());
-  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
-
-  useEffect(() => {
-    fetchUser();
-  }, []);
-
-  const fetchUser = async () => {
-    try {
-      setIsLoading(true);
-      const response = await fetch('/api/auth/me', {
-        cache: 'no-cache',
-        headers: {
-          'Cache-Control': 'no-cache'
-        }
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setUser(data.user);
-        
-        // Проверяем доступ к еженедельным отчетам
-        const allowedRoles = ['HIRING_MANAGER', 'OPS_MANAGER', 'MIXED_MANAGER'];
-        if (!allowedRoles.includes(data.user.role)) {
-          setError('У вас нет доступа к еженедельным отчетам');
-        }
-      } else {
-        router.push('/login');
-      }
-    } catch (error) {
-      console.error('Error fetching user:', error);
-      setError('Ошибка загрузки данных пользователя');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const getRoleForForm = (): 'hr' | 'ops' | 'mixed' => {
     if (!user) return 'hr';
@@ -99,39 +56,6 @@ export default function WeeklyReportPage() {
     // Здесь можно добавить дополнительную логику после сохранения
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-          <p className="text-gray-600">Загрузка...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Ошибка доступа</h2>
-          <p className="text-gray-600 mb-4">{error}</p>
-          <button
-            onClick={() => router.push('/dashboard')}
-            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-          >
-            Вернуться на дашборд
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return null;
-  }
-
   return (
     <div className="space-y-6">
       {/* Заголовок страницы */}
@@ -143,7 +67,7 @@ export default function WeeklyReportPage() {
               Еженедельный отчет
             </h1>
             <p className="text-gray-600 mt-1">
-              {user.name} • {getRoleDisplayName(user.role)} • {user.city}
+              {user?.name || user?.login} • {getRoleDisplayName(user?.role || 'HIRING_MANAGER')} • {user?.city}
             </p>
           </div>
           
@@ -239,10 +163,12 @@ export default function WeeklyReportPage() {
       {/* Форма отчета */}
       <WeeklyReportForm
         role={getRoleForForm()}
-        userId={user.id}
+        userId={user?.id || ''}
         weekIso={currentWeek}
         onSave={handleSaveReport}
       />
     </div>
   );
 }
+
+export default withAuth(WeeklyReportPage, ['HIRING_MANAGER', 'OPS_MANAGER', 'MIXED_MANAGER']);

@@ -157,7 +157,7 @@ function UsersPage() {
               Просмотр и редактирование информации о сотрудниках
             </p>
           </div>
-          {currentUser.role === 'ADMIN' && (
+          {currentUser?.role === 'ADMIN' && (
             <button
               onClick={() => router.push('/dashboard/users/new')}
               className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
@@ -261,7 +261,7 @@ function UsersPage() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Статус
                   </th>
-                  {currentUser.role === 'ADMIN' && (
+                  {currentUser?.role === 'ADMIN' && (
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Действия
                     </th>
@@ -316,7 +316,7 @@ function UsersPage() {
                         {user.isActive ? 'Активен' : 'Неактивен'}
                       </span>
                     </td>
-                    {currentUser.role === 'ADMIN' && (
+                    {currentUser?.role === 'ADMIN' && (
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex items-center space-x-2">
                           <button

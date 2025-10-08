@@ -13,6 +13,7 @@ import {
   ChevronRight,
   AlertCircle
 } from 'lucide-react';
+import { useAuth, withAuth } from '@/contexts/AuthContext';
 
 interface ManagerSchedule {
   id: string;
@@ -55,8 +56,8 @@ interface ManagerSchedulesResponse {
   total: number;
 }
 
-export default function ManagerSchedulesPage() {
-  const [user, setUser] = useState<any>(null);
+function ManagerSchedulesPage() {
+  const { user } = useAuth();
   const [schedules, setSchedules] = useState<ManagerSchedule[]>([]);
   const [filteredSchedules, setFilteredSchedules] = useState<ManagerSchedule[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -72,9 +73,6 @@ export default function ManagerSchedulesPage() {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  useEffect(() => {
-    fetchUser();
-  }, []);
 
   useEffect(() => {
     if (user) {
@@ -86,50 +84,6 @@ export default function ManagerSchedulesPage() {
     applyFilters();
   }, [schedules, cityFilter, roleFilter]);
 
-  const fetchUser = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      
-      const response = await fetch('/api/auth/me', {
-        method: 'GET',
-        cache: 'no-cache',
-        headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        },
-        credentials: 'include'
-      });
-      
-      console.log('Auth response status:', response.status);
-      
-      if (response.ok) {
-        const data = await response.json();
-        console.log('User data:', data.user);
-        setUser(data.user);
-        
-        // Проверяем доступ к просмотру всех графиков
-        if (!['COUNTRY_MANAGER', 'ADMIN'].includes(data.user.role)) {
-          setError(`У вас нет доступа к просмотру всех графиков менеджеров. Ваша роль: ${data.user.role}`);
-        }
-      } else {
-        console.error('Auth failed with status:', response.status);
-        const errorData = await response.json().catch(() => ({}));
-        console.error('Auth error data:', errorData);
-        
-        if (response.status === 401) {
-          router.push('/login');
-        } else {
-          setError(`Ошибка авторизации: ${errorData.message || 'Неизвестная ошибка'}`);
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching user:', error);
-      setError('Ошибка загрузки данных пользователя');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const loadManagerSchedules = async () => {
     try {
@@ -561,3 +515,5 @@ export default function ManagerSchedulesPage() {
     </div>
   );
 }
+
+export default withAuth(ManagerSchedulesPage, ['ADMIN', 'COUNTRY_MANAGER']);

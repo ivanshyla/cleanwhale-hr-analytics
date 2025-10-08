@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
         totalJobPosts: weekReports.reduce((sum, r) => 
           sum + (r.hrMetrics?.jobPosts || 0), 0),
         totalRegistered: weekReports.reduce((sum, r) => 
-          sum + (r.hrMetrics?.registered || 0), 0),
+          sum + (r.hrMetrics?.registrations || 0), 0),
         
         // Ops метрики
         totalMessages: weekReports.reduce((sum, r) => 
@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
           workdays: r.workdays,
           stress: r.stressLevel,
           overtime: r.overtime,
-          registered: r.hrMetrics?.registered || 0,
+          registered: r.hrMetrics?.registrations || 0,
           interviews: r.hrMetrics?.interviews || 0,
           messages: r.opsMetrics?.messages || 0,
           orders: r.opsMetrics?.orders || 0
@@ -195,7 +195,7 @@ ${JSON.stringify(weeklyData, null, 2)}
 
 **Период:** ${formatWeekForDisplay(targetWeek)}  
 **Дата создания:** ${new Date().toLocaleString('ru-RU')}  
-**Подготовил:** ${user.name} (${user.role})
+**Подготовил:** ${user.login} (${user.role})
 
 ---
 
@@ -247,7 +247,7 @@ function aggregateByCity(reports: any[]) {
     const data = cities.get(city);
     data.employees++;
     data.workdays += r.workdays || 0;
-    data.registered += r.hrMetrics?.registered || 0;
+    data.registered += r.hrMetrics?.registrations || 0;
     data.orders += r.opsMetrics?.orders || 0;
     data.stressSum += r.stressLevel || 0;
   });
@@ -278,7 +278,7 @@ function aggregateByType(reports: any[]) {
     const data = types.get(type);
     data.count++;
     data.workdays += r.workdays || 0;
-    data.registered += r.hrMetrics?.registered || 0;
+    data.registered += r.hrMetrics?.registrations || 0;
     data.orders += r.opsMetrics?.orders || 0;
     data.stressSum += r.stressLevel || 0;
   });

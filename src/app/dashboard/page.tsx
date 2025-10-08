@@ -53,13 +53,13 @@ export default function DashboardPage() {
         setStats(data);
       } else {
         // Fallback к моковым данным при ошибке
-        const mockStats = getMockStatsForRole(user?.role);
+        const mockStats = getMockStatsForRole(user?.role || 'HIRING_MANAGER');
         setStats(mockStats);
       }
     } catch (error) {
       console.error('Error loading stats:', error);
       // Fallback к моковым данным
-      const mockStats = getMockStatsForRole(user?.role);
+      const mockStats = getMockStatsForRole(user?.role || 'HIRING_MANAGER');
       setStats(mockStats);
     } finally {
       setIsLoadingData(false);
