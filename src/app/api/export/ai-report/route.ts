@@ -5,6 +5,7 @@ import { requireAuth } from '@/lib/auth';
 import { getOpenAIClient } from '@/lib/openai';
 import { prisma } from '@/lib/prisma';
 import { isoWeekOf, getPreviousWeek, formatWeekForDisplay } from '@/lib/week';
+import { sendTelegramMessage, isTelegramConfigured } from '@/lib/telegram';
 
 export async function POST(request: NextRequest) {
   const authResult = requireAuth(request);
@@ -206,11 +207,26 @@ ${report}
 *Отчет сгенерирован AI-ассистентом CleanWhale Analytics*
 `;
 
+    // Отправляем отчет в Telegram (если настроен)
+    if (isTelegramConfigured()) {
+      try {
+        console.log('📱 Отправка отчета в Telegram...');
+        await sendTelegramMessage(fullReport);
+        console.log('✅ Отчет успешно отправлен в Telegram');
+      } catch (telegramError) {
+        console.error('⚠️ Ошибка отправки в Telegram:', telegramError);
+        // Не прерываем выполнение, если отправка в Telegram не удалась
+      }
+    } else {
+      console.log('ℹ️ Telegram не настроен, пропускаем отправку');
+    }
+
     return NextResponse.json({
       success: true,
       report: fullReport,
       weekIso: targetWeek,
-      generatedAt: new Date().toISOString()
+      generatedAt: new Date().toISOString(),
+      sentToTelegram: isTelegramConfigured()
     });
 
   } catch (error: any) {
