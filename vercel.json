@@ -9,6 +9,12 @@
       "maxDuration": 60
     }
   },
+  "crons": [
+    {
+      "path": "/api/cron/weekly-report",
+      "schedule": "0 12 * * 1"
+    }
+  ],
   "env": {
     "NODE_OPTIONS": "--max_old_space_size=4096",
     "NEXT_DISABLE_ESLINT_PLUGIN": "1"
