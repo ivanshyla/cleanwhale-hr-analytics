@@ -1,65 +1,19 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Calendar, ChevronLeft, ChevronRight, Building2, Users, AlertCircle, BarChart3, PieChart } from 'lucide-react';
 import { isoWeekOf, formatWeekForDisplay, getPreviousWeek, getNextWeek, isCurrentWeek } from '@/lib/week';
 import CountryCitiesTab from './CountryCitiesTab';
 import CountryUsersTab from './CountryUsersTab';
+import { useAuth, withAuth } from '@/contexts/AuthContext';
 
-interface User {
-  id: string;
-  login: string;
-  name: string;
-  role: 'COUNTRY_MANAGER' | 'ADMIN';
-  city: string;
-}
-
-export default function CountryPage() {
-  const [user, setUser] = useState<User | null>(null);
+function CountryPage() {
+  const { user } = useAuth();
   const [currentWeek, setCurrentWeek] = useState<string>(isoWeekOf());
   const [activeTab, setActiveTab] = useState<'cities' | 'users'>('cities');
-  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
-
-  useEffect(() => {
-    fetchUser();
-  }, []);
-
-  const fetchUser = async () => {
-    try {
-      setIsLoading(true);
-      const response = await fetch('/api/auth/me', {
-        cache: 'no-cache',
-        headers: {
-          'Cache-Control': 'no-cache'
-        }
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Country Page: fetched user data', data.user);
-        
-        setUser(data.user);
-        
-        // Проверяем доступ к country функциям
-        const allowedRoles = ['COUNTRY_MANAGER', 'ADMIN'];
-        console.log('User role:', data.user.role, 'City:', data.user.city);
-        if (!allowedRoles.includes(data.user.role)) {
-          setError(`У вас нет доступа к управлению данными по стране. Ваша роль: ${data.user.role}`);
-        }
-      } else {
-        console.error('Failed to fetch user, redirecting to login');
-        router.push('/login');
-      }
-    } catch (error) {
-      console.error('Error fetching user:', error);
-      setError('Ошибка загрузки данных пользователя');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleWeekChange = (direction: 'prev' | 'next') => {
     if (direction === 'prev') {
@@ -72,17 +26,6 @@ export default function CountryPage() {
   const handleGoToCurrentWeek = () => {
     setCurrentWeek(isoWeekOf());
   };
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-          <p className="text-gray-600">Загрузка...</p>
-        </div>
-      </div>
-    );
-  }
 
   if (error) {
     return (
@@ -100,10 +43,6 @@ export default function CountryPage() {
         </div>
       </div>
     );
-  }
-
-  if (!user) {
-    return null;
   }
 
   return (
@@ -251,3 +190,6 @@ export default function CountryPage() {
     </div>
   );
 }
+
+// Защита страницы: только для ADMIN и COUNTRY_MANAGER
+export default withAuth(CountryPage, ['ADMIN', 'COUNTRY_MANAGER']);

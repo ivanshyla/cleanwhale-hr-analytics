@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm, Controller } from 'react-hook-form';
 import { Users, Calendar, Plus, Edit2, Trash2, X, Check } from 'lucide-react';
+import { useAuth, withAuth } from '@/contexts/AuthContext';
 
 interface Manager {
   id: string;
@@ -46,9 +47,9 @@ const CATEGORIES = [
   { value: 'OTHER', label: '📝 Другое', color: 'bg-gray-100 text-gray-800' },
 ];
 
-export default function TeamMeetingsPage() {
+function TeamMeetingsPage() {
+  const { user } = useAuth();
   const router = useRouter();
-  const [user, setUser] = useState<any>(null);
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [managers, setManagers] = useState<Manager[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,31 +68,20 @@ export default function TeamMeetingsPage() {
   });
 
   useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
-    try {
-      const resp = await fetch('/api/auth/me', { credentials: 'include' });
-      if (!resp.ok) {
-        router.push('/login');
-        return;
+    if (!user) return;
+    
+    const loadData = async () => {
+      try {
+        await Promise.all([loadMeetings(), loadManagers()]);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error loading data:', error);
+        setLoading(false);
       }
-      const data = await resp.json();
-      setUser(data.user);
-
-      // Только Country Manager и Admin
-      if (!['COUNTRY_MANAGER', 'ADMIN'].includes(data.user.role)) {
-        router.push('/dashboard');
-        return;
-      }
-
-      await Promise.all([loadMeetings(), loadManagers()]);
-      setLoading(false);
-    } catch {
-      router.push('/login');
-    }
-  };
+    };
+    
+    loadData();
+  }, [user]);
 
   const loadMeetings = async () => {
     try {
@@ -553,3 +543,6 @@ export default function TeamMeetingsPage() {
     </div>
   );
 }
+
+// Защита страницы: только для ADMIN и COUNTRY_MANAGER
+export default withAuth(TeamMeetingsPage, ['ADMIN', 'COUNTRY_MANAGER']);

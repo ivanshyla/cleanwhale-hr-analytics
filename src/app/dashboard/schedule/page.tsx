@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { Calendar, Save, Clock, Sun, Moon, Coffee, Briefcase, Home, Zap, CheckCircle } from 'lucide-react';
+import { useAuth, withAuth } from '@/contexts/AuthContext';
 
 interface ScheduleForm {
   weekStartDate: string; // Monday YYYY-MM-DD
@@ -27,7 +28,8 @@ function getCurrentMonday(): string {
   return monday.toISOString().slice(0, 10);
 }
 
-export default function SchedulePage() {
+function SchedulePage() {
+  const { user } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [isLoadingSchedule, setIsLoadingSchedule] = useState(true);
@@ -48,15 +50,11 @@ export default function SchedulePage() {
   const watchedValues = watch();
 
   useEffect(() => {
-    // Проверяем авторизацию и загружаем график
+    // Загружаем график когда пользователь авторизован
+    if (!user) return;
+    
     const loadSchedule = async () => {
       try {
-        const authRes = await fetch('/api/auth/me');
-        if (!authRes.ok) {
-          router.push('/login');
-          return;
-        }
-
         // Загружаем сохраненный график для текущей недели
         const monday = getCurrentMonday();
         const scheduleRes = await fetch(`/api/work-schedules?since=${monday}&until=${monday}`, {
@@ -90,7 +88,7 @@ export default function SchedulePage() {
     };
 
     loadSchedule();
-  }, [router, setValue]);
+  }, [user, router, setValue]);
 
   const onSubmit = async (data: ScheduleForm) => {
     setLoading(true);
@@ -426,3 +424,6 @@ export default function SchedulePage() {
     </div>
   );
 }
+
+// Защита страницы: для всех типов менеджеров
+export default withAuth(SchedulePage, ['HIRING_MANAGER', 'OPS_MANAGER', 'MIXED_MANAGER', 'COUNTRY_MANAGER', 'ADMIN']);

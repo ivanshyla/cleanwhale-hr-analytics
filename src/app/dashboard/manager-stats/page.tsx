@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { Calendar, ClipboardList, Save, User2, ListFilter, BarChart3 } from 'lucide-react';
+import { useAuth, withAuth } from '@/contexts/AuthContext';
 
 interface ManagerOption {
   id: string;
@@ -24,9 +25,9 @@ interface ManagerWeeklyForm {
   notes?: string;
 }
 
-export default function ManagerStatsPage() {
+function ManagerStatsPage() {
+  const { user } = useAuth();
   const router = useRouter();
-  const [user, setUser] = useState<any>(null);
   const [managers, setManagers] = useState<ManagerOption[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -37,31 +38,20 @@ export default function ManagerStatsPage() {
   });
 
   useEffect(() => {
-    const checkAuth = async () => {
+    if (!user) return;
+    
+    const loadManagers = async () => {
       try {
-        const res = await fetch('/api/auth/me', { credentials: 'include' });
-        if (!res.ok) {
-          router.push('/login');
-          return;
-        }
-        const userData = await res.json();
-        if (!['COUNTRY_MANAGER', 'ADMIN'].includes(userData.role)) {
-          alert('Доступ запрещен. Только для менеджера по стране.');
-          router.push('/dashboard');
-          return;
-        }
-        setUser(userData);
-
-        // load managers
         const mgrs = await fetch('/api/users/manager-list', { credentials: 'include' });
         const data = await mgrs.json();
         if (data.managers) setManagers(data.managers);
-      } catch (e) {
-        router.push('/login');
+      } catch (error) {
+        console.error('Error loading managers:', error);
       }
     };
-    checkAuth();
-  }, [router]);
+    
+    loadManagers();
+  }, [user]);
 
   const onSubmit = async (data: ManagerWeeklyForm) => {
     setLoading(true);
@@ -175,3 +165,6 @@ export default function ManagerStatsPage() {
     </div>
   );
 }
+
+// Защита страницы: только для ADMIN и COUNTRY_MANAGER
+export default withAuth(ManagerStatsPage, ['ADMIN', 'COUNTRY_MANAGER']);
