@@ -35,7 +35,10 @@ export function middleware(request: NextRequest) {
         throw new Error('Invalid token format');
       }
       
-      const payload = JSON.parse(atob(parts[1]));
+      // Корректное декодирование base64url (JWT использует base64url, не base64)
+      const base64Url = parts[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const payload = JSON.parse(atob(base64));
       if (payload.role !== 'ADMIN') {
         return NextResponse.json({ error: 'Admin only' }, { status: 403 });
       }
@@ -65,7 +68,10 @@ export function middleware(request: NextRequest) {
         throw new Error('Invalid token format');
       }
       
-      const payload = JSON.parse(atob(parts[1]));
+      // Корректное декодирование base64url (JWT использует base64url, не base64)
+      const base64Url = parts[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const payload = JSON.parse(atob(base64));
       const now = Math.floor(Date.now() / 1000);
       
       // Проверяем срок действия
@@ -83,9 +89,11 @@ export function middleware(request: NextRequest) {
       loginUrl.searchParams.set('redirect', pathname);
       loginUrl.searchParams.set('reason', 'expired');
       
-      // Удаляем невалидный токен
+      // Удаляем невалидный токен только при критических ошибках (истечение срока)
       const response = NextResponse.redirect(loginUrl);
-      response.cookies.delete('token');
+      if (error.message === 'Token expired') {
+        response.cookies.delete('token');
+      }
       return response;
     }
   }

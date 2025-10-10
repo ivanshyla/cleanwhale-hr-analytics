@@ -1,174 +1,155 @@
 /**
- * Абстракция над кэшем с поддержкой Redis и In-Memory
- * 
- * Использование:
- * 1. In-Memory (текущее): работает, но только на одном инстансе
- * 2. Redis (будущее): добавить REDIS_URL в .env и всё автоматически переключится
+ * Кэш для API endpoints
+ * Поддерживает Redis (Upstash) и in-memory fallback
  */
 
-import { logger } from './logger';
-
-export interface CacheOptions {
-  ttl?: number; // Time to live в секундах
+interface CacheConfig {
+  ttl: number; // время жизни в секундах
+  key: string;
 }
 
-export interface Cache {
-  get<T>(key: string): Promise<T | null>;
-  set<T>(key: string, value: T, options?: CacheOptions): Promise<void>;
-  delete(key: string): Promise<void>;
-  clear(): Promise<void>;
-}
-
-/**
- * In-Memory кэш (для локальной разработки и одного инстанса)
- */
-class InMemoryCache implements Cache {
-  private cache = new Map<string, { value: any; expiresAt: number | null }>();
-
-  async get<T>(key: string): Promise<T | null> {
-    const item = this.cache.get(key);
-    
-    if (!item) return null;
-    
-    if (item.expiresAt && Date.now() > item.expiresAt) {
-      this.cache.delete(key);
-      return null;
-    }
-    
-    return item.value as T;
-  }
-
-  async set<T>(key: string, value: T, options: CacheOptions = {}): Promise<void> {
-    const expiresAt = options.ttl ? Date.now() + options.ttl * 1000 : null;
-    this.cache.set(key, { value, expiresAt });
-  }
-
-  async delete(key: string): Promise<void> {
-    this.cache.delete(key);
-  }
-
-  async clear(): Promise<void> {
-    this.cache.clear();
-  }
-}
-
-/**
- * Redis кэш (для production с несколькими инстансами)
- * 
- * Установка:
- * npm install @upstash/redis
- * 
- * Настройка:
- * REDIS_URL=https://... или UPSTASH_REDIS_REST_URL=...
- */
-class RedisCache implements Cache {
-  private redis: any;
+class CacheManager {
+  private memoryCache = new Map<string, { data: any; expires: number }>();
+  private useRedis = false;
+  private redisClient: any = null;
 
   constructor() {
+    // Проверяем наличие Redis URL
+    if (process.env.REDIS_URL || process.env.UPSTASH_REDIS_REST_URL) {
+      this.initRedis();
+    }
+  }
+
+  private async initRedis() {
     try {
-      const { Redis } = require('@upstash/redis');
-      const redisUrl = process.env.REDIS_URL || process.env.UPSTASH_REDIS_REST_URL;
-      const redisToken = process.env.REDIS_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
-      
-      if (!redisUrl) {
-        throw new Error('REDIS_URL not configured');
-      }
-      
-      this.redis = new Redis({
-        url: redisUrl,
-        token: redisToken,
-      });
-      
-      logger.info('Redis cache initialized');
+      // Пытаемся использовать Upstash Redis
+      const { Redis } = await import('@upstash/redis');
+      this.redisClient = Redis.fromEnv();
+      this.useRedis = true;
+      console.log('✅ Redis cache initialized');
     } catch (error) {
-      logger.error('Failed to initialize Redis', { error });
-      throw error;
+      console.warn('⚠️ Redis not available, using memory cache:', error);
+      this.useRedis = false;
     }
   }
 
   async get<T>(key: string): Promise<T | null> {
-    try {
-      const value = await this.redis.get(key);
-      return value as T | null;
-    } catch (error) {
-      logger.error('Redis GET error', { key, error });
+    if (this.useRedis && this.redisClient) {
+      try {
+        const data = await this.redisClient.get(key);
+        return data ? JSON.parse(data) : null;
+      } catch (error) {
+        console.warn('Redis get error:', error);
+        return this.getFromMemory<T>(key);
+      }
+    }
+    
+    return this.getFromMemory<T>(key);
+  }
+
+  private getFromMemory<T>(key: string): T | null {
+    const cached = this.memoryCache.get(key);
+    if (!cached) return null;
+    
+    if (cached.expires < Date.now()) {
+      this.memoryCache.delete(key);
       return null;
     }
+    
+    return cached.data;
   }
 
-  async set<T>(key: string, value: T, options: CacheOptions = {}): Promise<void> {
-    try {
-      if (options.ttl) {
-        await this.redis.set(key, value, { ex: options.ttl });
-      } else {
-        await this.redis.set(key, value);
+  async set<T>(key: string, data: T, ttl: number): Promise<void> {
+    if (this.useRedis && this.redisClient) {
+      try {
+        await this.redisClient.setex(key, ttl, JSON.stringify(data));
+        return;
+      } catch (error) {
+        console.warn('Redis set error:', error);
       }
-    } catch (error) {
-      logger.error('Redis SET error', { key, error });
     }
+    
+    // Fallback to memory cache
+    this.memoryCache.set(key, {
+      data,
+      expires: Date.now() + (ttl * 1000)
+    });
   }
 
-  async delete(key: string): Promise<void> {
-    try {
-      await this.redis.del(key);
-    } catch (error) {
-      logger.error('Redis DELETE error', { key, error });
+  async invalidate(pattern: string): Promise<void> {
+    if (this.useRedis && this.redisClient) {
+      try {
+        const keys = await this.redisClient.keys(pattern);
+        if (keys.length > 0) {
+          await this.redisClient.del(...keys);
+        }
+      } catch (error) {
+        console.warn('Redis invalidate error:', error);
+      }
+    }
+    
+    // Fallback: clear memory cache entries matching pattern
+    for (const key of this.memoryCache.keys()) {
+      if (key.includes(pattern)) {
+        this.memoryCache.delete(key);
+      }
     }
   }
-
-  async clear(): Promise<void> {
-    try {
-      await this.redis.flushdb();
-    } catch (error) {
-      logger.error('Redis CLEAR error', { error });
-    }
-  }
-}
-
-/**
- * Фабрика кэша - автоматически выбирает Redis или In-Memory
- */
-function createCache(): Cache {
-  const redisUrl = process.env.REDIS_URL || process.env.UPSTASH_REDIS_REST_URL;
-  
-  if (redisUrl && process.env.NODE_ENV === 'production') {
-    try {
-      return new RedisCache();
-    } catch (error) {
-      logger.warn('Failed to create Redis cache, falling back to In-Memory', { error });
-      return new InMemoryCache();
-    }
-  }
-  
-  logger.info('Using In-Memory cache');
-  return new InMemoryCache();
 }
 
 // Singleton instance
-export const cache: Cache = createCache();
+const cache = new CacheManager();
 
 /**
- * Helper для кэширования результатов функций
+ * Декоратор для кэширования API endpoints
  */
-export async function cached<T>(
-  key: string,
-  fn: () => Promise<T>,
-  options: CacheOptions = { ttl: 60 }
-): Promise<T> {
-  // Проверяем кэш
-  const cached = await cache.get<T>(key);
-  if (cached !== null) {
-    logger.debug('Cache hit', { key });
-    return cached;
-  }
-  
-  // Кэш промахнулся, выполняем функцию
-  logger.debug('Cache miss', { key });
-  const result = await fn();
-  
-  // Сохраняем в кэш
-  await cache.set(key, result, options);
-  
-  return result;
+export function withCache<T extends any[], R>(
+  fn: (...args: T) => Promise<R>,
+  keyGenerator: (...args: T) => string,
+  ttl: number = 300 // 5 минут по умолчанию
+) {
+  return async (...args: T): Promise<R> => {
+    const key = keyGenerator(...args);
+    
+    // Пытаемся получить из кэша
+    const cached = await cache.get<R>(key);
+    if (cached) {
+      console.log(`📦 Cache hit: ${key}`);
+      return cached;
+    }
+    
+    // Выполняем функцию и кэшируем результат
+    console.log(`🔄 Cache miss: ${key}`);
+    const result = await fn(...args);
+    await cache.set(key, result, ttl);
+    
+    return result;
+  };
 }
 
+/**
+ * Утилиты для работы с кэшем
+ */
+export const cacheUtils = {
+  async get<T>(key: string): Promise<T | null> {
+    return cache.get<T>(key);
+  },
+  
+  async set<T>(key: string, data: T, ttl: number = 300): Promise<void> {
+    return cache.set(key, data, ttl);
+  },
+  
+  async invalidate(pattern: string): Promise<void> {
+    return cache.invalidate(pattern);
+  },
+  
+  // Предустановленные ключи для разных типов данных
+  keys: {
+    users: (city?: string, role?: string) => `users:${city || 'all'}:${role || 'all'}`,
+    countryAnalytics: (weekIso: string) => `country-analytics:${weekIso}`,
+    dashboardStats: (userId: string) => `dashboard-stats:${userId}`,
+    workSchedules: (userId: string, weekStart?: string) => `work-schedules:${userId}:${weekStart || 'all'}`,
+  }
+};
+
+export default cache;

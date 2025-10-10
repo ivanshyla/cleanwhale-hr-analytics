@@ -71,9 +71,13 @@ export async function POST(request: NextRequest) {
     });
 
     // Устанавливаем JWT в httpOnly cookie для безопасности
+    // Проверяем протокол для правильной установки Secure флага
+    const isHttps = request.headers.get('x-forwarded-proto') === 'https' || 
+                   new URL(request.url).protocol === 'https:';
+    
     response.cookies.set('token', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: isHttps, // Secure только для HTTPS
       sameSite: 'lax',
       maxAge: 30 * 24 * 60 * 60, // 30 дней (синхронизировано с JWT)
       path: '/',

@@ -7,6 +7,7 @@ import { prisma } from '@/lib/prisma';
 import { requireRole } from '@/lib/auth';
 import { logger } from '@/lib/logger';
 import { parsePaginationParams, createPaginatedResponse } from '@/lib/pagination';
+import { cacheUtils } from '@/lib/cache';
 import bcrypt from 'bcryptjs';
 
 // GET - получить список всех пользователей (только для админов и менеджеров по стране)
@@ -23,6 +24,16 @@ export async function GET(request: NextRequest) {
   const { page, limit, skip, take } = parsePaginationParams(searchParams, { page: 1, limit: 50 });
 
   try {
+    // Генерируем ключ кэша
+    const cacheKey = cacheUtils.keys.users(city || undefined, role || undefined);
+    
+    // Пытаемся получить из кэша
+    const cached = await cacheUtils.get(cacheKey);
+    if (cached) {
+      console.log('📦 Users cache hit:', cacheKey);
+      return NextResponse.json(createPaginatedResponse(cached.users, cached.page, cached.limit, cached.total));
+    }
+
     const where: any = {};
     
     if (city) where.city = city;
@@ -56,6 +67,12 @@ export async function GET(request: NextRequest) {
         take,
       }),
     ]);
+
+    const result = { users, page, limit, total };
+    
+    // Кэшируем результат на 5 минут
+    await cacheUtils.set(cacheKey, result, 300);
+    console.log('💾 Users cached:', cacheKey);
 
     // ✅ Возвращаем с мета-данными пагинации
     return NextResponse.json(createPaginatedResponse(users, page, limit, total));

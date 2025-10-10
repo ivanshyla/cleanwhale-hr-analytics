@@ -22,6 +22,7 @@ export async function apiRequest(endpoint: string, options: ApiRequestOptions = 
   const response = await fetch(url, {
     ...fetchOptions,
     headers,
+    credentials: 'include', // Включаем cookies для CORS
   });
 
   return response;
