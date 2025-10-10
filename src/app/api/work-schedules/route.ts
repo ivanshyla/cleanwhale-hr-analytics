@@ -4,6 +4,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth';
 import { hasPermission, Permission } from '@/lib/permissions';
+import { logger } from '@/lib/logger';
+import { parsePaginationParams, createPaginatedResponse } from '@/lib/pagination';
 
 function getWeekRangeFromMonday(weekStartStr: string): { weekStartDate: Date; weekEndDate: Date } {
   const weekStartDate = new Date(weekStartStr);
@@ -128,6 +130,9 @@ export async function GET(request: NextRequest) {
     const includeAll = searchParams.get('include_all') === 'true';
     const since = searchParams.get('since') || undefined;
     const until = searchParams.get('until') || undefined;
+    
+    // ✅ Добавлена пагинация
+    const { page, limit, skip, take } = parsePaginationParams(searchParams, { page: 1, limit: 100 });
 
     let where: any = {};
 
@@ -157,17 +162,59 @@ export async function GET(request: NextRequest) {
       if (until) (where.weekStartDate as any).lte = new Date(until);
     }
 
-    const schedules = await prisma.workSchedule.findMany({
-      where,
-      include: {
-        user: { select: { id: true, name: true, email: true, city: true, role: true } }
-      },
-      orderBy: [{ weekStartDate: 'desc' }],
-    });
+    // ✅ Параллельные запросы
+    const [total, schedules] = await Promise.all([
+      prisma.workSchedule.count({ where }),
+      prisma.workSchedule.findMany({
+        where,
+        select: {
+          id: true,
+          weekStartDate: true,
+          weekEndDate: true,
+          scheduleType: true,
+          mondayStart: true,
+          mondayEnd: true,
+          mondayNote: true,
+          tuesdayStart: true,
+          tuesdayEnd: true,
+          tuesdayNote: true,
+          wednesdayStart: true,
+          wednesdayEnd: true,
+          wednesdayNote: true,
+          thursdayStart: true,
+          thursdayEnd: true,
+          thursdayNote: true,
+          fridayStart: true,
+          fridayEnd: true,
+          fridayNote: true,
+          saturdayStart: true,
+          saturdayEnd: true,
+          saturdayNote: true,
+          sundayStart: true,
+          sundayEnd: true,
+          sundayNote: true,
+          weeklyNotes: true,
+          isFlexible: true,
+          user: { 
+            select: { 
+              id: true, 
+              name: true, 
+              email: true, 
+              city: true, 
+              role: true 
+            } 
+          }
+        },
+        orderBy: [{ weekStartDate: 'desc' }],
+        skip,
+        take,
+      }),
+    ]);
 
-    return NextResponse.json({ schedules, total: schedules.length });
+    // ✅ Возвращаем с пагинацией
+    return NextResponse.json(createPaginatedResponse(schedules, page, limit, total));
   } catch (error) {
-    console.error('work-schedules GET error:', error);
+    logger.error('work-schedules GET error', { error });
     return NextResponse.json({ message: 'Внутренняя ошибка сервера' }, { status: 500 });
   }
 }
