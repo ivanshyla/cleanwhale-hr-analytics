@@ -138,3 +138,8 @@ test-supabase.js
 test-db.js
 vercel-env.txt
 add-openai-key.sh
+
+# Temporary secrets files (NEVER commit!)
+.env.secrets.tmp
+.env.secrets.*
+*secrets*.tmp
