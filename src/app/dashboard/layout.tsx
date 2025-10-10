@@ -47,10 +47,6 @@ const navigation = [
   { name: 'Аналитика', href: '/dashboard/country-analytics', icon: BarChart3, roles: ['ADMIN', 'COUNTRY_MANAGER'] },
   { name: 'Встречи команды', href: '/dashboard/team-meetings', icon: MessageCircle, roles: ['ADMIN', 'COUNTRY_MANAGER'] },
   { name: 'Пользователи', href: '/dashboard/users', icon: Users, roles: ['ADMIN', 'COUNTRY_MANAGER'] },
-  { name: 'Статистика менеджеров', href: '/dashboard/manager-stats', icon: UserRoundCog, roles: ['ADMIN'] },
-  { name: 'Расписание звонков', href: '/dashboard/call-schedule', icon: CalendarDays, roles: ['ADMIN'] },
-  { name: 'Внешние данные', href: '/dashboard/external-data', icon: Briefcase, roles: ['ADMIN'] },
-  { name: 'Данные по сотрудникам', href: '/dashboard/employee-data', icon: Building2, roles: ['ADMIN', 'HR_MANAGER', 'MIXED_MANAGER'] },
 ];
 
 function classNames(...classes: string[]) {
