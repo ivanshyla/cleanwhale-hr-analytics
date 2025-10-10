@@ -50,9 +50,11 @@ function UsersPage() {
       });
 
       if (response.ok) {
-        const usersData = await response.json();
-        console.log('Users loaded:', usersData.length);
-        setUsers(usersData);
+        const responseData = await response.json();
+        console.log('Users loaded:', responseData);
+        // API возвращает пагинированный ответ с полем data
+        const usersData = responseData.data || responseData;
+        setUsers(Array.isArray(usersData) ? usersData : []);
       } else {
         console.error('Failed to load users:', response.status);
         const errorData = await response.json().catch(() => ({}));
@@ -66,7 +68,7 @@ function UsersPage() {
   };
 
   const filterUsers = () => {
-    let filtered = users;
+    let filtered = users || [];
 
     // Исключаем ADMIN и COUNTRY_MANAGER из отображения
     filtered = filtered.filter(user => 
@@ -365,7 +367,7 @@ function UsersPage() {
               <div className="ml-3">
                 <p className="text-sm font-medium text-gray-500">Активных</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {users.filter(u => u.isActive).length}
+                  {users?.filter(u => u.isActive).length || 0}
                 </p>
               </div>
             </div>
@@ -378,8 +380,8 @@ function UsersPage() {
                 <p className="text-sm font-medium text-gray-500">Средняя зарплата</p>
                 <p className="text-2xl font-bold text-gray-900">
                   {formatSalary(
-                    users.filter(u => u.salaryGross).reduce((sum, u) => sum + (u.salaryGross || 0), 0) / 
-                    users.filter(u => u.salaryGross).length
+                    users?.filter(u => u.salaryGross).reduce((sum, u) => sum + (u.salaryGross || 0), 0) / 
+                    (users?.filter(u => u.salaryGross).length || 1)
                   )}
                 </p>
               </div>
