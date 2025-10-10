@@ -113,6 +113,10 @@ ${JSON.stringify(aggregateHistorical(reports, weeks), null, 2)}
 
     console.log('🤖 Calling OpenAI API...');
     
+    if (!openai) {
+      throw new Error('OpenAI client is not initialized');
+    }
+    
     const completion = await openai.chat.completions.create({
       model: 'gpt-4',
       messages: [
