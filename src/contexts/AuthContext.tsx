@@ -30,6 +30,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
   const checkAuth = async () => {
+    // Не проверяем auth на публичных страницах
+    if (pathname === '/login' || pathname === '/') {
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const response = await fetch('/api/auth/me', {
         credentials: 'include',
@@ -42,15 +48,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(userData);
       } else {
         setUser(null);
-        // Редирект только если не на странице логина
-        if (pathname !== '/login' && pathname !== '/') {
+        // Редирект на логин только для защищенных страниц
+        if (pathname.startsWith('/dashboard')) {
           router.push('/login');
         }
       }
     } catch (error) {
       console.error('Auth check failed:', error);
       setUser(null);
-      if (pathname !== '/login' && pathname !== '/') {
+      // Редирект на логин только для защищенных страниц
+      if (pathname.startsWith('/dashboard')) {
         router.push('/login');
       }
     } finally {
