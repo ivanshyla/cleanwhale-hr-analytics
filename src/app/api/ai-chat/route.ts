@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
       whereClause.userId = user.userId;
     }
 
-    const weeklyReports = await prisma.weeklyReport.findMany({
+    const allReports = await prisma.weeklyReport.findMany({
       where: whereClause,
       include: {
         user: {
@@ -84,6 +84,9 @@ export async function POST(request: NextRequest) {
         weekIso: 'desc'
       }
     });
+
+    // Фильтруем отчеты с существующими пользователями
+    const weeklyReports = allReports.filter(r => r.user !== null);
 
     // Получаем агрегированные данные по стране (если доступно)
     let countryData = null;

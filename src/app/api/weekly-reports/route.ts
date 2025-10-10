@@ -129,7 +129,7 @@ export async function POST(request: NextRequest) {
 
     // Получаем данные из тела запроса согласно новому контракту
     const body = await request.json();
-    const { weekIso, role, hr, ops } = body;
+    const { weekIso, role, hr, ops, base } = body;
 
     if (!weekIso || !role) {
       return NextResponse.json(
@@ -189,6 +189,13 @@ export async function POST(request: NextRequest) {
           userId_weekIso: { userId, weekIso }
         },
         update: {
+          workdays: base?.workdays ?? undefined,
+          stressLevel: base?.stressLevel ?? undefined,
+          overtime: base?.overtime ?? undefined,
+          overtimeHours: base?.overtimeHours ?? undefined,
+          notes: base?.notes ?? undefined,
+          teamComment: base?.teamComment ?? undefined,
+          isCompleted: true, // Отмечаем отчет как завершенный
           updatedAt: new Date()
         },
         create: {
@@ -196,9 +203,13 @@ export async function POST(request: NextRequest) {
           weekIso,
           weekStartDate,
           weekEndDate,
-          workdays: 0,
-          stressLevel: 0,
-          overtime: false
+          workdays: base?.workdays || 0,
+          stressLevel: base?.stressLevel || 0,
+          overtime: base?.overtime || false,
+          overtimeHours: base?.overtimeHours || 0,
+          notes: base?.notes || null,
+          teamComment: base?.teamComment || null,
+          isCompleted: true // Отмечаем отчет как завершенный
         }
       });
 

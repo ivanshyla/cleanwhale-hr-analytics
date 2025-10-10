@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
       weeks.push(getPreviousWeek(weeks[weeks.length - 1]));
     }
 
-    const reports = await prisma.weeklyReport.findMany({
+    const allReports = await prisma.weeklyReport.findMany({
       where: {
         weekIso: { in: weeks }
       },
@@ -71,7 +71,10 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    console.log(`📊 Found ${reports.length} reports for analysis`);
+    // Фильтруем отчеты с существующими пользователями
+    const reports = allReports.filter(r => r.user !== null);
+
+    console.log(`📊 Found ${reports.length} reports for analysis (filtered from ${allReports.length} total)`);
 
     if (reports.length === 0) {
       const message = `⚠️ *Отчет не сгенерирован*\n\nНет данных за неделю ${formatWeekForDisplay(targetWeek)}\n\nВозможные причины:\n- Менеджеры не заполнили еженедельные отчеты\n- Данные еще не внесены\n\n_CleanWhale Analytics_`;
@@ -92,6 +95,9 @@ export async function GET(request: NextRequest) {
     // Генерируем AI отчет с помощью OpenAI
     const openai = getOpenAIClient();
     
+    // Собираем заметки и сложные ситуации для анализа
+    const qualitativeData = extractQualitativeData(currentWeekData);
+
     const prompt = `Ты - бизнес-аналитик CleanWhale, компании по клининговым услугам в Польше.
 
 Напиши краткий executive summary для правления на основе данных за неделю ${formatWeekForDisplay(targetWeek)}.
@@ -107,11 +113,26 @@ ${JSON.stringify(byType, null, 2)}
 **Исторические данные (${weeks.length} недель):**
 ${JSON.stringify(aggregateHistorical(reports, weeks), null, 2)}
 
+**Заметки и комментарии менеджеров:**
+${qualitativeData.notes.length > 0 ? qualitativeData.notes.map(n => `- ${n.manager} (${n.city}): ${n.text}`).join('\n') : 'Нет заметок'}
+
+**Работа с командой:**
+${qualitativeData.teamComments.length > 0 ? qualitativeData.teamComments.map(c => `- ${c.manager} (${c.city}): ${c.text}`).join('\n') : 'Нет комментариев'}
+
+**Сложные ситуации (HR):**
+${qualitativeData.hrDifficulties.length > 0 ? qualitativeData.hrDifficulties.map(d => `- ${d.manager} (${d.city}): ${d.text}`).join('\n') : 'Нет сложных ситуаций'}
+
+**Проблемы с клинерами (Ops):**
+${qualitativeData.cleanerIssues.length > 0 ? qualitativeData.cleanerIssues.map(i => `- ${i.manager} (${i.city}): ${i.text}`).join('\n') : 'Нет проблем'}
+
+**Проблемы с клиентами (Ops):**
+${qualitativeData.clientIssues.length > 0 ? qualitativeData.clientIssues.map(i => `- ${i.manager} (${i.city}): ${i.text}`).join('\n') : 'Нет проблем'}
+
 ТРЕБОВАНИЯ К ОТЧЕТУ:
 
 1. **Executive Summary** (2-3 предложения) - главные выводы
 2. **Ключевые метрики** с динамикой (↑↓) и процентами изменения
-3. **Проблемные зоны** - что требует внимания
+3. **Проблемные зоны** - что требует внимания (учитывай заметки и сложные ситуации!)
 4. **Достижения** - что работает хорошо
 5. **Прогноз на следующую неделю** - краткие ожидания
 
@@ -275,5 +296,45 @@ function aggregateHistorical(reports: any[], weeks: string[]) {
         : 0
     };
   });
+}
+
+function extractQualitativeData(reports: any[]) {
+  const notes: Array<{manager: string, city: string, text: string}> = [];
+  const hrDifficulties: Array<{manager: string, city: string, text: string}> = [];
+  const cleanerIssues: Array<{manager: string, city: string, text: string}> = [];
+  const clientIssues: Array<{manager: string, city: string, text: string}> = [];
+  const teamComments: Array<{manager: string, city: string, text: string}> = [];
+
+  reports.forEach(r => {
+    const manager = r.user.name;
+    const city = r.user.city;
+
+    // Собираем заметки
+    if (r.notes && r.notes.trim()) {
+      notes.push({ manager, city, text: r.notes.trim() });
+    }
+
+    // Собираем комментарии о работе с командой
+    if (r.teamComment && r.teamComment.trim()) {
+      teamComments.push({ manager, city, text: r.teamComment.trim() });
+    }
+
+    // Собираем сложные ситуации в HR
+    if (r.hrMetrics?.difficultCases && r.hrMetrics.difficultCases.trim()) {
+      hrDifficulties.push({ manager, city, text: r.hrMetrics.difficultCases.trim() });
+    }
+
+    // Собираем проблемы с клинерами
+    if (r.opsMetrics?.diffCleaners && r.opsMetrics.diffCleaners.trim()) {
+      cleanerIssues.push({ manager, city, text: r.opsMetrics.diffCleaners.trim() });
+    }
+
+    // Собираем проблемы с клиентами
+    if (r.opsMetrics?.diffClients && r.opsMetrics.diffClients.trim()) {
+      clientIssues.push({ manager, city, text: r.opsMetrics.diffClients.trim() });
+    }
+  });
+
+  return { notes, teamComments, hrDifficulties, cleanerIssues, clientIssues };
 }
 

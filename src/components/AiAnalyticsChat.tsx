@@ -60,7 +60,16 @@ export default function AiAnalyticsChat() {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         console.error('AI Chat API Error:', response.status, errorData);
-        throw new Error(errorData.error || errorData.message || 'Ошибка при обращении к AI');
+        
+        // Конкретизируем ошибку для пользователя
+        let errorMsg = 'Ошибка при обращении к AI';
+        if (response.status === 403) {
+          errorMsg = 'Доступ запрещен. AI аналитика доступна только для менеджеров по стране.';
+        } else if (errorData.error || errorData.message) {
+          errorMsg = errorData.error || errorData.message;
+        }
+        
+        throw new Error(errorMsg);
       }
 
       const data = await response.json();
@@ -74,12 +83,12 @@ export default function AiAnalyticsChat() {
       };
 
       setMessages(prev => [...prev, assistantMessage]);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error sending message:', error);
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: 'Извините, произошла ошибка при обработке вашего запроса. Попробуйте еще раз.',
+        content: error?.message || 'Извините, произошла ошибка при обработке вашего запроса. Попробуйте еще раз.',
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, errorMessage]);

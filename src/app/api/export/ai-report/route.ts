@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Загружаем все данные
-    const reports = await prisma.weeklyReport.findMany({
+    const allReports = await prisma.weeklyReport.findMany({
       where: {
         weekIso: {
           in: weeks
@@ -65,6 +65,9 @@ export async function POST(request: NextRequest) {
         weekIso: 'desc'
       }
     });
+
+    // Фильтруем отчеты с существующими пользователями
+    const reports = allReports.filter(r => r.user !== null);
 
     // Проверяем наличие данных
     if (reports.length === 0) {

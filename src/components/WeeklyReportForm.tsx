@@ -47,6 +47,7 @@ export default function WeeklyReportForm({ role, userId, weekIso, onSave }: Week
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
+  const [isReportLocked, setIsReportLocked] = useState(false);
 
   // Состояние формы
   const [baseData, setBaseData] = useState<BaseData>({
@@ -87,6 +88,11 @@ export default function WeeklyReportForm({ role, userId, weekIso, onSave }: Week
       
       if (response.ok) {
         const data = await response.json();
+        
+        // Проверяем, заблокирован ли отчет
+        if (data.baseReport?.isCompleted) {
+          setIsReportLocked(true);
+        }
         
         // Загружаем базовые данные
         if (data.baseReport) {
@@ -139,6 +145,7 @@ export default function WeeklyReportForm({ role, userId, weekIso, onSave }: Week
       const requestBody: any = {
         weekIso,
         role: submitRole,
+        base: baseData, // Добавляем базовые данные (workdays, stress, overtime, notes)
       };
 
       // Добавляем HR или Ops данные в соответствии с ролью
@@ -234,7 +241,8 @@ export default function WeeklyReportForm({ role, userId, weekIso, onSave }: Week
               step="0.5"
               value={baseData.workdays}
               onChange={(e) => setBaseData(prev => ({ ...prev, workdays: parseFloat(e.target.value) || 0 }))}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              disabled={isReportLocked}
+              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
             />
           </div>
 
@@ -248,7 +256,8 @@ export default function WeeklyReportForm({ role, userId, weekIso, onSave }: Week
               max="10"
               value={baseData.stressLevel}
               onChange={(e) => setBaseData(prev => ({ ...prev, stressLevel: parseInt(e.target.value) }))}
-              className="w-full"
+              disabled={isReportLocked}
+              className="w-full disabled:opacity-50 disabled:cursor-not-allowed"
             />
             <div className="flex justify-between text-xs text-gray-500 mt-1">
               <span>Низкий (1)</span>
@@ -264,7 +273,8 @@ export default function WeeklyReportForm({ role, userId, weekIso, onSave }: Week
                 id="overtime"
                 checked={baseData.overtime}
                 onChange={(e) => setBaseData(prev => ({ ...prev, overtime: e.target.checked }))}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                disabled={isReportLocked}
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
               />
               <label htmlFor="overtime" className="ml-2 text-sm font-medium text-gray-700">
                 Были переработки
@@ -282,7 +292,8 @@ export default function WeeklyReportForm({ role, userId, weekIso, onSave }: Week
                   step="0.5"
                   value={baseData.overtimeHours}
                   onChange={(e) => setBaseData(prev => ({ ...prev, overtimeHours: parseFloat(e.target.value) || 0 }))}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  disabled={isReportLocked}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                 />
               </div>
             )}
@@ -297,8 +308,9 @@ export default function WeeklyReportForm({ role, userId, weekIso, onSave }: Week
           <textarea
             value={baseData.notes}
             onChange={(e) => setBaseData(prev => ({ ...prev, notes: e.target.value }))}
+            disabled={isReportLocked}
             rows={3}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
             placeholder="Любые дополнительные комментарии..."
           />
         </div>
@@ -319,7 +331,8 @@ export default function WeeklyReportForm({ role, userId, weekIso, onSave }: Week
                 min="0"
                 value={hrData.interviews}
                 onChange={(e) => setHrData(prev => ({ ...prev, interviews: parseInt(e.target.value) || 0 }))}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={isReportLocked}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
               />
             </div>
 
@@ -332,7 +345,8 @@ export default function WeeklyReportForm({ role, userId, weekIso, onSave }: Week
                 min="0"
                 value={hrData.jobPosts}
                 onChange={(e) => setHrData(prev => ({ ...prev, jobPosts: parseInt(e.target.value) || 0 }))}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={isReportLocked}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
               />
             </div>
 
@@ -345,7 +359,8 @@ export default function WeeklyReportForm({ role, userId, weekIso, onSave }: Week
                 min="0"
                 value={hrData.registered}
                 onChange={(e) => setHrData(prev => ({ ...prev, registered: parseInt(e.target.value) || 0 }))}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={isReportLocked}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
               />
             </div>
 
@@ -359,7 +374,8 @@ export default function WeeklyReportForm({ role, userId, weekIso, onSave }: Week
                 max="7"
                 value={hrData.fullDays}
                 onChange={(e) => setHrData(prev => ({ ...prev, fullDays: parseInt(e.target.value) || 0 }))}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={isReportLocked}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
               />
             </div>
           </div>
@@ -371,8 +387,9 @@ export default function WeeklyReportForm({ role, userId, weekIso, onSave }: Week
             <textarea
               value={hrData.difficult}
               onChange={(e) => setHrData(prev => ({ ...prev, difficult: e.target.value }))}
+              disabled={isReportLocked}
               rows={4}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
               placeholder="Опишите сложные случаи в найме, проблемы с кандидатами..."
             />
           </div>
@@ -381,8 +398,8 @@ export default function WeeklyReportForm({ role, userId, weekIso, onSave }: Week
             <div className="mt-6">
               <button
                 onClick={() => handleSave('hr')}
-                disabled={isSaving}
-                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 flex items-center"
+                disabled={isSaving || isReportLocked}
+                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
               >
                 <Save className="h-4 w-4 mr-2" />
                 {isSaving ? 'Сохранение...' : 'Сохранить HR отчет'}
@@ -392,48 +409,52 @@ export default function WeeklyReportForm({ role, userId, weekIso, onSave }: Week
         </div>
       )}
 
+
       {/* Ops секция */}
       {(role === 'ops' || role === 'mixed') && (
         <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Операционные метрики</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Ops Метрики</h3>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Обработанные сообщения в Trengo
+                Количество сообщений
               </label>
               <input
                 type="number"
                 min="0"
                 value={opsData.messages}
                 onChange={(e) => setOpsData(prev => ({ ...prev, messages: parseInt(e.target.value) || 0 }))}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={isReportLocked}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Решенные тикеты в CRM и Trengo
+                Количество тикетов
               </label>
               <input
                 type="number"
                 min="0"
                 value={opsData.tickets}
                 onChange={(e) => setOpsData(prev => ({ ...prev, tickets: parseInt(e.target.value) || 0 }))}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={isReportLocked}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Количество заказов по городу
+                Количество заказов
               </label>
               <input
                 type="number"
                 min="0"
                 value={opsData.orders}
                 onChange={(e) => setOpsData(prev => ({ ...prev, orders: parseInt(e.target.value) || 0 }))}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={isReportLocked}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
               />
             </div>
 
@@ -447,45 +468,46 @@ export default function WeeklyReportForm({ role, userId, weekIso, onSave }: Week
                 max="7"
                 value={opsData.fullDays}
                 onChange={(e) => setOpsData(prev => ({ ...prev, fullDays: parseInt(e.target.value) || 0 }))}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={isReportLocked}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
               />
             </div>
           </div>
 
-          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Сложные ситуации с клинерами
-              </label>
-              <textarea
-                value={opsData.diffCleaners}
-                onChange={(e) => setOpsData(prev => ({ ...prev, diffCleaners: e.target.value }))}
-                rows={4}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Опишите сложные случаи с клинерами..."
-              />
-            </div>
+          <div className="mt-6">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Сложности с клинерами
+            </label>
+            <textarea
+              value={opsData.diffCleaners}
+              onChange={(e) => setOpsData(prev => ({ ...prev, diffCleaners: e.target.value }))}
+              disabled={isReportLocked}
+              rows={3}
+              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+              placeholder="Опишите проблемы с клинерами..."
+            />
+          </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Сложные ситуации с клиентами
-              </label>
-              <textarea
-                value={opsData.diffClients}
-                onChange={(e) => setOpsData(prev => ({ ...prev, diffClients: e.target.value }))}
-                rows={4}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Опишите сложные случаи с клиентами..."
-              />
-            </div>
+          <div className="mt-6">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Сложности с клиентами
+            </label>
+            <textarea
+              value={opsData.diffClients}
+              onChange={(e) => setOpsData(prev => ({ ...prev, diffClients: e.target.value }))}
+              disabled={isReportLocked}
+              rows={3}
+              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+              placeholder="Опишите проблемы с клиентами..."
+            />
           </div>
 
           {role !== 'mixed' && (
             <div className="mt-6">
               <button
                 onClick={() => handleSave('ops')}
-                disabled={isSaving}
-                className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 disabled:opacity-50 flex items-center"
+                disabled={isSaving || isReportLocked}
+                className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
               >
                 <Save className="h-4 w-4 mr-2" />
                 {isSaving ? 'Сохранение...' : 'Сохранить Ops отчет'}
@@ -502,8 +524,8 @@ export default function WeeklyReportForm({ role, userId, weekIso, onSave }: Week
           <div className="flex space-x-4">
             <button
               onClick={() => handleSave('hr')}
-              disabled={isSaving}
-              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 flex items-center"
+              disabled={isSaving || isReportLocked}
+              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
             >
               <Save className="h-4 w-4 mr-2" />
               {isSaving ? 'Сохранение...' : 'Сохранить HR отчет'}
@@ -511,12 +533,25 @@ export default function WeeklyReportForm({ role, userId, weekIso, onSave }: Week
             
             <button
               onClick={() => handleSave('ops')}
-              disabled={isSaving}
-              className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 disabled:opacity-50 flex items-center"
+              disabled={isSaving || isReportLocked}
+              className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
             >
               <Save className="h-4 w-4 mr-2" />
               {isSaving ? 'Сохранение...' : 'Сохранить Ops отчет'}
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Предупреждение если отчет заблокирован */}
+      {isReportLocked && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex items-start">
+          <AlertCircle className="h-5 w-5 text-yellow-600 mr-3 mt-0.5 flex-shrink-0" />
+          <div>
+            <h4 className="font-medium text-yellow-900">Отчет уже сохранен</h4>
+            <p className="text-sm text-yellow-700 mt-1">
+              Этот отчет уже был сохранен и заблокирован. Вы сможете заполнить новый отчет в понедельник.
+            </p>
           </div>
         </div>
       )}

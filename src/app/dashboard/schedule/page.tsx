@@ -74,9 +74,6 @@ function SchedulePage() {
             // Устанавливаем тип расписания
             if (schedule.scheduleType) {
               setValue('scheduleType', schedule.scheduleType as ScheduleType);
-            } else if (schedule.isFlexible) {
-              // Обратная совместимость: если isFlexible=true, то FLEXIBLE
-              setValue('scheduleType', 'FLEXIBLE');
             }
             
             // Заполняем все дни
@@ -88,7 +85,6 @@ function SchedulePage() {
             });
             
             if (schedule.weeklyNotes) setValue('weeklyNotes', schedule.weeklyNotes);
-            if (schedule.isFlexible !== undefined) setValue('isFlexible', schedule.isFlexible);
           }
         }
       } catch (error) {
