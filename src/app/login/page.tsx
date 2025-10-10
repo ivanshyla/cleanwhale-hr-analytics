@@ -25,10 +25,12 @@ export default function LoginPage() {
 
       if (response.ok) {
         // Токен уже сохранен в cookie на сервере
-        // Перенаправляем на дашборд или на страницу, с которой пришли
+        // Используем window.location для гарантированной перезагрузки с новым cookie
         const urlParams = new URLSearchParams(window.location.search);
         const redirectTo = urlParams.get('redirect') || '/dashboard';
-        router.push(redirectTo);
+        
+        // Принудительная перезагрузка страницы для обновления cookie
+        window.location.href = redirectTo;
       } else {
         setError(data.message || 'Ошибка входа');
       }
