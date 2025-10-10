@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { BarChart3, Eye, EyeOff } from 'lucide-react';
 import { apiPost } from '@/lib/api-client';
 
@@ -45,10 +46,13 @@ export default function LoginPage() {
         <div>
           <div className="flex justify-center">
             <Link href="/" className="hover:opacity-80 transition-opacity">
-              <img 
+              <Image 
                 src="/cleanwhale-logo-big.png" 
                 alt="CleanWhale" 
-                className="h-20 w-auto rounded-xl"
+                width={80}
+                height={80}
+                className="rounded-xl"
+                priority
               />
             </Link>
           </div>

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { ArrowRight, BarChart3, Users, TrendingUp } from 'lucide-react';
 
 export default function HomePage() {
@@ -9,10 +10,13 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <Link href="/" className="flex items-center hover:opacity-80 transition-opacity">
-              <img 
+              <Image 
                 src="/cleanwhale-logo.png" 
                 alt="CleanWhale" 
-                className="h-10 w-10 rounded-lg mr-3"
+                width={40}
+                height={40}
+                className="rounded-lg mr-3"
+                priority
               />
               <div>
                 <span className="text-xl font-bold cw-text-primary">
