@@ -163,7 +163,7 @@ export async function GET(request: NextRequest) {
     }
 
     // ✅ Параллельные запросы
-    const [total, schedules] = await Promise.all([
+    const [total, allSchedules] = await Promise.all([
       prisma.workSchedule.count({ where }),
       prisma.workSchedule.findMany({
         where,
@@ -210,6 +210,9 @@ export async function GET(request: NextRequest) {
         take,
       }),
     ]);
+
+    // Фильтруем расписания с существующими пользователями
+    const schedules = allSchedules.filter(s => s.user !== null);
 
     // ✅ Возвращаем с пагинацией
     return NextResponse.json(createPaginatedResponse(schedules, page, limit, total));

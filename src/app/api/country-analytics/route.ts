@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
 
     // Получаем все отчеты за неделю с метриками и данными пользователей
     // Оптимизируем select - загружаем только нужные поля
-    const weeklyReports = await prisma.weeklyReport.findMany({
+    const allReports = await prisma.weeklyReport.findMany({
       where: { weekIso },
       select: {
         id: true,
@@ -77,6 +77,9 @@ export async function GET(request: NextRequest) {
         },
       }
     });
+
+    // Фильтруем отчеты с существующими пользователями
+    const weeklyReports = allReports.filter(r => r.user !== null);
 
     // 1. РАЗРЕЗ ПО СОТРУДНИКАМ
     const byEmployee = weeklyReports.map(report => ({
