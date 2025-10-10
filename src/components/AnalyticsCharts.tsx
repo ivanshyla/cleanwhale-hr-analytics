@@ -1,9 +1,26 @@
 'use client';
 
+// ✅ Оптимизация: динамический импорт recharts для уменьшения бандла (-150KB)
 import { 
-  BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  ScatterChart, Scatter, PieChart, Pie, Cell, ComposedChart, Area, AreaChart
-} from 'recharts';
+  DynamicBarChart as BarChart,
+  DynamicLineChart as LineChart,
+  DynamicAreaChart as AreaChart,
+  DynamicPieChart as PieChart,
+  DynamicComposedChart as ComposedChart,
+  DynamicScatterChart as ScatterChart,
+  Bar,
+  Line,
+  Area,
+  Pie,
+  Cell,
+  Scatter,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer
+} from '@/components/DynamicChart';
 
 interface ChartData {
   date: string;

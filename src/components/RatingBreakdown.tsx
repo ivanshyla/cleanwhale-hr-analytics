@@ -1,6 +1,16 @@
 'use client';
 
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+// ✅ Оптимизация: динамический импорт recharts для уменьшения бандла (-100KB)
+import { 
+  DynamicBarChart as BarChart,
+  Bar,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer
+} from '@/components/DynamicChart';
 
 interface RatingBreakdownProps {
   breakdown: Array<{
@@ -52,8 +62,8 @@ export default function RatingBreakdown({ breakdown, components }: RatingBreakdo
               />
               <YAxis domain={[0, 100]} />
               <Tooltip 
-                formatter={(value) => [`${value}/100`, 'Баллы']}
-                labelFormatter={(label) => `Компонент: ${label}`}
+                formatter={(value: any) => [`${value}/100`, 'Баллы']}
+                labelFormatter={(label: any) => `Компонент: ${label}`}
               />
               <Bar dataKey="value" radius={[4, 4, 0, 0]}>
                 {componentData.map((entry, index) => (

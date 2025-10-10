@@ -1,7 +1,19 @@
 'use client';
 
 import { useState } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
+// ✅ Оптимизация: динамический импорт recharts для уменьшения бандла (-100KB)
+import { 
+  DynamicBarChart as BarChart,
+  DynamicLineChart as LineChart,
+  Bar,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer
+} from '@/components/DynamicChart';
 import { ArrowUpDown, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
 interface ComparisonUnit {
@@ -131,7 +143,7 @@ export default function UnitComparison({
             <YAxis tick={{ fontSize: 11 }} />
             <Tooltip 
               formatter={(value: number) => [value.toFixed(1), metric]}
-              labelFormatter={(label) => `Юнит: ${label}`}
+              labelFormatter={(label: any) => `Юнит: ${label}`}
             />
             <Bar 
               dataKey="value" 
