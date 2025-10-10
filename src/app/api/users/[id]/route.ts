@@ -59,6 +59,7 @@ export async function PUT(
   try {
     const data = await request.json();
     const { login, password, email, name, role, city, salary, currency, isActive } = data;
+    const normalizedLogin = typeof login === 'string' ? login.trim().toLowerCase() : undefined;
 
     // Проверяем существование пользователя
     const existingUser = await prisma.user.findUnique({
@@ -73,9 +74,12 @@ export async function PUT(
     }
 
     // Проверяем уникальность логина, если он изменился
-    if (login && login !== existingUser.login) {
-      const userWithLogin = await prisma.user.findUnique({
-        where: { login },
+    if (normalizedLogin && normalizedLogin !== existingUser.login) {
+      const userWithLogin = await prisma.user.findFirst({
+        where: {
+          login: { equals: normalizedLogin, mode: 'insensitive' },
+          NOT: { id: params.id },
+        },
       });
 
       if (userWithLogin) {
@@ -88,7 +92,7 @@ export async function PUT(
 
     // Подготавливаем данные для обновления
     const updateData: any = {
-      login: login ?? existingUser.login,
+      login: normalizedLogin ?? existingUser.login,
       email: email ?? existingUser.email,
       name: name ?? existingUser.name,
       role: role ?? existingUser.role,

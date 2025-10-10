@@ -9,8 +9,9 @@ import { logger } from '@/lib/logger';
 export async function POST(request: NextRequest) {
   try {
     const { login, password } = await request.json();
+    const normalizedLogin = typeof login === 'string' ? login.trim().toLowerCase() : '';
 
-    if (!login || !password) {
+    if (!normalizedLogin || !password || String(password).trim() === '') {
       return NextResponse.json(
         { message: 'Логин и пароль обязательны' },
         { status: 400 }
@@ -18,10 +19,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Поиск пользователя
-    logger.info('Login attempt', { login });
-    
-    const user = await prisma.user.findUnique({
-      where: { login },
+    logger.info('Login attempt', { login: normalizedLogin });
+
+    const user = await prisma.user.findFirst({
+      where: {
+        login: { equals: normalizedLogin, mode: 'insensitive' },
+      },
     });
 
     if (!user || !user.isActive) {

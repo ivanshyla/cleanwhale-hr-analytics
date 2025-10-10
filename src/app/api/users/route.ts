@@ -74,6 +74,7 @@ export async function POST(request: NextRequest) {
     console.log('[Create User] Received request');
     const data = await request.json();
     const { login, password, email, name, role, city, salary, currency = 'PLN', secret } = data;
+    const normalizedLogin = typeof login === 'string' ? login.trim().toLowerCase() : '';
     console.log(`[Create User] Data parsed for login: ${login}`);
 
     // Временная проверка секрета для первой регистрации
@@ -88,7 +89,7 @@ export async function POST(request: NextRequest) {
     }
     console.log('[Create User] Authorization check passed');
 
-    if (!login || !password || !name || !role || !city) {
+    if (!normalizedLogin || !password || !name || !role || !city) {
       console.error('[Create User] Missing required fields');
       return NextResponse.json(
         { message: 'Обязательные поля: login, password, name, role, city' },
@@ -98,9 +99,11 @@ export async function POST(request: NextRequest) {
     console.log('[Create User] All required fields are present');
 
     // Проверяем, не существует ли уже пользователь с таким логином
-    console.log(`[Create User] Checking for existing user: ${login}`);
-    const existingUser = await prisma.user.findUnique({
-      where: { login },
+    console.log(`[Create User] Checking for existing user: ${normalizedLogin}`);
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        login: { equals: normalizedLogin, mode: 'insensitive' },
+      },
     });
     console.log(`[Create User] Prisma check for existing user completed`);
 
@@ -117,10 +120,10 @@ export async function POST(request: NextRequest) {
     const hashedPassword = await bcrypt.hash(password, 10);
     console.log(`[Create User] Password hashed for: ${login}`);
 
-    console.log(`[Create User] Attempting to create user in database: ${login}`);
+    console.log(`[Create User] Attempting to create user in database: ${normalizedLogin}`);
     const user = await prisma.user.create({
       data: {
-        login,
+        login: normalizedLogin,
         password: hashedPassword,
         email,
         name,

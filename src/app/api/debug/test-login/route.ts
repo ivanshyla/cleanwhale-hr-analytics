@@ -12,12 +12,15 @@ export async function POST(request: NextRequest) {
   
   try {
     const { login, password } = await request.json();
-    
-    console.log('🔍 Testing login for:', login);
-    
-    // Поиск пользователя
-    const user = await prisma.user.findUnique({
-      where: { login },
+    const normalizedLogin = typeof login === 'string' ? login.trim().toLowerCase() : '';
+
+    console.log('🔍 Testing login for:', normalizedLogin);
+
+    // Поиск пользователя (регистронезависимый)
+    const user = await prisma.user.findFirst({
+      where: {
+        login: { equals: normalizedLogin, mode: 'insensitive' },
+      },
     });
     
     if (!user) {
