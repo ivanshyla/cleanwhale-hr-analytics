@@ -265,12 +265,19 @@ model UserSchedule {
   @@index([userId])
 }
 
+enum ScheduleType {
+  STANDARD      // Стандартная рабочая неделя (5 дней)
+  FLEXIBLE      // Гибкий график
+  IRREGULAR_7DAY // Ненормированная рабочая неделя, 7 дней
+}
+
 model WorkSchedule {
-  id             Int      @id @default(autoincrement())
+  id             Int          @id @default(autoincrement())
   userId         String
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   weekStartDate  DateTime
   weekEndDate    DateTime
+  scheduleType   ScheduleType @default(STANDARD) // Тип расписания
   mondayStart    String?
   mondayEnd      String?
   mondayNote     String?
@@ -293,9 +300,9 @@ model WorkSchedule {
   sundayEnd      String?
   sundayNote     String?
   weeklyNotes    String?
-  isFlexible     Boolean  @default(false)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  isFlexible     Boolean      @default(false) // Сохраняем для обратной совместимости
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 
   @@unique([userId, weekStartDate])
   @@map("work_schedules")

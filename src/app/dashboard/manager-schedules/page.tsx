@@ -15,10 +15,13 @@ import {
 } from 'lucide-react';
 import { useAuth, withAuth } from '@/contexts/AuthContext';
 
+type ScheduleType = 'STANDARD' | 'FLEXIBLE' | 'IRREGULAR_7DAY';
+
 interface ManagerSchedule {
   id: string;
   weekStartDate: string;
   weekEndDate: string;
+  scheduleType?: ScheduleType; // Новое поле
   user: {
     id: string;
     name: string;
@@ -48,7 +51,7 @@ interface ManagerSchedule {
   sundayEnd: string | null;
   sundayNote: string | null;
   weeklyNotes: string | null;
-  isFlexible: boolean;
+  isFlexible: boolean; // Сохраняем для обратной совместимости
 }
 
 interface ManagerSchedulesResponse {
@@ -387,15 +390,30 @@ function ManagerSchedulesPage() {
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-green-600">
-              {filteredSchedules.filter(s => s.isFlexible).length}
+              {filteredSchedules.filter(s => {
+                const type = s.scheduleType || (s.isFlexible ? 'FLEXIBLE' : 'STANDARD');
+                return type === 'STANDARD';
+              }).length}
+            </div>
+            <div className="text-sm text-gray-600">Стандартный график</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-purple-600">
+              {filteredSchedules.filter(s => {
+                const type = s.scheduleType || (s.isFlexible ? 'FLEXIBLE' : 'STANDARD');
+                return type === 'FLEXIBLE';
+              }).length}
             </div>
             <div className="text-sm text-gray-600">Гибкий график</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-purple-600">
-              {filteredSchedules.filter(s => !s.isFlexible).length}
+            <div className="text-2xl font-bold text-orange-600">
+              {filteredSchedules.filter(s => {
+                const type = s.scheduleType || (s.isFlexible ? 'FLEXIBLE' : 'STANDARD');
+                return type === 'IRREGULAR_7DAY';
+              }).length}
             </div>
-            <div className="text-sm text-gray-600">Фиксированный график</div>
+            <div className="text-sm text-gray-600">Ненормированная, 7 дней</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-orange-600">
@@ -456,7 +474,15 @@ function ManagerSchedulesPage() {
                 <div className="flex items-center space-x-2">
                   <Clock className="h-4 w-4 text-gray-400" />
                   <span className="text-sm text-gray-500">
-                    {schedule.isFlexible ? 'Гибкий график' : 'Фиксированный'}
+                    {(() => {
+                      const type = schedule.scheduleType || (schedule.isFlexible ? 'FLEXIBLE' : 'STANDARD');
+                      switch(type) {
+                        case 'STANDARD': return '📅 Стандартный график';
+                        case 'FLEXIBLE': return '🔄 Гибкий график';
+                        case 'IRREGULAR_7DAY': return '⏰ Ненормированная, 7 дней';
+                        default: return 'Неизвестный тип';
+                      }
+                    })()}
                   </span>
                   {expandedManager === schedule.id ? (
                     <ChevronDown className="h-5 w-5 text-gray-400" />

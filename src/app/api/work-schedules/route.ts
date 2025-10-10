@@ -23,6 +23,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const {
       weekStartDate,
+      scheduleType, // Новое поле: STANDARD, FLEXIBLE, IRREGULAR_7DAY
       mondayStart, mondayEnd, mondayNote,
       tuesdayStart, tuesdayEnd, tuesdayNote,
       wednesdayStart, wednesdayEnd, wednesdayNote,
@@ -43,6 +44,7 @@ export async function POST(request: NextRequest) {
     const schedule = await prisma.workSchedule.upsert({
       where: { userId_weekStartDate: { userId: user.userId, weekStartDate: weekStart } },
       update: {
+        scheduleType: scheduleType || 'STANDARD', // Устанавливаем тип расписания
         mondayStart: mondayStart || null,
         mondayEnd: mondayEnd || null,
         mondayNote: mondayNote || null,
@@ -73,6 +75,7 @@ export async function POST(request: NextRequest) {
         userId: user.userId,
         weekStartDate: weekStart,
         weekEndDate,
+        scheduleType: scheduleType || 'STANDARD', // Устанавливаем тип расписания
         mondayStart: mondayStart || null,
         mondayEnd: mondayEnd || null,
         mondayNote: mondayNote || null,

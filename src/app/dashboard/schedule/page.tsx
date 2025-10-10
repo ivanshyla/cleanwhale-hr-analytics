@@ -6,8 +6,11 @@ import { useForm } from 'react-hook-form';
 import { Calendar, Save, Clock, Sun, Moon, Coffee, Briefcase, Home, Zap, CheckCircle } from 'lucide-react';
 import { useAuth, withAuth } from '@/contexts/AuthContext';
 
+type ScheduleType = 'STANDARD' | 'FLEXIBLE' | 'IRREGULAR_7DAY';
+
 interface ScheduleForm {
   weekStartDate: string; // Monday YYYY-MM-DD
+  scheduleType: ScheduleType; // Тип расписания
   mondayStart?: string; mondayEnd?: string; mondayNote?: string;
   tuesdayStart?: string; tuesdayEnd?: string; tuesdayNote?: string;
   wednesdayStart?: string; wednesdayEnd?: string; wednesdayNote?: string;
@@ -16,7 +19,7 @@ interface ScheduleForm {
   saturdayStart?: string; saturdayEnd?: string; saturdayNote?: string;
   sundayStart?: string; sundayEnd?: string; sundayNote?: string;
   weeklyNotes?: string;
-  isFlexible?: boolean;
+  isFlexible?: boolean; // Оставляем для обратной совместимости
 }
 
 function getCurrentMonday(): string {
@@ -37,6 +40,7 @@ function SchedulePage() {
   const { register, handleSubmit, watch, setValue } = useForm<ScheduleForm>({
     defaultValues: { 
       weekStartDate: getCurrentMonday(),
+      scheduleType: 'STANDARD',
       mondayStart: '09:00', mondayEnd: '18:00',
       tuesdayStart: '09:00', tuesdayEnd: '18:00',
       wednesdayStart: '09:00', wednesdayEnd: '18:00',
@@ -67,6 +71,14 @@ function SchedulePage() {
           if (data.schedules && data.schedules.length > 0) {
             const schedule = data.schedules[0];
             setValue('weekStartDate', monday);
+            
+            // Устанавливаем тип расписания
+            if (schedule.scheduleType) {
+              setValue('scheduleType', schedule.scheduleType as ScheduleType);
+            } else if (schedule.isFlexible) {
+              // Обратная совместимость: если isFlexible=true, то FLEXIBLE
+              setValue('scheduleType', 'FLEXIBLE');
+            }
             
             // Заполняем все дни
             const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
@@ -153,29 +165,13 @@ function SchedulePage() {
   };
 
   const getDayColor = (key: string) => {
-    const colors: Record<string, string> = {
-      monday: 'from-blue-50 to-blue-100 border-blue-200',
-      tuesday: 'from-green-50 to-green-100 border-green-200',
-      wednesday: 'from-yellow-50 to-yellow-100 border-yellow-200',
-      thursday: 'from-purple-50 to-purple-100 border-purple-200',
-      friday: 'from-pink-50 to-pink-100 border-pink-200',
-      saturday: 'from-orange-50 to-orange-100 border-orange-200',
-      sunday: 'from-red-50 to-red-100 border-red-200',
-    };
-    return colors[key] || 'from-gray-50 to-gray-100 border-gray-200';
+    // Единый нейтральный цвет для всех дней
+    return 'from-gray-50 to-gray-100 border-gray-300';
   };
 
   const getTextColor = (key: string) => {
-    const colors: Record<string, string> = {
-      monday: 'text-blue-800',
-      tuesday: 'text-green-800',
-      wednesday: 'text-yellow-800',
-      thursday: 'text-purple-800',
-      friday: 'text-pink-800',
-      saturday: 'text-orange-800',
-      sunday: 'text-red-800',
-    };
-    return colors[key] || 'text-gray-800';
+    // Единый цвет текста для всех дней
+    return 'text-gray-800';
   };
 
   const days = [
@@ -247,6 +243,63 @@ function SchedulePage() {
               </div>
             </div>
             
+            {/* Тип расписания */}
+            <div className="mt-6">
+              <label className="block text-sm font-medium text-gray-700 mb-3">📋 Тип расписания:</label>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <label className={`flex items-center p-4 border-2 rounded-xl cursor-pointer transition-all ${
+                  watchedValues.scheduleType === 'STANDARD' 
+                    ? 'bg-blue-50 border-blue-500 ring-2 ring-blue-200' 
+                    : 'bg-white border-gray-300 hover:border-blue-300'
+                }`}>
+                  <input 
+                    type="radio" 
+                    value="STANDARD" 
+                    {...register('scheduleType')} 
+                    className="mr-3"
+                  />
+                  <div>
+                    <div className="font-semibold text-gray-900">📅 Стандартная неделя</div>
+                    <div className="text-xs text-gray-600 mt-1">Обычная рабочая неделя (5 дней)</div>
+                  </div>
+                </label>
+                
+                <label className={`flex items-center p-4 border-2 rounded-xl cursor-pointer transition-all ${
+                  watchedValues.scheduleType === 'FLEXIBLE' 
+                    ? 'bg-purple-50 border-purple-500 ring-2 ring-purple-200' 
+                    : 'bg-white border-gray-300 hover:border-purple-300'
+                }`}>
+                  <input 
+                    type="radio" 
+                    value="FLEXIBLE" 
+                    {...register('scheduleType')} 
+                    className="mr-3"
+                  />
+                  <div>
+                    <div className="font-semibold text-gray-900">🔄 Гибкий график</div>
+                    <div className="text-xs text-gray-600 mt-1">Свободный режим работы</div>
+                  </div>
+                </label>
+                
+                <label className={`flex items-center p-4 border-2 rounded-xl cursor-pointer transition-all ${
+                  watchedValues.scheduleType === 'IRREGULAR_7DAY' 
+                    ? 'bg-orange-50 border-orange-500 ring-2 ring-orange-200' 
+                    : 'bg-white border-gray-300 hover:border-orange-300'
+                }`}>
+                  <input 
+                    type="radio" 
+                    value="IRREGULAR_7DAY" 
+                    {...register('scheduleType')} 
+                    className="mr-3"
+                  />
+                  <div>
+                    <div className="font-semibold text-gray-900">⏰ Ненормированная, 7 дней</div>
+                    <div className="text-xs text-gray-600 mt-1">Работа без четкого графика</div>
+                  </div>
+                </label>
+              </div>
+            </div>
+
             {/* Быстрые действия */}
             <div className="mt-4 flex flex-wrap gap-3">
               <button
