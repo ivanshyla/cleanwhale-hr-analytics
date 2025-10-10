@@ -8,12 +8,37 @@ export function middleware(request: NextRequest) {
     pathname === '/login' ||
     pathname === '/' ||
     pathname.startsWith('/api/auth/login') ||
-    pathname.startsWith('/api/debug/') ||
     pathname.startsWith('/_next/') ||
     pathname.startsWith('/public/') ||
     pathname.includes('.') // статические файлы
   ) {
     return NextResponse.next();
+  }
+
+  // ❌ КРИТИЧНО: Debug endpoints полностью заблокированы в production
+  if (pathname.startsWith('/api/debug/')) {
+    if (process.env.NODE_ENV === 'production') {
+      return NextResponse.json(
+        { error: 'Debug endpoints disabled in production' },
+        { status: 404 }
+      );
+    }
+    // В dev требуем авторизацию и ADMIN роль
+    const token = request.cookies.get('token')?.value;
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    try {
+      const jwt = require('jsonwebtoken');
+      const { getJwtSecret } = require('@/lib/env');
+      const decoded = jwt.verify(token, getJwtSecret()) as any;
+      if (decoded.role !== 'ADMIN') {
+        return NextResponse.json({ error: 'Admin only' }, { status: 403 });
+      }
+      return NextResponse.next();
+    } catch {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    }
   }
 
   // Для всех страниц /dashboard/** требуем авторизацию

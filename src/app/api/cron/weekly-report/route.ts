@@ -12,10 +12,17 @@ import { sendTelegramMessage, isTelegramConfigured } from '@/lib/telegram';
  */
 export async function GET(request: NextRequest) {
   try {
+    // ✅ КРИТИЧНО: CRON_SECRET обязателен, без дефолта
+    const cronSecret = process.env.CRON_SECRET;
+    if (!cronSecret) {
+      console.error('❌ CRON_SECRET not configured');
+      return NextResponse.json({ 
+        error: 'Server misconfiguration' 
+      }, { status: 500 });
+    }
+    
     // Проверяем секретный ключ для безопасности
     const authHeader = request.headers.get('authorization');
-    const cronSecret = process.env.CRON_SECRET || 'your-secret-key-here';
-    
     if (authHeader !== `Bearer ${cronSecret}`) {
       console.error('❌ Unauthorized cron request');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
