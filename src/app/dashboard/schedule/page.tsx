@@ -19,7 +19,6 @@ interface ScheduleForm {
   saturdayStart?: string; saturdayEnd?: string; saturdayNote?: string;
   sundayStart?: string; sundayEnd?: string; sundayNote?: string;
   weeklyNotes?: string;
-  isFlexible?: boolean; // Оставляем для обратной совместимости
 }
 
 function getCurrentMonday(): string {
@@ -307,7 +306,7 @@ function SchedulePage() {
                 onClick={setWorkWeek}
                 className="inline-flex items-center px-4 py-2 bg-green-100 text-green-800 rounded-lg hover:bg-green-200 transition-colors text-sm font-medium"
               >
-                ⚡ Стандартная рабочая неделя
+                ⚡ Заполнить как стандартная неделя
               </button>
               <button
                 type="button"
@@ -434,23 +433,6 @@ function SchedulePage() {
                 />
               </div>
               
-              <div className="flex items-center">
-                <label className="flex items-center cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    {...register('isFlexible')} 
-                    className="sr-only"
-                  />
-                  <div className="relative">
-                    <div className={`w-12 h-6 rounded-full transition-colors ${watchedValues.isFlexible ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                    <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${watchedValues.isFlexible ? 'translate-x-6' : ''}`}></div>
-                  </div>
-                  <span className="ml-3 text-sm font-medium text-gray-700 flex items-center">
-                    <Zap className="h-4 w-4 mr-1" />
-                    Гибкий график
-                  </span>
-                </label>
-              </div>
             </div>
           </div>
 
