@@ -1,134 +1,45 @@
 #!/usr/bin/env node
-import https from 'https';
-import { config } from 'dotenv';
 
-config();
+/**
+ * Скрипт для обновления DATABASE_URL в Vercel с оптимизированными параметрами
+ * для совместимости Prisma + PgBouncer
+ */
 
-const token = process.env.VERCEL_TOKEN;
-const projectId = process.env.VERCEL_PROJECT_ID;
+import { execSync } from 'child_process';
 
-if (!token) {
-  console.error('❌ VERCEL_TOKEN не найден в .env');
-  console.log('💡 Получи токен: https://vercel.com/account/tokens');
-  process.exit(1);
-}
+const OPTIMIZED_DATABASE_URL = 'postgresql://postgres.msluhxhvayzgxfioxgdi:zYjbam-hahheh-mawmo2@aws-1-eu-central-1.pooler.supabase.com:6543/postgres?pgbouncer=true&connect_timeout=30&statement_cache_size=0';
 
-if (!projectId) {
-  console.error('❌ VERCEL_PROJECT_ID не найден в .env');
-  console.log('💡 Найди ID проекта на странице проекта в Vercel');
-  process.exit(1);
-}
+const environments = ['production', 'preview', 'development'];
 
-const newDatabaseUrl = 'postgresql://postgres.msluhxhvayzgxfioxgdi:zYjbam-hahheh-mawmo2@aws-1-eu-central-1.pooler.supabase.com:6543/postgres?pgbouncer=true&connect_timeout=30&statement_cache_size=0';
+console.log('🔧 Обновление DATABASE_URL для всех окружений Vercel...\n');
 
-console.log('🔧 Обновляю DATABASE_URL на Vercel...\n');
-
-// Функция для HTTP запросов
-function request(options, payload) {
-  return new Promise((resolve, reject) => {
-    const req = https.request(options, (res) => {
-      let body = '';
-      res.on('data', (chunk) => body += chunk);
-      res.on('end', () => {
-        if (res.statusCode >= 200 && res.statusCode < 300) {
-          resolve({ status: res.statusCode, body: JSON.parse(body || '{}') });
-        } else {
-          reject(new Error(`HTTP ${res.statusCode}: ${body}`));
-        }
-      });
-    });
-    req.on('error', reject);
-    if (payload) req.write(JSON.stringify(payload));
-    req.end();
-  });
-}
-
-async function main() {
+for (const env of environments) {
   try {
-    // 1. Получаем текущие env variables
-    console.log('📋 Получаю текущие переменные...');
-    const { body: envData } = await request({
-      hostname: 'api.vercel.com',
-      path: `/v9/projects/${projectId}/env`,
-      method: 'GET',
-      headers: { 'Authorization': `Bearer ${token}` },
-    });
-
-    const databaseUrlVars = envData.envs.filter(env => env.key === 'DATABASE_URL');
+    console.log(`📝 Обновление ${env}...`);
     
-    if (databaseUrlVars.length === 0) {
-      console.log('⚠️  DATABASE_URL не найден, создаю новый...\n');
-    } else {
-      console.log(`✅ Найдено ${databaseUrlVars.length} DATABASE_URL\n`);
-      
-      // Удаляем старые
-      console.log('🗑️  Удаляю старые DATABASE_URL...');
-      for (const envVar of databaseUrlVars) {
-        await request({
-          hostname: 'api.vercel.com',
-          path: `/v9/projects/${projectId}/env/${envVar.id}`,
-          method: 'DELETE',
-          headers: { 'Authorization': `Bearer ${token}` },
-        });
-        console.log(`   ✅ Удален: ${envVar.target?.join(', ') || 'all'}`);
-      }
-      console.log('');
+    // Удаляем старую переменную
+    try {
+      execSync(`vercel env rm DATABASE_URL ${env} --yes`, { stdio: 'pipe' });
+      console.log(`  ✅ Удален старый DATABASE_URL для ${env}`);
+    } catch (error) {
+      console.log(`  ⚠️  Старый DATABASE_URL для ${env} не найден или уже удален`);
     }
-
-    // 2. Создаем новые DATABASE_URL для всех окружений
-    console.log('✨ Создаю новые DATABASE_URL со statement_cache_size=0...');
     
-    for (const target of ['production', 'preview', 'development']) {
-      await request({
-        hostname: 'api.vercel.com',
-        path: `/v10/projects/${projectId}/env`,
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      }, {
-        key: 'DATABASE_URL',
-        value: newDatabaseUrl,
-        type: 'encrypted',
-        target: [target],
-      });
-      console.log(`   ✅ ${target}`);
-    }
-
-    console.log('\n✅ DATABASE_URL обновлен на всех окружениях!\n');
-
-    // 3. Запускаем redeploy
-    console.log('🚀 Запускаю redeploy...');
+    // Добавляем новую переменную
+    execSync(`echo '${OPTIMIZED_DATABASE_URL}' | vercel env add DATABASE_URL ${env}`, { stdio: 'pipe' });
+    console.log(`  ✅ Добавлен оптимизированный DATABASE_URL для ${env}`);
     
-    const { body: deployment } = await request({
-      hostname: 'api.vercel.com',
-      path: `/v13/deployments`,
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    }, {
-      name: 'cleanwhale-hr-analytics',
-      project: projectId,
-      target: 'production',
-      gitSource: {
-        type: 'github',
-        ref: 'main',
-      },
-    });
-
-    console.log(`✅ Deployment запущен: ${deployment.id}`);
-    console.log(`🔗 URL: https://vercel.com/ivanshyla/cleanwhale-hr-analytics/deployments/${deployment.id}`);
-    console.log('\n⏱️  Подожди 1-2 минуты пока deployment завершится...');
-    console.log('✅ После этого логин заработает!\n');
-
   } catch (error) {
-    console.error('\n❌ Ошибка:', error.message);
-    process.exit(1);
+    console.error(`  ❌ Ошибка при обновлении ${env}:`, error.message);
   }
 }
 
-main();
-
+console.log('\n🎉 Обновление завершено!');
+console.log('\n📋 Что было исправлено:');
+console.log('  • Добавлен pgbouncer=true для использования PgBouncer');
+console.log('  • Добавлен connect_timeout=30 для таймаута подключения');
+console.log('  • Добавлен statement_cache_size=0 для отключения prepared statements');
+console.log('  • Используется pooler-хост на порту 6543');
+console.log('\n🚀 Теперь нужно сделать redeploy для применения изменений:');
+console.log('  git commit --allow-empty -m "trigger redeploy for DATABASE_URL fix"');
+console.log('  git push');

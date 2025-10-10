@@ -15,18 +15,25 @@ class CacheManager {
 
   constructor() {
     // Проверяем наличие Redis URL
-    if (process.env.REDIS_URL || process.env.UPSTASH_REDIS_REST_URL) {
+    if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
       this.initRedis();
+    } else {
+      console.log('ℹ️ Redis not configured, using memory cache only');
     }
   }
 
   private async initRedis() {
     try {
-      // Пытаемся использовать Upstash Redis
-      const { Redis } = await import('@upstash/redis');
-      this.redisClient = Redis.fromEnv();
-      this.useRedis = true;
-      console.log('✅ Redis cache initialized');
+      // Пытаемся использовать Upstash Redis только если есть переменные окружения
+      if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+        const { Redis } = await import('@upstash/redis');
+        this.redisClient = Redis.fromEnv();
+        this.useRedis = true;
+        console.log('✅ Redis cache initialized');
+      } else {
+        console.log('ℹ️ Redis not configured, using memory cache');
+        this.useRedis = false;
+      }
     } catch (error) {
       console.warn('⚠️ Redis not available, using memory cache:', error);
       this.useRedis = false;
