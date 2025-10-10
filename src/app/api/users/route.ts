@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
     const cacheKey = cacheUtils.keys.users(city || undefined, role || undefined);
     
     // Пытаемся получить из кэша
-    const cached = await cacheUtils.get(cacheKey);
+    const cached = await cacheUtils.get<{users: any[], page: number, limit: number, total: number}>(cacheKey);
     if (cached) {
       console.log('📦 Users cache hit:', cacheKey);
       return NextResponse.json(createPaginatedResponse(cached.users, cached.page, cached.limit, cached.total));
