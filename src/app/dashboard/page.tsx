@@ -342,7 +342,7 @@ export default function DashboardPage() {
                       <Clock className="h-5 w-5 text-purple-600 mr-2 mt-0.5 flex-shrink-0" />
                       <div>
                         <p className="text-sm font-semibold text-purple-900 mb-1">
-                          ⏰ Дедлайн: Пятница до 18:00
+                          ⏰ Дедлайн: Понедельник утром
                         </p>
                         <p className="text-sm text-purple-800">
                           Не забудьте заполнить еженедельный отчет и график работы
@@ -352,17 +352,17 @@ export default function DashboardPage() {
                   </div>
                   {(() => {
                     const now = new Date();
-                    const dayOfWeek = now.getDay(); // 0 = воскресенье, 5 = пятница
+                    const dayOfWeek = now.getDay(); // 0 = воскресенье, 1 = понедельник
                     const hour = now.getHours();
                     
-                    if (dayOfWeek === 5 && hour >= 16 && hour < 18) {
+                    if (dayOfWeek === 1 && hour >= 8 && hour < 12) {
                       return (
                         <div className="p-4 bg-red-50 border-l-4 border-red-500 rounded-md">
                           <div className="flex items-start">
                             <AlertTriangle className="h-5 w-5 text-red-600 mr-2 mt-0.5 flex-shrink-0" />
                             <div>
                               <p className="text-sm font-bold text-red-900">
-                                🔥 СРОЧНО: До дедлайна осталось менее 2 часов!
+                                🔥 СРОЧНО: Сегодня утром нужно заполнить отчет!
                               </p>
                               <button
                                 onClick={() => router.push('/dashboard/weekly-report')}
