@@ -1,4 +1,4 @@
-export const dynamic = 'force-dynamic';
+export const revalidate = 30; // кэш на 30 секунд (частые проверки авторизации)
 
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';

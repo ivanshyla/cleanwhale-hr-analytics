@@ -1,4 +1,3 @@
-export const dynamic = 'force-dynamic';
 export const revalidate = 60; // кэш на 60 секунд
 
 import { NextRequest, NextResponse } from 'next/server';
