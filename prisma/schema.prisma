@@ -411,6 +411,21 @@ model AiAnalysis {
   @@map("ai_analysis")
 }
 
+// Job Locks для идемпотентности крон-задач
+model JobLock {
+  id        Int      @id @default(autoincrement())
+  jobName   String   // Имя задачи (weekly-report, etc.)
+  key       String   // Уникальный ключ (weekIso, date, etc.)
+  startedAt DateTime @default(now())
+  expiresAt DateTime // Время истечения блокировки
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([jobName, key])
+  @@index([expiresAt])
+  @@map("job_locks")
+}
+
 // Отчеты
 model Report {
   id          String   @id @default(cuid())

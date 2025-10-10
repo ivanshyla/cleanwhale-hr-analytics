@@ -1,8 +1,12 @@
-export const dynamic = 'force-dynamic';
+// ✅ Убрано force-dynamic для кэширования
+// Кэш на 60 секунд для списка пользователей
+export const revalidate = 60;
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireRole } from '@/lib/auth';
+import { logger } from '@/lib/logger';
+import { parsePaginationParams, createPaginatedResponse } from '@/lib/pagination';
 import bcrypt from 'bcryptjs';
 
 // GET - получить список всех пользователей (только для админов и менеджеров по стране)
@@ -14,6 +18,9 @@ export async function GET(request: NextRequest) {
   const city = searchParams.get('city');
   const role = searchParams.get('role');
   const isActive = searchParams.get('isActive');
+  
+  // ✅ Добавлена пагинация
+  const { page, limit, skip, take } = parsePaginationParams(searchParams, { page: 1, limit: 50 });
 
   try {
     const where: any = {};
@@ -22,31 +29,38 @@ export async function GET(request: NextRequest) {
     if (role) where.role = role;
     if (isActive !== null) where.isActive = isActive === 'true';
 
-    const users = await prisma.user.findMany({
-      where,
-      select: {
-        id: true,
-        login: true,
-        email: true,
-        name: true,
-        role: true,
-        city: true,
-        salaryGross: true,
-        currency: true,
-        isActive: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-      orderBy: [
-        { city: 'asc' },
-        { role: 'asc' },
-        { name: 'asc' },
-      ],
-    });
+    // ✅ Параллельные запросы count и data
+    const [total, users] = await Promise.all([
+      prisma.user.count({ where }),
+      prisma.user.findMany({
+        where,
+        select: {
+          id: true,
+          login: true,
+          email: true,
+          name: true,
+          role: true,
+          city: true,
+          salaryGross: true,
+          currency: true,
+          isActive: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+        orderBy: [
+          { city: 'asc' },
+          { role: 'asc' },
+          { name: 'asc' },
+        ],
+        skip,
+        take,
+      }),
+    ]);
 
-    return NextResponse.json(users);
+    // ✅ Возвращаем с мета-данными пагинации
+    return NextResponse.json(createPaginatedResponse(users, page, limit, total));
   } catch (error) {
-    console.error('Error fetching users:', error);
+    logger.error('Error fetching users', { error });
     return NextResponse.json(
       { message: 'Ошибка при получении списка пользователей' },
       { status: 500 }

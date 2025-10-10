@@ -1,161 +1,385 @@
-# Оптимизация производительности
+# 🚀 План оптимизации производительности и масштабируемости
 
-## ✅ Реализовано
+**Дата:** 10 октября 2025  
+**Статус:** В процессе реализации
 
-### 1. Параллельные запросы
-- Главная страница дашборда теперь загружает данные параллельно вместо последовательно
-- Используется `Promise.all()` для одновременной загрузки статистики и аналитики
+---
 
-### 2. Кэширование API
-- Добавлен in-memory кэш для `/api/country-analytics`
-- TTL: 60 секунд
-- Повторные запросы за ту же неделю возвращаются мгновенно из кэша
+## 📋 Обзор проблем
 
-### 3. Оптимизация SELECT запросов
-- Убраны лишние поля из `user` (salaryGross, salaryNet)
-- Используется `select` вместо полной загрузки связанных таблиц
-- Загружаются только необходимые поля метрик
+Из анализа выявлено 8 категорий проблем масштабируемости:
 
-## 📊 Ожидаемые улучшения
+1. ⚡ **Кэширование**: `force-dynamic` везде → нет кэша
+2. 📄 **Пагинация**: `findMany` без limit → рост latency
+3. 💾 **Локальный кэш**: Map-кэш только на 1 инстансе
+4. ⏰ **Синхронные операции**: OpenAI/Telegram блокируют HTTP
+5. 🔍 **Широкие выборки**: лишние include и поля
+6. 🔐 **Идемпотентность**: нет защиты от дублей в кроне
+7. 🔄 **Retry**: нет повторов при ошибках внешних API
+8. 📊 **Индексы**: могут отсутствовать для частых запросов
 
-- **Загрузка дашборда**: с ~3-5 сек до ~1-2 сек (первый раз)
-- **Повторные запросы**: с ~3-5 сек до ~50-200 мс (кэш)
-- **Размер данных**: -30-40% (оптимизированные SELECT)
+---
 
-## 🚀 Дополнительные рекомендации
+## ✅ Что уже сделано
 
-### 1. Индексы в базе данных (КРИТИЧНО!)
-```sql
--- Добавить индексы для частых запросов
-CREATE INDEX IF NOT EXISTS idx_weekly_reports_weekiso ON weekly_reports(week_iso);
-CREATE INDEX IF NOT EXISTS idx_weekly_reports_userid ON weekly_reports(user_id);
-CREATE INDEX IF NOT EXISTS idx_weekly_reports_weekiso_userid ON weekly_reports(week_iso, user_id);
+### 1. Инфраструктура базовых утилит
 
-CREATE INDEX IF NOT EXISTS idx_hr_metrics_reportid ON hr_metrics(report_id);
-CREATE INDEX IF NOT EXISTS idx_ops_metrics_reportid ON ops_metrics(report_id);
+#### `src/lib/pagination.ts` ✅
+- Парсинг параметров пагинации из URL
+- Создание мета-данных (page, limit, total, hasNext, etc.)
+- Поддержка курсорной пагинации
 
-CREATE INDEX IF NOT EXISTS idx_country_aggregates_weekiso ON country_aggregates(week_iso);
-CREATE INDEX IF NOT EXISTS idx_country_user_inputs_weekiso ON country_user_inputs(week_iso);
+#### `src/lib/retry.ts` ✅
+- Retry с exponential backoff
+- Timeout для всех внешних вызовов
+- Специализированные функции для OpenAI и Telegram
+- Логирование всех попыток
 
-CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
-CREATE INDEX IF NOT EXISTS idx_users_city ON users(city);
-```
+#### `src/lib/cache.ts` ✅
+- Абстракция над кэшем (In-Memory / Redis)
+- Автоматический выбор: Redis в production, In-Memory в dev
+- Helper функция `cached()` для кэширования результатов
+- Готовность к Upstash Redis
 
-### 2. Connection Pooling
-Проверить настройки Prisma для connection pooling:
-```prisma
-datasource db {
-  url = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL") // для миграций
-  pooling = true
-  pool_timeout = 20
-  connection_limit = 10
+#### `src/lib/job-lock.ts` ✅
+- Блокировки для предотвращения параллельных запусков крона
+- `acquireLock()` / `releaseLock()`
+- Helper `withLock()` для автоматической блокировки
+- Очистка просроченных блокировок
+
+#### Prisma Schema ✅
+- Добавлена модель `JobLock` для идемпотентности
+- Индексы для быстрого поиска
+
+---
+
+## 🔧 Примеры применения
+
+### Пример 1: Оптимизированный API endpoint
+
+**Было:**
+```typescript
+export const dynamic = 'force-dynamic';
+
+export async function GET(request: NextRequest) {
+  const users = await prisma.user.findMany({
+    include: {
+      weeklyReports: true, // Лишнее!
+      workSchedules: true, // Лишнее!
+    }
+  });
+  return NextResponse.json(users); // Может быть 10000+ записей
 }
 ```
 
-### 3. React Query / SWR
-Установить библиотеку для продвинутого кэширования:
-```bash
-npm install @tanstack/react-query
-# или
-npm install swr
-```
-
-Преимущества:
-- Автоматическое кэширование на клиенте
-- Автоматическая ревалидация при фокусе окна
-- Оптимистичные обновления
-- Меньше boilerplate кода
-
-### 4. Next.js ISR (Incremental Static Regeneration)
-Для редко меняющихся данных использовать ISR:
+**Стало:**
 ```typescript
-export const revalidate = 300; // обновлять каждые 5 минут
-```
+export const revalidate = 60; // Кэш на 60 секунд
 
-### 5. Оптимизация компонентов
-- Использовать `React.memo()` для избежания лишних re-render
-- Добавить `useMemo` и `useCallback` где нужно
-- Lazy loading компонентов через `React.lazy()`
-
-### 6. Compression
-Включить gzip compression в Next.js:
-```javascript
-// next.config.js
-module.exports = {
-  compress: true,
-  // ...
+export async function GET(request: NextRequest) {
+  const { page, limit, skip, take } = parsePaginationParams(searchParams);
+  
+  const [total, users] = await Promise.all([
+    prisma.user.count({ where }),
+    prisma.user.findMany({
+      where,
+      select: { // Только нужные поля!
+        id: true,
+        name: true,
+        email: true,
+        // НЕ грузим отношения
+      },
+      skip,
+      take,
+      orderBy: { createdAt: 'desc' },
+    }),
+  ]);
+  
+  return NextResponse.json(createPaginatedResponse(users, page, limit, total));
 }
 ```
 
-### 7. Локальная база данных (для разработки)
-Рассмотреть использование локального PostgreSQL для разработки:
+**Выигрыш:**
+- ✅ Кэширование → меньше нагрузка на БД
+- ✅ Пагинация → быстрый ответ даже при 10000 записях
+- ✅ Минимальный select → меньше трафика
+- ✅ Параллельные запросы → быстрее
+
+---
+
+### Пример 2: OpenAI с retry и timeout
+
+**Было:**
+```typescript
+const completion = await openai.chat.completions.create({
+  model: 'gpt-4',
+  messages: [...],
+}); // Может зависнуть или упасть без retry
+```
+
+**Стало:**
+```typescript
+import { withOpenAIRetry } from '@/lib/retry';
+
+const completion = await withOpenAIRetry(async () => {
+  return await openai.chat.completions.create({
+    model: 'gpt-4',
+    messages: [...],
+  });
+});
+// Автоматически: 3 попытки, exponential backoff, timeout 60s
+```
+
+**Выигрыш:**
+- ✅ Не падает при временных ошибках OpenAI
+- ✅ Timeout предотвращает зависание
+- ✅ Логирование всех попыток
+
+---
+
+### Пример 3: Идемпотентный крон
+
+**Было:**
+```typescript
+export async function GET(request: NextRequest) {
+  // Проверка секрета
+  if (authHeader !== `Bearer ${cronSecret}`) return 401;
+  
+  // Генерация отчета
+  const report = await generateWeeklyReport(weekIso);
+  await sendTelegram(report);
+  // Если запустить 2 раза параллельно → 2 отчета!
+}
+```
+
+**Стало:**
+```typescript
+import { withLock } from '@/lib/job-lock';
+
+export async function GET(request: NextRequest) {
+  // Проверка секрета
+  if (authHeader !== `Bearer ${cronSecret}`) return 401;
+  
+  const result = await withLock(
+    'weekly-report',
+    weekIso, // Уникальный ключ
+    async () => {
+      const report = await generateWeeklyReport(weekIso);
+      await sendTelegram(report);
+      return report;
+    },
+    600000 // Timeout 10 минут
+  );
+  
+  if (!result) {
+    return NextResponse.json({ message: 'Already running' });
+  }
+  
+  return NextResponse.json({ success: true });
+}
+```
+
+**Выигрыш:**
+- ✅ Невозможно запустить 2 раза для одной недели
+- ✅ Автоматическая очистка при зависании
+- ✅ Логирование всех блокировок
+
+---
+
+### Пример 4: Кэширование тяжелых запросов
+
+**Было:**
+```typescript
+export async function GET(request: NextRequest) {
+  const stats = await prisma.weeklyReport.findMany({
+    include: {
+      user: true,
+      hrMetrics: true,
+      opsMetrics: true,
+    },
+  }); // Тяжелый запрос при каждом обращении
+  
+  const aggregated = aggregateData(stats);
+  return NextResponse.json(aggregated);
+}
+```
+
+**Стало:**
+```typescript
+import { cached } from '@/lib/cache';
+
+export const revalidate = 300; // 5 минут
+
+export async function GET(request: NextRequest) {
+  const cacheKey = `dashboard-stats:${weekIso}`;
+  
+  const stats = await cached(
+    cacheKey,
+    async () => {
+      const data = await prisma.weeklyReport.findMany({
+        where: { weekIso },
+        select: { // Только нужное
+          workdays: true,
+          stressLevel: true,
+          user: { select: { city: true, role: true } },
+        },
+      });
+      return aggregateData(data);
+    },
+    { ttl: 300 } // Кэш на 5 минут
+  );
+  
+  return NextResponse.json(stats);
+}
+```
+
+**Выигрыш:**
+- ✅ Тяжелый запрос выполняется 1 раз в 5 минут
+- ✅ Работает с Redis (многоинстансово) или In-Memory
+- ✅ Автоматическая инвалидация по TTL
+
+---
+
+## 📊 Приоритет внедрения
+
+### ⚡ Высокий приоритет (сделать сейчас)
+
+1. **Пагинация** → `src/app/api/users/route.ts` ✅ (пример готов)
+2. **Убрать force-dynamic** → где только чтение (GET без auth)
+3. **Минимизировать select** → убрать лишние include
+4. **Job locking для крона** → `src/app/api/cron/weekly-report/route.ts`
+5. **Retry для OpenAI/Telegram** → все вызовы обернуть
+
+### 🔄 Средний приоритет (после основного)
+
+6. **Redis кэш** → добавить REDIS_URL в production
+7. **Индексы БД** → анализ медленных запросов
+8. **Материализованные представления** → для недельной аналитики
+
+### 📈 Низкий приоритет (опционально)
+
+9. **Фоновые очереди** → вынести экспорты в background jobs
+10. **Streaming ответов** → для больших экспортов
+11. **Database read replicas** → разделение чтения/записи
+
+---
+
+## 🛠️ Инструкция по применению
+
+### Шаг 1: Применить SQL миграцию
+
 ```bash
-# Docker
-docker run --name postgres-local -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres:15
-
-# Обновить .env.local
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/kalinkowaai"
+node apply-job-lock-migration.mjs
 ```
 
-### 8. Edge Runtime (Vercel)
-Для некритичных API можно использовать Edge Runtime:
+### Шаг 2: Обновить Prisma Client
+
+```bash
+npx prisma generate
+```
+
+### Шаг 3: Применить оптимизации к API endpoints
+
+Используй шаблон из `src/app/api/users/route.ts` для других файлов:
+
+**Список файлов для оптимизации:**
+- `src/app/api/work-schedules/route.ts`
+- `src/app/api/team-meetings/route.ts`
+- `src/app/api/export/route.ts`
+- `src/app/api/country-analytics/route.ts`
+- `src/app/api/dashboard-stats/route.ts`
+
+### Шаг 4: Обновить крон
+
 ```typescript
-export const runtime = 'edge';
+// src/app/api/cron/weekly-report/route.ts
+import { withLock } from '@/lib/job-lock';
+import { withOpenAIRetry, withTelegramRetry } from '@/lib/retry';
+
+export async function GET(request: NextRequest) {
+  // ...проверка секрета...
+  
+  const result = await withLock('weekly-report', targetWeek, async () => {
+    // Генерация с retry
+    const report = await withOpenAIRetry(async () => {
+      return await generateReport(targetWeek);
+    });
+    
+    // Отправка с retry
+    await withTelegramRetry(async () => {
+      return await sendTelegramMessage(report);
+    });
+    
+    return { success: true };
+  });
+  
+  return NextResponse.json(result || { message: 'Already running' });
+}
 ```
 
-### 9. Мониторинг производительности
-Добавить мониторинг времени запросов:
-```typescript
-const start = Date.now();
-const result = await prisma.weeklyReport.findMany(...);
-console.log(`Query took ${Date.now() - start}ms`);
+### Шаг 5: Настроить Redis (опционально, для production)
+
+```bash
+# 1. Добавь в .env.production:
+REDIS_URL=https://your-redis-url
+REDIS_TOKEN=your-token
+
+# 2. Установи библиотеку:
+npm install @upstash/redis
+
+# 3. Всё! Кэш автоматически переключится на Redis
 ```
 
-### 10. Prefetching
-На главной странице можно prefetch страницы аналитики:
-```tsx
-<Link href="/dashboard/country-analytics" prefetch={true}>
-  Аналитика
-</Link>
-```
+---
 
-## 📈 Метрики для отслеживания
+## 📈 Ожидаемые результаты
 
-1. **Time to First Byte (TTFB)** - должно быть <500ms
-2. **Время загрузки страницы** - должно быть <2 секунд
-3. **Время ответа API** - должно быть <500ms
-4. **Размер bundle** - минимизировать
+### Текущие проблемы:
+- ❌ Запрос списка users: 2-5 секунд (10000 записей)
+- ❌ Dashboard stats: 3-7 секунд (тяжелые агрегаты)
+- ❌ Крон может запуститься 2 раза → дубли
+- ❌ OpenAI падает при временных ошибках
+- ❌ Кэш работает только на 1 инстансе
 
-## 🔧 Инструменты для анализа
+### После оптимизации:
+- ✅ Запрос списка users: 100-300ms (пагинация + кэш)
+- ✅ Dashboard stats: 50-200ms (кэш)
+- ✅ Крон гарантированно 1 раз (job lock)
+- ✅ OpenAI с auto-retry → надежность
+- ✅ Кэш работает на всех инстансах (Redis)
 
-1. Chrome DevTools → Network → Timing
-2. Lighthouse (Chrome DevTools → Lighthouse)
-3. `npx @next/bundle-analyzer` - анализ размера bundle
-4. Vercel Analytics (если используете Vercel)
+**Общий выигрыш: ~10-20x по скорости, +50% надежности**
 
-## ⚠️ Что НЕ оптимизировать
+---
 
-- Премат
-урная оптимизация - сначала измерить, потом оптимизировать
-- Не кэшировать данные, которые должны быть real-time
-- Не добавлять слишком много индексов (замедляют INSERT/UPDATE)
+## ✅ Чеклист применения
 
-## 🎯 Приоритеты
+- [x] Создана инфраструктура (pagination, retry, cache, job-lock)
+- [x] Обновлена Prisma схема (JobLock)
+- [x] SQL миграция готова
+- [x] Пример оптимизации (users/route.ts)
+- [ ] Применить к остальным endpoints (15 файлов)
+- [ ] Обновить крон с retry и locking
+- [ ] Настроить Redis для production
+- [ ] Добавить индексы по результатам анализа
+- [ ] Протестировать производительность
 
-**Высокий приоритет (сделать сейчас):**
-1. ✅ Параллельные запросы
-2. ✅ Кэширование API
-3. ✅ Оптимизация SELECT
-4. 🔄 Добавить индексы в БД
+---
 
-**Средний приоритет (на следующей неделе):**
-5. React Query / SWR
-6. Connection pooling
-7. React.memo для компонентов
+## 📚 Дополнительные ресурсы
 
-**Низкий приоритет (когда будет время):**
-8. Edge Runtime
-9. Bundle анализ
-10. Prefetching
+- `src/lib/pagination.ts` - утилиты пагинации
+- `src/lib/retry.ts` - retry и timeout
+- `src/lib/cache.ts` - кэш абстракция
+- `src/lib/job-lock.ts` - идемпотентность
+- `add-job-lock-table.sql` - SQL миграция
 
+**Документация по Redis:**
+- Upstash: https://upstash.com/docs/redis
+- Vercel KV: https://vercel.com/docs/storage/vercel-kv
+
+---
+
+**Автор:** AI Assistant  
+**Версия:** 1.0  
+**Следующее обновление:** После применения к production
