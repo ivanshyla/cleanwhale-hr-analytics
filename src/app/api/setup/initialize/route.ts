@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
           password: hashedPassword,
           name: userData.name,
           role: userData.role as any,
-          city: userData.city,
+          city: userData.city as any,
           isActive: true,
         },
         select: {
@@ -98,7 +98,8 @@ export async function POST(request: NextRequest) {
       logger.info('User created', { login: user.login, role: user.role });
     }
 
-    logger.authEvent('setup_complete', { 
+    logger.info('Database setup completed', { 
+      event: 'setup_complete',
       usersCreated: createdUsers.length,
       timestamp: new Date().toISOString() 
     });
