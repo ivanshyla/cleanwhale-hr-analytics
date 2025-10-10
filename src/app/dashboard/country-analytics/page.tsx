@@ -161,11 +161,15 @@ function CountryAnalyticsPage() {
         })
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to generate report');
-      }
-
       const result = await response.json();
+
+      if (!response.ok) {
+        // Показываем конкретную ошибку от сервера
+        const errorMsg = result.message || result.error || 'Неизвестная ошибка';
+        alert(`Ошибка: ${errorMsg}`);
+        console.error('Server error:', result);
+        return;
+      }
       
       if (result.success && result.report) {
         // Скачиваем как markdown файл
@@ -174,12 +178,19 @@ function CountryAnalyticsPage() {
         link.href = URL.createObjectURL(blob);
         link.download = `ai-report-${currentWeek}.md`;
         link.click();
+        
+        // Уведомляем об успехе
+        if (result.sentToTelegram) {
+          alert('✅ Отчет создан и отправлен в Telegram!');
+        } else {
+          alert('✅ Отчет создан успешно!');
+        }
       } else {
-        alert('Ошибка генерации отчета');
+        alert('Ошибка: не удалось получить отчет');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error generating AI report:', error);
-      alert('Ошибка при генерации отчета. Попробуйте еще раз.');
+      alert(`Ошибка при генерации отчета: ${error.message || 'Попробуйте еще раз'}`);
     } finally {
       setIsGeneratingReport(false);
     }
@@ -450,10 +461,21 @@ function CountryAnalyticsPage() {
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Рабочие дни</p>
-                  <p className="text-2xl font-bold text-gray-900">{data.totalPoland.totalWorkdays}</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {(data.totalPoland.totalWorkdays / data.totalPoland.totalEmployees).toFixed(1)}
+                  </p>
+                  <p className="text-xs text-gray-500">дней / человек</p>
                 </div>
               </div>
               <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Человеко-дней:</span>
+                  <span className="font-medium">{data.totalPoland.totalWorkdays}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Человеко-часов:</span>
+                  <span className="font-medium">{data.totalPoland.totalWorkdays * 8} ч</span>
+                </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Переработка:</span>
                   <span className="font-medium">{data.totalPoland.totalOvertime} ч</span>

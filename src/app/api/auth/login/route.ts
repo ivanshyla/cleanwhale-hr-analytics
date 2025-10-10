@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     
     logger.authEvent('login', { userId: user.id, login: user.login, role: user.role, city: user.city });
 
-    // Создание JWT токена
+    // Создание JWT токена (30 дней для стабильности)
     const { getJwtSecret } = require('@/lib/env');
     const token = jwt.sign(
       { 
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
         city: user.city 
       },
       getJwtSecret(),
-      { expiresIn: '7d' }
+      { expiresIn: '30d' }  // Увеличено до 30 дней для удобства
     );
 
     // Возвращаем пользователя без пароля
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60, // 7 дней
+      maxAge: 30 * 24 * 60 * 60, // 30 дней (синхронизировано с JWT)
       path: '/',
     });
 

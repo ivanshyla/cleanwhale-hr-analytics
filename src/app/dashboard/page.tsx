@@ -332,24 +332,99 @@ export default function DashboardPage() {
           </div>
 
           <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Последние уведомления</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Напоминания</h3>
             <div className="space-y-3">
               {/* Напоминание для обычных менеджеров */}
               {['HIRING_MANAGER', 'OPS_MANAGER', 'MIXED_MANAGER'].includes(user?.role) && (
-                <div className="p-3 bg-yellow-50 rounded-md">
-                  <p className="text-sm text-yellow-800">Напоминание: внести еженедельный отчет</p>
-                </div>
+                <>
+                  <div className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 border-l-4 border-purple-500 rounded-md">
+                    <div className="flex items-start">
+                      <Clock className="h-5 w-5 text-purple-600 mr-2 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-sm font-semibold text-purple-900 mb-1">
+                          ⏰ Дедлайн: Пятница до 18:00
+                        </p>
+                        <p className="text-sm text-purple-800">
+                          Не забудьте заполнить еженедельный отчет и график работы
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  {(() => {
+                    const now = new Date();
+                    const dayOfWeek = now.getDay(); // 0 = воскресенье, 5 = пятница
+                    const hour = now.getHours();
+                    
+                    if (dayOfWeek === 5 && hour >= 16 && hour < 18) {
+                      return (
+                        <div className="p-4 bg-red-50 border-l-4 border-red-500 rounded-md">
+                          <div className="flex items-start">
+                            <AlertTriangle className="h-5 w-5 text-red-600 mr-2 mt-0.5 flex-shrink-0" />
+                            <div>
+                              <p className="text-sm font-bold text-red-900">
+                                🔥 СРОЧНО: До дедлайна осталось менее 2 часов!
+                              </p>
+                              <button
+                                onClick={() => router.push('/dashboard/weekly-report')}
+                                className="mt-2 px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700"
+                              >
+                                Заполнить сейчас →
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
+                </>
               )}
               
               {/* Напоминание для Country Manager и Admin */}
               {['ADMIN', 'COUNTRY_MANAGER'].includes(user?.role) && (
                 <>
-                  <div className="p-3 bg-yellow-50 rounded-md">
-                    <p className="text-sm text-yellow-800">Напоминание: внести данные за прошлую неделю</p>
+                  <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500 rounded-md">
+                    <div className="flex items-start">
+                      <Building2 className="h-5 w-5 text-blue-600 mr-2 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-sm font-semibold text-blue-900 mb-1">
+                          📊 Понедельник - день агрегирования
+                        </p>
+                        <p className="text-sm text-blue-800">
+                          Внесите данные по всем городам за прошлую неделю
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                  <div className="p-3 bg-blue-50 rounded-md">
-                    <p className="text-sm text-blue-800">Новый отчет по городу доступен</p>
-                  </div>
+                  {(() => {
+                    const now = new Date();
+                    const dayOfWeek = now.getDay(); // 1 = понедельник
+                    
+                    if (dayOfWeek === 1) {
+                      return (
+                        <div className="p-4 bg-green-50 border-l-4 border-green-500 rounded-md">
+                          <div className="flex items-start">
+                            <Database className="h-5 w-5 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
+                            <div>
+                              <p className="text-sm font-semibold text-green-900 mb-1">
+                                ✅ Сегодня понедельник
+                              </p>
+                              <p className="text-sm text-green-800 mb-2">
+                                Проверьте отчеты менеджеров и внесите общие данные
+                              </p>
+                              <button
+                                onClick={() => router.push('/dashboard/country')}
+                                className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700"
+                              >
+                                Внести данные →
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
                 </>
               )}
             </div>

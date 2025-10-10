@@ -66,6 +66,20 @@ export async function POST(request: NextRequest) {
       }
     });
 
+    // Проверяем наличие данных
+    if (reports.length === 0) {
+      return NextResponse.json(
+        { 
+          success: false,
+          message: 'Нет данных для генерации отчета',
+          error: `За неделю ${formatWeekForDisplay(targetWeek)} и предыдущие 3 недели нет еженедельных отчетов. Попросите менеджеров заполнить отчеты.`
+        },
+        { status: 404 }
+      );
+    }
+
+    console.log(`📊 Найдено ${reports.length} отчетов за ${weeks.length} недель`);
+
     // Группируем по неделям
     const weeklyData = weeks.map(w => {
       const weekReports = reports.filter(r => r.weekIso === w);
@@ -230,12 +244,32 @@ ${report}
     });
 
   } catch (error: any) {
-    console.error('Error generating AI report:', error);
+    console.error('❌ Error generating AI report:', error);
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
+    
+    // Определяем тип ошибки для пользователя
+    let userMessage = 'Ошибка генерации отчета';
+    
+    if (error.message?.includes('API key')) {
+      userMessage = 'Ошибка: неверный или истекший OpenAI API ключ';
+    } else if (error.message?.includes('rate limit')) {
+      userMessage = 'Превышен лимит запросов к OpenAI. Попробуйте через минуту';
+    } else if (error.message?.includes('timeout')) {
+      userMessage = 'Превышено время ожидания. Попробуйте еще раз';
+    } else if (error.code === 'P2002' || error.message?.includes('Prisma')) {
+      userMessage = 'Ошибка доступа к базе данных';
+    }
+    
     return NextResponse.json(
       { 
         success: false,
-        message: 'Ошибка генерации отчета',
-        error: error.message 
+        message: userMessage,
+        error: error.message,
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
       },
       { status: 500 }
     );

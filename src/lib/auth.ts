@@ -16,7 +16,17 @@ export function verifyToken(token: string): JWTPayload | null {
     const { getJwtSecret } = require('./env');
     const decoded = jwt.verify(token, getJwtSecret()) as JWTPayload;
     return decoded;
-  } catch (error) {
+  } catch (error: any) {
+    // Логируем причину ошибки для отладки
+    if (error.name === 'TokenExpiredError') {
+      console.warn('🔐 Token expired:', { expiredAt: error.expiredAt });
+    } else if (error.name === 'JsonWebTokenError') {
+      console.warn('🔐 Invalid token:', error.message);
+    } else if (error.name === 'NotBeforeError') {
+      console.warn('🔐 Token not active yet');
+    } else {
+      console.error('🔐 Token verification error:', error);
+    }
     return null;
   }
 }

@@ -37,7 +37,9 @@ export async function GET(request: NextRequest) {
       // Исключаем ADMIN и COUNTRY_MANAGER из подсчета
       role: {
         notIn: ['ADMIN', 'COUNTRY_MANAGER']
-      }
+      },
+      // КРИТИЧНО: считаем только активных пользователей!
+      isActive: true
     };
     if (!isCountryManager) {
       // Обычные менеджеры видят только пользователей своего города

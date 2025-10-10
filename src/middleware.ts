@@ -28,8 +28,25 @@ export function middleware(request: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
 
-    // Если есть токен - разрешаем доступ (проверку валидности делаем в API)
-    return NextResponse.next();
+    // КРИТИЧНО: Проверяем валидность токена!
+    try {
+      const jwt = require('jsonwebtoken');
+      const { getJwtSecret } = require('@/lib/env');
+      jwt.verify(token, getJwtSecret());
+      // Токен валиден - разрешаем доступ
+      return NextResponse.next();
+    } catch (error: any) {
+      // Токен невалиден или истёк - редирект на логин
+      console.warn('🔐 Invalid/expired token in middleware:', error.name);
+      const loginUrl = new URL('/login', request.url);
+      loginUrl.searchParams.set('redirect', pathname);
+      loginUrl.searchParams.set('reason', 'expired');
+      
+      // Удаляем невалидный токен
+      const response = NextResponse.redirect(loginUrl);
+      response.cookies.delete('token');
+      return response;
+    }
   }
 
   return NextResponse.next();
