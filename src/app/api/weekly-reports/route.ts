@@ -257,7 +257,7 @@ export async function POST(request: NextRequest) {
             messages: ops.messages ?? undefined,
             tickets: ops.tickets ?? undefined,
             orders: ops.orders ?? undefined,
-            fullDays: ops.fullDays ?? undefined,
+            fullDays: body.baseData?.workdays ?? undefined, // Используем workdays из общей информации
             diffCleaners: ops.diffCleaners ?? undefined,
             diffClients: ops.diffClients ?? undefined,
             stress: ops.stress ?? undefined,
@@ -271,7 +271,7 @@ export async function POST(request: NextRequest) {
             messages: ops.messages || 0,
             tickets: ops.tickets || 0,
             orders: ops.orders || 0,
-            fullDays: ops.fullDays || 0,
+            fullDays: body.baseData?.workdays || 0, // Используем workdays из общей информации
             diffCleaners: ops.diffCleaners || null,
             diffClients: ops.diffClients || null,
             stress: ops.stress || null,
