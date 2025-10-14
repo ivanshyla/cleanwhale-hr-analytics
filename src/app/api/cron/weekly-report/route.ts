@@ -109,6 +109,12 @@ export async function GET(request: NextRequest) {
     const byCity = aggregateByCity(currentWeekData);
     const byType = aggregateByType(currentWeekData);
 
+    // Подсчитываем, сколько менеджеров не заполнили отчеты
+    const totalManagers = activeUserIds.length;
+    const reportedManagers = currentWeekData.length;
+    const missingReports = totalManagers - reportedManagers;
+    const reportingRate = Math.round((reportedManagers / totalManagers) * 100);
+
     // Генерируем AI отчет с помощью OpenAI
     const openai = getOpenAIClient();
     
@@ -119,7 +125,18 @@ export async function GET(request: NextRequest) {
 
 Напиши краткий executive summary для правления на основе данных за неделю ${formatWeekForDisplay(targetWeek)}.
 
-ДАННЫЕ:
+ВАЖНО: 
+- Всего менеджеров: ${totalManagers}
+- Заполнили отчеты: ${reportedManagers} (${reportingRate}%)
+- НЕ заполнили отчеты: ${missingReports} менеджеров
+
+⚠️ КРИТИЧНЫЕ ПРАВИЛА:
+1. НЕ ДОДУМЫВАЙ причины! Если данных нет - значит менеджер НЕ ЗАПОЛНИЛ отчет
+2. Если метрики = 0 или нет данных - это НЕ проблема бизнеса, это проблема НЕЗАПОЛНЕННЫХ отчетов
+3. НЕ пиши "низкая активность" или "снижение показателей" - пиши "менеджеры не заполнили данные"
+4. ОБЯЗАТЕЛЬНО укажи в начале: сколько менеджеров не заполнили отчеты
+
+ДАННЫЕ ОТ ТЕХ, КТО ЗАПОЛНИЛ:
 
 **По городам:**
 ${JSON.stringify(byCity, null, 2)}
@@ -145,13 +162,14 @@ ${qualitativeData.cleanerIssues.length > 0 ? qualitativeData.cleanerIssues.map(i
 **Проблемы с клиентами (Ops):**
 ${qualitativeData.clientIssues.length > 0 ? qualitativeData.clientIssues.map(i => `- ${i.manager} (${i.city}): ${i.text}`).join('\n') : 'Нет проблем'}
 
-ТРЕБОВАНИЯ К ОТЧЕТУ:
+СТРУКТУРА ОТЧЕТА:
 
-1. **Executive Summary** (2-3 предложения) - главные выводы
-2. **Ключевые метрики** с динамикой (↑↓) и процентами изменения
-3. **Проблемные зоны** - что требует внимания (учитывай заметки и сложные ситуации!)
-4. **Достижения** - что работает хорошо
-5. **Прогноз на следующую неделю** - краткие ожидания
+1. **⚠️ Заполнение отчетов** - ПЕРВЫМ делом укажи: ${reportedManagers} из ${totalManagers} заполнили (${reportingRate}%), ${missingReports} не заполнили
+2. **Executive Summary** (2-3 предложения) - главные выводы ПО ИМЕЮЩИМСЯ данным
+3. **Ключевые метрики** - только по тем, кто заполнил отчет
+4. **Проблемные зоны** - реальные проблемы из заметок менеджеров (НЕ "низкие показатели")
+5. **Достижения** - что работает хорошо
+6. **Действия** - напомнить менеджерам заполнять отчеты вовремя
 
 Пиши кратко, по делу, профессионально. Используй эмодзи для наглядности.
 Формат: Markdown для Telegram.`;
@@ -167,7 +185,7 @@ ${qualitativeData.clientIssues.length > 0 ? qualitativeData.clientIssues.map(i =
       messages: [
         {
           role: 'system',
-          content: 'Ты - опытный бизнес-аналитик, специализирующийся на HR и операционной аналитике. Пишешь краткие, информативные отчеты для топ-менеджмента.'
+          content: 'Ты - бизнес-аналитик. ГЛАВНОЕ ПРАВИЛО: НЕ додумывай! Если данных нет - значит менеджер не заполнил отчет, а НЕ "низкая активность". Пиши только факты из имеющихся данных. Если метрики = 0 - это проблема незаполненных отчетов, а не бизнеса.'
         },
         {
           role: 'user',
