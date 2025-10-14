@@ -4,10 +4,18 @@ import OpenAI from 'openai';
 let cachedClient: OpenAI | null = null;
 
 export function getOpenAIClient(): OpenAI | null {
-  const key = process.env.OPENAI_API_KEY;
-  if (!key) return null;
+  const key = process.env.OPENAI_API_KEY?.trim();
+  if (!key) {
+    console.error('❌ OPENAI_API_KEY not found in environment');
+    return null;
+  }
   if (!cachedClient) {
-    cachedClient = new OpenAI({ apiKey: key });
+    console.log('✅ Initializing OpenAI client with key:', key.substring(0, 20) + '...');
+    cachedClient = new OpenAI({ 
+      apiKey: key,
+      timeout: 30000, // 30 seconds timeout
+      maxRetries: 2
+    });
   }
   return cachedClient;
 }
