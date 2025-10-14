@@ -158,53 +158,28 @@ ${qualitativeData.clientIssues.length > 0 ? qualitativeData.clientIssues.map(i =
 
     console.log('🤖 Calling OpenAI API...');
     
-    let aiReport = '';
-    
     if (!openai) {
-      console.warn('⚠️ OpenAI client not available, generating basic report');
-      // Генерируем базовый отчет без AI
-      aiReport = `**Executive Summary:**
-Отчет за неделю ${formatWeekForDisplay(targetWeek)}. Данные собраны от ${reports.length} менеджеров из ${byCity.length} городов.
-
-**Ключевые метрики:**
-${byCity.map(c => `• ${c.city}: ${c.employeeCount} сотрудников, ${c.totalWorkdays} рабочих дней`).join('\n')}
-
-**По типам менеджеров:**
-${byType.map(t => `• ${t.type}: ${t.employeeCount} человек`).join('\n')}
-
-_AI анализ недоступен - требуется настроить OPENAI_API_KEY_`;
-    } else {
-      try {
-        const completion = await openai.chat.completions.create({
-          model: 'gpt-4',
-          messages: [
-            {
-              role: 'system',
-              content: 'Ты - опытный бизнес-аналитик, специализирующийся на HR и операционной аналитике. Пишешь краткие, информативные отчеты для топ-менеджмента.'
-            },
-            {
-              role: 'user',
-              content: prompt
-            }
-          ],
-          temperature: 0.7,
-          max_tokens: 1500
-        });
-
-        aiReport = completion.choices[0]?.message?.content || 'Отчет не сгенерирован';
-        console.log('✅ AI report generated');
-      } catch (openaiError: any) {
-        console.error('❌ OpenAI API error:', openaiError.message);
-        // Fallback to basic report if OpenAI fails
-        aiReport = `**Executive Summary:**
-Отчет за неделю ${formatWeekForDisplay(targetWeek)}. Данные от ${reports.length} менеджеров.
-
-**Статистика:**
-${byCity.map(c => `• ${c.city}: ${c.employeeCount} сотрудников`).join('\n')}
-
-_AI анализ недоступен из-за ошибки: ${openaiError.message}_`;
-      }
+      throw new Error('OpenAI client is not initialized. Check OPENAI_API_KEY environment variable.');
     }
+    
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: 'Ты - опытный бизнес-аналитик, специализирующийся на HR и операционной аналитике. Пишешь краткие, информативные отчеты для топ-менеджмента.'
+        },
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      temperature: 0.7,
+      max_tokens: 1500
+    });
+
+    const aiReport = completion.choices[0]?.message?.content || 'Отчет не сгенерирован';
+    console.log('✅ AI report generated');
 
     // Формируем финальное сообщение
     const fullReport = `# 📊 ЕЖЕНЕДЕЛЬНЫЙ ОТЧЕТ
