@@ -15,7 +15,8 @@ export async function GET(request: NextRequest) {
     // Проверяем аутентификацию: либо Vercel Cron, либо Authorization header
     const vercelCronHeader = request.headers.get('x-vercel-cron');
     const authHeader = request.headers.get('authorization');
-    const cronSecret = process.env.CRON_SECRET;
+    // Trim CRON_SECRET to remove any trailing newlines or whitespace
+    const cronSecret = process.env.CRON_SECRET?.trim();
     
     // Vercel Cron автоматически добавляет x-vercel-cron заголовок
     const isVercelCron = vercelCronHeader === '1' || vercelCronHeader === 'true';
@@ -27,7 +28,9 @@ export async function GET(request: NextRequest) {
       console.error('❌ Unauthorized cron request', {
         hasVercelCron: !!vercelCronHeader,
         hasAuth: !!authHeader,
-        hasCronSecret: !!cronSecret
+        hasCronSecret: !!cronSecret,
+        cronSecretLength: cronSecret?.length,
+        authHeaderLength: authHeader?.length
       });
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
