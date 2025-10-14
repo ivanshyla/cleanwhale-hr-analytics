@@ -26,7 +26,6 @@ interface OpsData {
   messages: number;
   tickets: number;
   orders: number;
-  fullDays: number;
   diffCleaners: string;
   diffClients: string;
   stress?: number;
