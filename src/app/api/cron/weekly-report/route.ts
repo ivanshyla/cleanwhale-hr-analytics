@@ -12,21 +12,27 @@ import { sendTelegramMessage, isTelegramConfigured } from '@/lib/telegram';
  */
 export async function GET(request: NextRequest) {
   try {
-    // ✅ КРИТИЧНО: CRON_SECRET обязателен, без дефолта
-    const cronSecret = process.env.CRON_SECRET;
-    if (!cronSecret) {
-      console.error('❌ CRON_SECRET not configured');
-      return NextResponse.json({ 
-        error: 'Server misconfiguration' 
-      }, { status: 500 });
-    }
-    
-    // Проверяем секретный ключ для безопасности
+    // Проверяем аутентификацию: либо Vercel Cron, либо Authorization header
+    const vercelCronHeader = request.headers.get('x-vercel-cron');
     const authHeader = request.headers.get('authorization');
-    if (authHeader !== `Bearer ${cronSecret}`) {
-      console.error('❌ Unauthorized cron request');
+    const cronSecret = process.env.CRON_SECRET;
+    
+    // Vercel Cron автоматически добавляет x-vercel-cron заголовок
+    const isVercelCron = vercelCronHeader === '1' || vercelCronHeader === 'true';
+    
+    // Ручной вызов через Authorization header
+    const isManualCall = cronSecret && authHeader === `Bearer ${cronSecret}`;
+    
+    if (!isVercelCron && !isManualCall) {
+      console.error('❌ Unauthorized cron request', {
+        hasVercelCron: !!vercelCronHeader,
+        hasAuth: !!authHeader,
+        hasCronSecret: !!cronSecret
+      });
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    
+    console.log('✅ Cron authentication:', isVercelCron ? 'Vercel Cron' : 'Manual call');
 
     console.log('⏰ Cron job started: Weekly report generation');
 
