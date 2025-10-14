@@ -71,7 +71,6 @@ export default function WeeklyReportForm({ role, userId, weekIso, onSave }: Week
     messages: 0,
     tickets: 0,
     orders: 0,
-    fullDays: 0,
     diffCleaners: '',
     diffClients: ''
   });
@@ -123,7 +122,6 @@ export default function WeeklyReportForm({ role, userId, weekIso, onSave }: Week
             messages: data.opsData.messages || 0,
             tickets: data.opsData.tickets || 0,
             orders: data.opsData.orders || 0,
-            fullDays: data.opsData.fullDays || 0,
             diffCleaners: data.opsData.diffCleaners || '',
             diffClients: data.opsData.diffClients || ''
           });
