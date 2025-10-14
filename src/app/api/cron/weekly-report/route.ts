@@ -59,9 +59,17 @@ export async function GET(request: NextRequest) {
       weeks.push(getPreviousWeek(weeks[weeks.length - 1]));
     }
 
+    // Получаем все активные пользователи
+    const activeUsers = await prisma.user.findMany({
+      where: { isActive: true },
+      select: { id: true }
+    });
+    const activeUserIds = activeUsers.map(u => u.id);
+
     const allReports = await prisma.weeklyReport.findMany({
       where: {
-        weekIso: { in: weeks }
+        weekIso: { in: weeks },
+        userId: { in: activeUserIds } // Только отчеты активных пользователей
       },
       include: {
         user: {
@@ -80,8 +88,8 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    // Фильтруем отчеты с существующими пользователями
-    const reports = allReports.filter(r => r.user !== null);
+    // Отчеты уже отфильтрованы в запросе
+    const reports = allReports;
 
     console.log(`📊 Found ${reports.length} reports for analysis (filtered from ${allReports.length} total)`);
 
