@@ -79,7 +79,6 @@ export async function GET(
       const ops = weeklyReport.opsMetrics;
       response.ops = {
         messages: ops.messages || 0,
-        tickets: ops.tickets || 0,
         orders: ops.orders || 0,
         fullDays: ops.fullDays || 0,
         diffCleaners: ops.diffCleaners || '',
@@ -108,7 +107,6 @@ export async function GET(
         const ops = weeklyReport.opsMetrics;
         response.ops = {
           messages: ops.messages || 0,
-          tickets: ops.tickets || 0,
           orders: ops.orders || 0,
           fullDays: ops.fullDays || 0,
           diffCleaners: ops.diffCleaners || '',

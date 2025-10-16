@@ -160,7 +160,6 @@ function calculateKPIs(current: any, previous: any) {
     orders: getOrdersValue(current, 'country'),
     hired: getHiredValue(current, 'country'),
     messages: getMessagesValue(current, 'country'),
-    tickets: getTicketsValue(current, 'country'),
     complaints: getComplaintsValue(current, 'country')
   };
 
@@ -168,13 +167,12 @@ function calculateKPIs(current: any, previous: any) {
     orders: getOrdersValue(previous, 'country'),
     hired: getHiredValue(previous, 'country'),
     messages: getMessagesValue(previous, 'country'),
-    tickets: getTicketsValue(previous, 'country'),
     complaints: getComplaintsValue(previous, 'country')
   };
 
   const result: any = {};
   
-  (['orders', 'hired', 'messages', 'tickets', 'complaints'] as const).forEach(key => {
+  (['orders', 'hired', 'messages', 'complaints'] as const).forEach(key => {
     const currentValue = data[key];
     const prevValue = prevData[key];
     const source = getSource(current, key);
@@ -258,25 +256,14 @@ function getMessagesValue(data: any, prefix: string) {
   };
 }
 
-function getTicketsValue(data: any, prefix: string) {
-  const fromCountry = data.userInputs.reduce((sum: number, ui: any) => sum + (ui.trengoTickets + ui.crmComplaintsClosed), 0);
-  const fromSelf = data.weeklyReports.reduce((sum: number, wr: any) => sum + (wr.opsMetrics?.tickets || 0), 0);
-  
-  const totalTickets = fromCountry + fromSelf;
-  return {
-    value: totalTickets,
-    source: fromCountry > 0 ? 'COUNTRY' : (fromSelf > 0 ? 'SELF' : 'NONE')
-  };
-}
+// Функция getTicketsValue удалена, так как тикеты больше не используются
 
 function getComplaintsValue(data: any, prefix: string) {
   const fromCountry = data.cityAggregates.reduce((sum: number, ca: any) => sum + ca.crmComplaintsClosed, 0);
-  const fromSelf = data.weeklyReports.reduce((sum: number, wr: any) => sum + (wr.opsMetrics?.tickets || 0), 0);
   
-  const totalComplaints = fromCountry + fromSelf;
   return {
-    value: totalComplaints,
-    source: fromCountry > 0 ? 'COUNTRY' : (fromSelf > 0 ? 'SELF' : 'NONE')
+    value: fromCountry,
+    source: fromCountry > 0 ? 'COUNTRY' : 'NONE'
   };
 }
 

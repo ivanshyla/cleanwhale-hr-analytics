@@ -176,7 +176,6 @@ model OpsMetrics {
   
   // Основные Ops метрики (упрощенные названия)
   messages                Int      @default(0) // Сообщения (Trengo)
-  tickets                 Int      @default(0) // Решенные тикеты (Trengo + CRM)
   orders                  Int      @default(0) // Заказы города
   fullDays                Int      @default(0) // Отработанные дни
   
@@ -190,7 +189,6 @@ model OpsMetrics {
   
   // Источники данных (для отслеживания автозаполнения)
   sourceMsg               String?  // 'api'|'manual' для messages
-  sourceTkt               String?  // 'api'|'manual' для tickets
   sourceOrd               String?  // 'api'|'manual' для orders
   
   createdAt               DateTime @default(now())
@@ -209,7 +207,6 @@ model CountryAggregate {
   cityId              Int
   trengoResponses     Int      @default(0)   // ответы (по городу суммарно)
   crmComplaintsClosed Int      @default(0)   // жалобы закрытые (по городу суммарно)
-  trengoTickets       Int      @default(0)   // тикеты (по городу суммарно)
   hiredPeople         Int      @default(0)   // нанятые (по городу)
   cityOrders          Int      @default(0)   // заказы (по городу)
   // Новые поля для расширенной функциональности
@@ -234,7 +231,6 @@ model CountryUserInput {
   weekIso             String
   userId              String   // только для OPS_MANAGER и MIXED_MANAGER
   trengoResponses     Int      @default(0)   // «сколько отвечал» в Trengo
-  trengoTickets       Int      @default(0)   // тикеты Trengo на нём
   crmComplaintsClosed Int      @default(0)   // закрытые жалобы (на нём)
   ordersHandled       Int      @default(0)   // (если хотите фиксировать по людям)
   notes               String?

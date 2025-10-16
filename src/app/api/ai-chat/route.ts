@@ -132,7 +132,6 @@ export async function POST(request: NextRequest) {
         } : null,
         ops: r.opsMetrics ? {
           messages: r.opsMetrics.messages,
-          tickets: r.opsMetrics.tickets,
           orders: r.opsMetrics.orders,
           fullDays: r.opsMetrics.fullDays,
           diffCleaners: r.opsMetrics.diffCleaners,
@@ -157,7 +156,6 @@ export async function POST(request: NextRequest) {
       totalReports: weeklyReports.length,
       totalHired: weeklyReports.reduce((sum, r) => sum + (r.hrMetrics?.registrations || 0), 0),
       totalMessages: weeklyReports.reduce((sum, r) => sum + (r.opsMetrics?.messages || 0), 0),
-      totalTickets: weeklyReports.reduce((sum, r) => sum + (r.opsMetrics?.tickets || 0), 0),
       totalOrders: weeklyReports.reduce((sum, r) => sum + (r.opsMetrics?.orders || 0), 0),
       avgStress: weeklyReports.length > 0 
         ? (weeklyReports.reduce((sum, r) => sum + (r.stressLevel || 0), 0) / weeklyReports.length).toFixed(1)
@@ -191,7 +189,6 @@ export async function POST(request: NextRequest) {
 - Отчетов: ${stats.totalReports}
 - Нанято: ${stats.totalHired} чел.
 - Сообщений: ${stats.totalMessages}
-- Тикетов: ${stats.totalTickets}
 - Заказов: ${stats.totalOrders}
 - Средний стресс: ${stats.avgStress}/10
 - Переработки: ${stats.overtimeCount} менеджеров

@@ -75,7 +75,6 @@ export async function GET(request: NextRequest) {
         userRole: user.role,
         weekIso,
         trengoResponses: input?.trengoResponses || 0,
-        trengoTickets: input?.trengoTickets || 0,
         crmComplaintsClosed: input?.crmComplaintsClosed || 0,
         ordersHandled: input?.ordersHandled || 0,
         notes: input?.notes || '',
@@ -133,7 +132,6 @@ export async function POST(request: NextRequest) {
         const {
           userId,
           trengoResponses,
-          trengoTickets,
           crmComplaintsClosed,
           ordersHandled,
           notes
@@ -152,7 +150,6 @@ export async function POST(request: NextRequest) {
           },
           update: {
             trengoResponses: trengoResponses || 0,
-            trengoTickets: trengoTickets || 0,
             crmComplaintsClosed: crmComplaintsClosed || 0,
             ordersHandled: ordersHandled || 0,
             notes: notes || null,
@@ -162,7 +159,6 @@ export async function POST(request: NextRequest) {
             weekIso,
             userId,
             trengoResponses: trengoResponses || 0,
-            trengoTickets: trengoTickets || 0,
             crmComplaintsClosed: crmComplaintsClosed || 0,
             ordersHandled: ordersHandled || 0,
             notes: notes || null

@@ -77,7 +77,7 @@ async function exportCityWeek(weekIso: string): Promise<{ blob: Buffer; filename
   });
 
   // Преобразуем в CSV
-  const csvHeader = 'City,CityCode,WeekIso,TrengoResponses,CrmComplaintsClosed,TrengoTickets,HiredPeople,CityOrders,TrengoMessages,HiredHR,HiredOps,HiredMixed,Notes,UpdatedAt,Source\n';
+  const csvHeader = 'City,CityCode,WeekIso,TrengoResponses,CrmComplaintsClosed,HiredPeople,CityOrders,TrengoMessages,HiredHR,HiredOps,HiredMixed,Notes,UpdatedAt,Source\n';
   
   const csvRows = aggregates.map(agg => {
     const row = [
@@ -86,7 +86,6 @@ async function exportCityWeek(weekIso: string): Promise<{ blob: Buffer; filename
       `"${weekIso}"`,
       agg.trengoResponses,
       agg.crmComplaintsClosed,
-      agg.trengoTickets,
       agg.hiredPeople,
       agg.cityOrders,
       agg.trengoMessages,
@@ -135,7 +134,7 @@ async function exportUsersWeek(weekIso: string): Promise<{ blob: Buffer; filenam
   });
 
   // CSV для экспорта пользователей
-  const csvHeader = 'Name,Email,City,Role,WeekIso,TrengoResponses_Final,TrengoTickets_Final,CrmComplaints_Final,Orders_Final,HR_Interviews_Final,HR_Registrations_Final,Source,UpdatedAt\n';
+  const csvHeader = 'Name,Email,City,Role,WeekIso,TrengoResponses_Final,CrmComplaints_Final,Orders_Final,HR_Interviews_Final,HR_Registrations_Final,Source,UpdatedAt\n';
   
   const csvRows = users.map(user => {
     const countryInput = countryInputs.find(ci => ci.userId === user.id);
@@ -150,7 +149,6 @@ async function exportUsersWeek(weekIso: string): Promise<{ blob: Buffer; filenam
       `"${user.role}"`,
       `"${weekIso}"`,
       countryInput?.trengoResponses || selfReport?.opsMetrics?.messages || 0,
-      countryInput?.trengoTickets || selfReport?.opsMetrics?.tickets || 0,
       countryInput?.crmComplaintsClosed || 0, // Используем только country input
       countryInput?.ordersHandled || selfReport?.opsMetrics?.orders || 0,
       selfReport?.hrMetrics?.registrations || 0,
@@ -237,7 +235,7 @@ async function exportRawOps(weekIso: string): Promise<{ blob: Buffer; filename: 
     }
   });
 
-  const csvHeader = 'UserId,UserName,UserEmail,UserCity,UserRole,WeekIso,Messages,Tickets,Orders,FullDays,DiffCleaners,DiffClients,Stress,Overtime,SourceMsg,SourceTkt,SourceOrd,CreatedAt,UpdatedAt\n';
+  const csvHeader = 'UserId,UserName,UserEmail,UserCity,UserRole,WeekIso,Messages,Orders,FullDays,DiffCleaners,DiffClients,Stress,Overtime,SourceMsg,SourceOrd,CreatedAt,UpdatedAt\n';
   
   const csvRows = opsMetrics.map(ops => {
     const row = [
@@ -248,7 +246,6 @@ async function exportRawOps(weekIso: string): Promise<{ blob: Buffer; filename: 
       `"${ops.user.role}"`,
       `"${weekIso}"`,
       ops.messages,
-      ops.tickets,
       ops.orders,
       ops.fullDays,
       `"${ops.diffCleaners || ''}"`,
@@ -256,7 +253,6 @@ async function exportRawOps(weekIso: string): Promise<{ blob: Buffer; filename: 
       ops.stress || '',
       ops.overtime ? 1 : 0,
       ops.sourceMsg || '',
-      ops.sourceTkt || '',
       ops.sourceOrd || '',
       ops.createdAt.toISOString(),
       ops.updatedAt.toISOString()

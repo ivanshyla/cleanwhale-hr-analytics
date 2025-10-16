@@ -255,7 +255,6 @@ export async function POST(request: NextRequest) {
           },
           update: {
             messages: ops.messages ?? undefined,
-            tickets: ops.tickets ?? undefined,
             orders: ops.orders ?? undefined,
             fullDays: body.baseData?.workdays ?? undefined, // Используем workdays из общей информации
             diffCleaners: ops.diffCleaners ?? undefined,
@@ -269,7 +268,6 @@ export async function POST(request: NextRequest) {
             reportId: weeklyReport.id,
             weekIso,
             messages: ops.messages || 0,
-            tickets: ops.tickets || 0,
             orders: ops.orders || 0,
             fullDays: body.baseData?.workdays || 0, // Используем workdays из общей информации
             diffCleaners: ops.diffCleaners || null,

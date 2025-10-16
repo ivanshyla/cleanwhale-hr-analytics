@@ -67,7 +67,6 @@ export async function GET(request: NextRequest) {
         opsMetrics: {
           select: {
             messages: true,
-            tickets: true,
             orders: true,
             fullDays: true,
             stress: true,
@@ -98,7 +97,6 @@ export async function GET(request: NextRequest) {
       
       // Ops метрики
       messages: report.opsMetrics?.messages || 0,
-      tickets: report.opsMetrics?.tickets || 0,
       orders: report.opsMetrics?.orders || 0,
       opsFullDays: report.opsMetrics?.fullDays || 0,
       opsStress: report.opsMetrics?.stress || 0,
@@ -131,7 +129,6 @@ export async function GET(request: NextRequest) {
           
           // Ops метрики
           totalMessages: 0,
-          totalTickets: 0,
           totalOrders: 0,
           
           // Общее
@@ -159,7 +156,6 @@ export async function GET(request: NextRequest) {
       // Ops метрики
       if (report.opsMetrics) {
         cityData.totalMessages += report.opsMetrics.messages || 0;
-        cityData.totalTickets += report.opsMetrics.tickets || 0;
         cityData.totalOrders += report.opsMetrics.orders || 0;
       }
       
@@ -186,7 +182,6 @@ export async function GET(request: NextRequest) {
           totalInterviews: 0,
           totalRegistered: 0,
           totalMessages: 0,
-          totalTickets: 0,
           totalOrders: 0,
           totalWorkdays: 0,
           avgStress: 0,
@@ -203,7 +198,6 @@ export async function GET(request: NextRequest) {
       
       if (report.opsMetrics) {
         typeData.totalMessages += report.opsMetrics.messages || 0;
-        typeData.totalTickets += report.opsMetrics.tickets || 0;
         typeData.totalOrders += report.opsMetrics.orders || 0;
       }
       
@@ -228,7 +222,6 @@ export async function GET(request: NextRequest) {
       
       // Ops метрики
       totalMessages: byCity.reduce((sum, c) => sum + c.totalMessages, 0),
-      totalTickets: byCity.reduce((sum, c) => sum + c.totalTickets, 0),
       totalOrders: byCity.reduce((sum, c) => sum + c.totalOrders, 0),
       
       // Общее

@@ -12,7 +12,6 @@ export interface HRMetrics {
 
 export interface OPSMetrics {
   messages: number;
-  tickets: number;
   orders: number;
   fullDays: number;
   diffCleaners: string;
@@ -20,7 +19,6 @@ export interface OPSMetrics {
   stress: number;        // 0-10
   overtime: boolean;
   sourceMsg?: string;    // 'api'|'manual'
-  sourceTkt?: string;    // 'api'|'manual'
   sourceOrd?: string;    // 'api'|'manual'
 }
 
@@ -29,7 +27,7 @@ export interface WeeklyReportRequest {
   role: 'hr' | 'ops' | 'mixed';
   weekIso: string;
   hr?: Partial<Pick<HRMetrics, 'interviews' | 'jobPosts' | 'registered' | 'fullDays' | 'difficult' | 'stress' | 'overtime'>>;
-  ops?: Partial<Pick<OPSMetrics, 'messages' | 'tickets' | 'orders' | 'fullDays' | 'diffCleaners' | 'diffClients' | 'stress' | 'overtime'>>;
+  ops?: Partial<Pick<OPSMetrics, 'messages' | 'orders' | 'fullDays' | 'diffCleaners' | 'diffClients' | 'stress' | 'overtime'>>;
 }
 
 export interface WeeklyReportResponse {
@@ -57,7 +55,6 @@ export interface CityAggregate {
   jobPosts?: number;
   registered?: number;
   messages?: number;
-  tickets?: number;
   orders?: number;
   usersCount: number;
 }
@@ -75,7 +72,6 @@ export interface AnalyticsResponse {
     totalFullDays: WeekComparison;
     totalInterviews: WeekComparison;
     totalMessages: WeekComparison;
-    totalTickets: WeekComparison;
     totalOrders: WeekComparison;
     activeUsers: number;
   };

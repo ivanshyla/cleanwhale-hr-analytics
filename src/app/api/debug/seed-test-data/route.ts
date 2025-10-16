@@ -95,7 +95,6 @@ export async function POST(request: NextRequest) {
               reportId: report.id,
               weekIso,
               messages: Math.floor(Math.random() * 100) + 50,
-              tickets: Math.floor(Math.random() * 30) + 10,
               orders: Math.floor(Math.random() * 200) + 100,
               fullDays: 5,
               stress: Math.floor(Math.random() * 5) + 3,

@@ -51,7 +51,6 @@ export async function GET(request: NextRequest) {
       totalFullDays: createComparison(currentTotals.fullDays, previousTotals.fullDays),
       totalInterviews: createComparison(currentTotals.interviews, previousTotals.interviews),
       totalMessages: createComparison(currentTotals.messages, previousTotals.messages),
-      totalTickets: createComparison(currentTotals.tickets, previousTotals.tickets),
       totalOrders: createComparison(currentTotals.orders, previousTotals.orders),
       activeUsers: currentTotals.activeUsers
     };
@@ -88,7 +87,6 @@ async function getWeekAggregates(weekIso: string): Promise<CityAggregate[]> {
       COALESCE(SUM(hr."jobPosts"), 0) as "jobPosts", 
       COALESCE(SUM(hr."registrations"), 0) as "registered",
       COALESCE(SUM(ops."messages"), 0) as "messages",
-      COALESCE(SUM(ops."tickets"), 0) as "tickets",
       COALESCE(SUM(ops."orders"), 0) as "orders"
     FROM "users" u
     LEFT JOIN "hr_metrics" hr ON u.id = hr."userId" AND hr."weekIso" = ${weekIso}
@@ -106,7 +104,6 @@ async function getWeekAggregates(weekIso: string): Promise<CityAggregate[]> {
     jobPosts: parseInt(row.jobPosts) || 0,
     registered: parseInt(row.registrations) || 0,
     messages: parseInt(row.messages) || 0,
-    tickets: parseInt(row.tickets) || 0,
     orders: parseInt(row.orders) || 0
   }));
 }
@@ -117,14 +114,12 @@ function calculateTotals(cityData: CityAggregate[]) {
     fullDays: totals.fullDays + city.fullDays,
     interviews: totals.interviews + (city.interviews || 0),
     messages: totals.messages + (city.messages || 0),
-    tickets: totals.tickets + (city.tickets || 0),
     orders: totals.orders + (city.orders || 0),
     activeUsers: totals.activeUsers + city.usersCount
   }), {
     fullDays: 0,
     interviews: 0,
     messages: 0,
-    tickets: 0,
     orders: 0,
     activeUsers: 0
   });
