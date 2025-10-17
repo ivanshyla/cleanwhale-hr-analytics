@@ -129,8 +129,10 @@ export async function POST(request: NextRequest) {
 
     // 🚀 ОПТИМИЗАЦИЯ: Параллельные upserts в транзакции (10x быстрее!)
     const result = await prisma.$transaction(async (tx) => {
-      // Создаем все upsert операции параллельно
-      const upsertPromises = items.map(item => {
+      // Создаем все upsert операции
+      const results = [];
+      
+      for (const item of items) {
         const {
           cityId,
           trengoResponses,
@@ -148,7 +150,7 @@ export async function POST(request: NextRequest) {
           throw new Error('cityId обязателен для каждого элемента');
         }
 
-        return tx.countryAggregate.upsert({
+        const upserted = await tx.countryAggregate.upsert({
           where: {
             weekIso_cityId: {
               weekIso,
@@ -184,10 +186,11 @@ export async function POST(request: NextRequest) {
             city: true
           }
         });
-      });
+        
+        results.push(upserted);
+      }
 
-      // Выполняем все upserts параллельно
-      return Promise.all(upsertPromises);
+      return results;
     });
 
     return NextResponse.json({
