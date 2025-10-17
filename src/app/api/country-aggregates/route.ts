@@ -127,6 +127,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    console.log('📊 Processing country aggregates:', {
+      weekIso,
+      itemsCount: items.length,
+      firstItem: items[0]
+    });
+
+    // Валидируем каждый item
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (!item.cityId) {
+        console.error(`❌ Item ${i} missing cityId:`, item);
+        return NextResponse.json(
+          { message: `Item ${i}: отсутствует cityId` },
+          { status: 400 }
+        );
+      }
+      
+      const cityId = parseInt(item.cityId);
+      if (isNaN(cityId)) {
+        console.error(`❌ Item ${i} invalid cityId:`, item.cityId);
+        return NextResponse.json(
+          { message: `Item ${i}: cityId должно быть число, получено ${item.cityId}` },
+          { status: 400 }
+        );
+      }
+    }
+
     // 🚀 ОПТИМИЗАЦИЯ: Параллельные upserts в транзакции (10x быстрее!)
     const result = await prisma.$transaction(async (tx) => {
       // Создаем все upsert операции
@@ -205,14 +232,38 @@ export async function POST(request: NextRequest) {
       message: error.message,
       code: error.code,
       meta: error.meta,
-      stack: error.stack?.split('\n').slice(0, 3)
+      clientVersion: error.clientVersion,
     });
+    
+    // Обработка специфичных ошибок Prisma
+    if (error.code === 'P2003') {
+      return NextResponse.json(
+        { 
+          message: 'Ошибка: город не найден в системе',
+          error: 'Foreign key constraint failed - invalid cityId'
+        },
+        { status: 400 }
+      );
+    }
+    
+    if (error.code === 'P2002') {
+      return NextResponse.json(
+        { 
+          message: 'Ошибка: данные за эту неделю для этого города уже существуют',
+          error: 'Duplicate entry'
+        },
+        { status: 409 }
+      );
+    }
     
     return NextResponse.json(
       { 
         message: 'Ошибка сохранения данных по городам',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined,
-        code: error.code
+        error: process.env.NODE_ENV === 'development' ? {
+          message: error.message,
+          code: error.code,
+          meta: error.meta
+        } : undefined
       },
       { status: 500 }
     );
