@@ -90,6 +90,7 @@ function ManagerSchedulesPage() {
 
   const loadManagerSchedules = async () => {
     try {
+      setIsLoading(true);
       const weekStart = new Date(currentWeek);
       const weekEnd = new Date(weekStart);
       weekEnd.setDate(weekStart.getDate() + 6);
@@ -112,9 +113,11 @@ function ManagerSchedulesPage() {
       console.log('Schedules response status:', response.status);
       
       if (response.ok) {
-        const data: ManagerSchedulesResponse = await response.json();
-        console.log('Loaded schedules:', data.schedules?.length || 0);
-        setSchedules(data.schedules || []);
+        const payload = await response.json();
+        // API возвращает { data, meta } – поддержим оба формата на всякий случай
+        const schedulesData = Array.isArray(payload?.data) ? payload.data : payload?.schedules;
+        console.log('Loaded schedules:', Array.isArray(schedulesData) ? schedulesData.length : 0);
+        setSchedules(Array.isArray(schedulesData) ? schedulesData : []);
       } else {
         const errorData = await response.json().catch(() => ({}));
         console.error('Schedules error:', errorData);
@@ -123,6 +126,8 @@ function ManagerSchedulesPage() {
     } catch (error) {
       console.error('Error loading manager schedules:', error);
       setError('Ошибка подключения к серверу');
+    } finally {
+      setIsLoading(false);
     }
   };
 

@@ -138,71 +138,52 @@ export async function POST(request: NextRequest) {
       firstItem: items[0]
     });
 
-    // 🚀 ОПТИМИЗАЦИЯ: Параллельные upserts в транзакции (10x быстрее!)
-    const result = await prisma.$transaction(async (tx) => {
-      // Создаем все upsert операции
-      const results = [];
-      
-      for (const item of items) {
-        const {
-          cityId,
-          trengoResponses,
-          crmComplaintsClosed,
-          hiredPeople,
-          cityOrders,
-          trengoMessages,
-          hiredHR,
-          hiredOps,
-          hiredMixed,
-          notes
-        } = item;
-
-        if (!cityId) {
-          throw new Error('cityId обязателен для каждого элемента');
-        }
-
-        const upserted = await tx.countryAggregate.upsert({
-          where: {
-            weekIso_cityId: {
-              weekIso,
-              cityId: parseInt(cityId)
-            }
-          },
-          update: {
-            trengoResponses: trengoResponses || 0,
-            crmComplaintsClosed: crmComplaintsClosed || 0,
-            hiredPeople: hiredPeople || 0,
-            cityOrders: cityOrders || 0,
-            trengoMessages: trengoMessages || 0,
-            hiredHR: hiredHR || 0,
-            hiredOps: hiredOps || 0,
-            hiredMixed: hiredMixed || 0,
-            notes: notes || null,
-            updatedAt: new Date()
-          },
-          create: {
-            weekIso,
-            cityId: parseInt(cityId),
-            trengoResponses: trengoResponses || 0,
-            crmComplaintsClosed: crmComplaintsClosed || 0,
-            hiredPeople: hiredPeople || 0,
-            cityOrders: cityOrders || 0,
-            trengoMessages: trengoMessages || 0,
-            hiredHR: hiredHR || 0,
-            hiredOps: hiredOps || 0,
-            hiredMixed: hiredMixed || 0,
-            notes: notes || null
-          },
-          include: {
-            city: true
-          }
-        });
-        
-        results.push(upserted);
-      }
-
-      return results;
-    });
+    // Быстрые независимые upsert'ы параллельно (без транзакции)
+    const result = await Promise.all(items.map(async (item) => {
+      const {
+        cityId,
+        trengoResponses,
+        crmComplaintsClosed,
+        hiredPeople,
+        cityOrders,
+        trengoMessages,
+        hiredHR,
+        hiredOps,
+        hiredMixed,
+        notes
+      } = item;
+      if (!cityId) throw new Error('cityId обязателен для каждого элемента');
+      const parsedCityId = typeof cityId === 'string' ? parseInt(cityId) : Number(cityId);
+      return prisma.countryAggregate.upsert({
+        where: { weekIso_cityId: { weekIso, cityId: parsedCityId } },
+        update: {
+          trengoResponses: trengoResponses || 0,
+          crmComplaintsClosed: crmComplaintsClosed || 0,
+          hiredPeople: hiredPeople || 0,
+          cityOrders: cityOrders || 0,
+          trengoMessages: trengoMessages || 0,
+          hiredHR: hiredHR || 0,
+          hiredOps: hiredOps || 0,
+          hiredMixed: hiredMixed || 0,
+          notes: notes || null,
+          updatedAt: new Date()
+        },
+        create: {
+          weekIso,
+          cityId: parsedCityId,
+          trengoResponses: trengoResponses || 0,
+          crmComplaintsClosed: crmComplaintsClosed || 0,
+          hiredPeople: hiredPeople || 0,
+          cityOrders: cityOrders || 0,
+          trengoMessages: trengoMessages || 0,
+          hiredHR: hiredHR || 0,
+          hiredOps: hiredOps || 0,
+          hiredMixed: hiredMixed || 0,
+          notes: notes || null
+        },
+        include: { city: true }
+      });
+    }));
 
     return NextResponse.json({
       message: 'Данные по городам сохранены',
