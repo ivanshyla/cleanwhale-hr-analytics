@@ -53,8 +53,8 @@ export async function PUT(
       message: 'Встреча обновлена',
       meeting: {
         ...meeting,
-        attendees: JSON.parse(meeting.attendees),
-        attendeeNames: JSON.parse(meeting.attendeeNames),
+        attendees: meeting.attendees ? JSON.parse(meeting.attendees) : [],
+        attendeeNames: meeting.attendeeNames ? JSON.parse(meeting.attendeeNames) : [],
       }
     });
   } catch (error: any) {

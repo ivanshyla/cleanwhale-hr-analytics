@@ -58,8 +58,8 @@ export async function POST(request: NextRequest) {
       message: 'Встреча создана',
       meeting: {
         ...meeting,
-        attendees: JSON.parse(meeting.attendees),
-        attendeeNames: JSON.parse(meeting.attendeeNames),
+        attendees: meeting.attendees ? JSON.parse(meeting.attendees) : [],
+        attendeeNames: meeting.attendeeNames ? JSON.parse(meeting.attendeeNames) : [],
       }
     });
   } catch (error: any) {
@@ -113,8 +113,8 @@ export async function GET(request: NextRequest) {
 
     const formattedMeetings = meetings.map(meeting => ({
       ...meeting,
-      attendees: JSON.parse(meeting.attendees),
-      attendeeNames: JSON.parse(meeting.attendeeNames),
+      attendees: meeting.attendees ? JSON.parse(meeting.attendees) : [],
+      attendeeNames: meeting.attendeeNames ? JSON.parse(meeting.attendeeNames) : [],
     }));
 
     return NextResponse.json({ meetings: formattedMeetings, total: formattedMeetings.length });
