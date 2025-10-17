@@ -73,6 +73,11 @@ export async function GET(request: NextRequest) {
       };
     });
 
+    console.log('📦 Returning country aggregates response:', {
+      weekIso,
+      citiesCount: response.length
+    });
+
     return NextResponse.json({
       weekIso,
       cities: response
