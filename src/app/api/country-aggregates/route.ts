@@ -200,10 +200,20 @@ export async function POST(request: NextRequest) {
       data: result
     });
 
-  } catch (error) {
-    console.error('Error saving country aggregates:', error);
+  } catch (error: any) {
+    console.error('❌ Error saving country aggregates:', {
+      message: error.message,
+      code: error.code,
+      meta: error.meta,
+      stack: error.stack?.split('\n').slice(0, 3)
+    });
+    
     return NextResponse.json(
-      { message: 'Ошибка сохранения данных по городам' },
+      { 
+        message: 'Ошибка сохранения данных по городам',
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+        code: error.code
+      },
       { status: 500 }
     );
   }

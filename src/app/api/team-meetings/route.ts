@@ -130,13 +130,15 @@ export async function GET(request: NextRequest) {
       try {
         attendees = meeting.attendees ? JSON.parse(meeting.attendees) : [];
       } catch (e) {
-        console.error('Error parsing attendees:', meeting.attendees);
+        console.error('❌ Error parsing attendees for meeting', meeting.id, ':', meeting.attendees, e);
+        attendees = [];
       }
       
       try {
         attendeeNames = meeting.attendeeNames ? JSON.parse(meeting.attendeeNames) : [];
       } catch (e) {
-        console.error('Error parsing attendeeNames:', meeting.attendeeNames);
+        console.error('❌ Error parsing attendeeNames for meeting', meeting.id, ':', meeting.attendeeNames, e);
+        attendeeNames = [];
       }
       
       return {
