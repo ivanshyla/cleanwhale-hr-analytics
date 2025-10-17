@@ -133,27 +133,6 @@ export async function POST(request: NextRequest) {
       firstItem: items[0]
     });
 
-    // Валидируем каждый item
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
-      if (!item.cityId) {
-        console.error(`❌ Item ${i} missing cityId:`, item);
-        return NextResponse.json(
-          { message: `Item ${i}: отсутствует cityId` },
-          { status: 400 }
-        );
-      }
-      
-      const cityId = parseInt(item.cityId);
-      if (isNaN(cityId)) {
-        console.error(`❌ Item ${i} invalid cityId:`, item.cityId);
-        return NextResponse.json(
-          { message: `Item ${i}: cityId должно быть число, получено ${item.cityId}` },
-          { status: 400 }
-        );
-      }
-    }
-
     // 🚀 ОПТИМИЗАЦИЯ: Параллельные upserts в транзакции (10x быстрее!)
     const result = await prisma.$transaction(async (tx) => {
       // Создаем все upsert операции

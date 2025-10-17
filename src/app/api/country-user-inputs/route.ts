@@ -189,10 +189,33 @@ export async function POST(request: NextRequest) {
       data: result
     });
 
-  } catch (error) {
-    console.error('Error saving country user inputs:', error);
+  } catch (error: any) {
+    console.error('❌ Error saving country user inputs:', {
+      message: error.message,
+      code: error.code,
+      meta: error.meta,
+    });
+    
+    // Обработка специфичных ошибок Prisma
+    if (error.code === 'P2003') {
+      return NextResponse.json(
+        { 
+          message: 'Ошибка: пользователь не найден в системе',
+          error: 'Foreign key constraint failed - invalid userId'
+        },
+        { status: 400 }
+      );
+    }
+    
     return NextResponse.json(
-      { message: 'Ошибка сохранения данных по менеджерам' },
+      { 
+        message: 'Ошибка сохранения данных по менеджерам',
+        error: process.env.NODE_ENV === 'development' ? {
+          message: error.message,
+          code: error.code,
+          meta: error.meta
+        } : undefined
+      },
       { status: 500 }
     );
   }
