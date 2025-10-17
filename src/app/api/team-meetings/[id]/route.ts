@@ -53,8 +53,20 @@ export async function PUT(
       message: 'Встреча обновлена',
       meeting: {
         ...meeting,
-        attendees: meeting.attendees ? JSON.parse(meeting.attendees) : [],
-        attendeeNames: meeting.attendeeNames ? JSON.parse(meeting.attendeeNames) : [],
+        attendees: (() => {
+          try {
+            return meeting.attendees ? JSON.parse(meeting.attendees) : [];
+          } catch (e) {
+            return [];
+          }
+        })(),
+        attendeeNames: (() => {
+          try {
+            return meeting.attendeeNames ? JSON.parse(meeting.attendeeNames) : [];
+          } catch (e) {
+            return [];
+          }
+        })(),
       }
     });
   } catch (error: any) {

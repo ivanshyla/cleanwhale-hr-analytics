@@ -58,8 +58,20 @@ export async function POST(request: NextRequest) {
       message: 'Встреча создана',
       meeting: {
         ...meeting,
-        attendees: meeting.attendees ? JSON.parse(meeting.attendees) : [],
-        attendeeNames: meeting.attendeeNames ? JSON.parse(meeting.attendeeNames) : [],
+        attendees: (() => {
+          try {
+            return meeting.attendees ? JSON.parse(meeting.attendees) : [];
+          } catch (e) {
+            return [];
+          }
+        })(),
+        attendeeNames: (() => {
+          try {
+            return meeting.attendeeNames ? JSON.parse(meeting.attendeeNames) : [];
+          } catch (e) {
+            return [];
+          }
+        })(),
       }
     });
   } catch (error: any) {
@@ -111,11 +123,28 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    const formattedMeetings = meetings.map(meeting => ({
-      ...meeting,
-      attendees: meeting.attendees ? JSON.parse(meeting.attendees) : [],
-      attendeeNames: meeting.attendeeNames ? JSON.parse(meeting.attendeeNames) : [],
-    }));
+    const formattedMeetings = meetings.map(meeting => {
+      let attendees = [];
+      let attendeeNames = [];
+      
+      try {
+        attendees = meeting.attendees ? JSON.parse(meeting.attendees) : [];
+      } catch (e) {
+        console.error('Error parsing attendees:', meeting.attendees);
+      }
+      
+      try {
+        attendeeNames = meeting.attendeeNames ? JSON.parse(meeting.attendeeNames) : [];
+      } catch (e) {
+        console.error('Error parsing attendeeNames:', meeting.attendeeNames);
+      }
+      
+      return {
+        ...meeting,
+        attendees,
+        attendeeNames,
+      };
+    });
 
     return NextResponse.json({ meetings: formattedMeetings, total: formattedMeetings.length });
   } catch (error: any) {
