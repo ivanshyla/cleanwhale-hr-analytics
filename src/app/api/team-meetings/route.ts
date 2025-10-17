@@ -32,9 +32,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Используем userId из JWT payload
     const meeting = await prisma.teamMeeting.create({
       data: {
-        userId: user.userId,
+        userId: user.userId,  // userId из JWT токена
         meetingName,
         meetingDate: new Date(meetingDate),
         category,
@@ -61,9 +62,25 @@ export async function POST(request: NextRequest) {
         attendeeNames: JSON.parse(meeting.attendeeNames),
       }
     });
-  } catch (error) {
-    console.error('team-meetings POST error:', error);
-    return NextResponse.json({ message: 'Внутренняя ошибка сервера' }, { status: 500 });
+  } catch (error: any) {
+    console.error('❌ team-meetings POST error:', {
+      message: error.message,
+      code: error.code,
+      meta: error.meta
+    });
+    
+    // Более детальная ошибка для разработки
+    if (error.code === 'P2003') {
+      return NextResponse.json({ 
+        message: 'Ошибка: пользователь не найден',
+        error: 'Invalid user reference'
+      }, { status: 400 });
+    }
+
+    return NextResponse.json({ 
+      message: 'Внутренняя ошибка сервера',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    }, { status: 500 });
   }
 }
 
@@ -101,8 +118,15 @@ export async function GET(request: NextRequest) {
     }));
 
     return NextResponse.json({ meetings: formattedMeetings, total: formattedMeetings.length });
-  } catch (error) {
-    console.error('team-meetings GET error:', error);
-    return NextResponse.json({ message: 'Внутренняя ошибка сервера' }, { status: 500 });
+  } catch (error: any) {
+    console.error('❌ team-meetings GET error:', {
+      message: error.message,
+      code: error.code
+    });
+    
+    return NextResponse.json({ 
+      message: 'Внутренняя ошибка сервера',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    }, { status: 500 });
   }
 }

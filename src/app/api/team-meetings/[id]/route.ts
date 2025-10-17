@@ -31,12 +31,12 @@ export async function PUT(
     const meeting = await prisma.teamMeeting.update({
       where: { id: params.id },
       data: {
-        meetingName,
-        meetingDate: meetingDate ? new Date(meetingDate) : undefined,
-        category,
-        attendees: attendees ? JSON.stringify(attendees) : undefined,
-        attendeeNames: attendeeNames ? JSON.stringify(attendeeNames) : undefined,
-        summary,
+        ...(meetingName && { meetingName }),
+        ...(meetingDate && { meetingDate: new Date(meetingDate) }),
+        ...(category && { category }),
+        ...(attendees && { attendees: JSON.stringify(attendees) }),
+        ...(attendeeNames && { attendeeNames: JSON.stringify(attendeeNames) }),
+        ...(summary && { summary }),
       },
       include: {
         user: {
@@ -57,9 +57,20 @@ export async function PUT(
         attendeeNames: JSON.parse(meeting.attendeeNames),
       }
     });
-  } catch (error) {
-    console.error('team-meetings PUT error:', error);
-    return NextResponse.json({ message: 'Внутренняя ошибка сервера' }, { status: 500 });
+  } catch (error: any) {
+    console.error('❌ team-meetings PUT error:', {
+      message: error.message,
+      code: error.code
+    });
+
+    if (error.code === 'P2025') {
+      return NextResponse.json({ message: 'Встреча не найдена' }, { status: 404 });
+    }
+
+    return NextResponse.json({ 
+      message: 'Внутренняя ошибка сервера',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    }, { status: 500 });
   }
 }
 
@@ -82,9 +93,20 @@ export async function DELETE(
     });
 
     return NextResponse.json({ message: 'Встреча удалена' });
-  } catch (error) {
-    console.error('team-meetings DELETE error:', error);
-    return NextResponse.json({ message: 'Внутренняя ошибка сервера' }, { status: 500 });
+  } catch (error: any) {
+    console.error('❌ team-meetings DELETE error:', {
+      message: error.message,
+      code: error.code
+    });
+
+    if (error.code === 'P2025') {
+      return NextResponse.json({ message: 'Встреча не найдена' }, { status: 404 });
+    }
+
+    return NextResponse.json({ 
+      message: 'Внутренняя ошибка сервера',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    }, { status: 500 });
   }
 }
 
