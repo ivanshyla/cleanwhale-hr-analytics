@@ -41,7 +41,7 @@ export default function CountryCitiesTab({ weekIso }: CitiesTabProps) {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await fetch(`/api/country-aggregates?weekIso=${weekIso}`);
+      const response = await fetch(`/api/country-aggregates?weekIso=${weekIso}`, { cache: 'no-store' });
       
       if (response.ok) {
         const data = await response.json();
