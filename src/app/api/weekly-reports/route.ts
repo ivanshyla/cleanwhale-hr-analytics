@@ -1,4 +1,5 @@
-export const revalidate = 60; // кэш на 60 секунд
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
@@ -225,7 +226,7 @@ export async function POST(request: NextRequest) {
           update: {
             interviews: hr.interviews ?? undefined,
             jobPosts: hr.jobPosts ?? undefined,
-            registrations: hr.registrations ?? undefined, // mapping
+            registrations: hr.registered ?? undefined,
             fullDays: hr.fullDays ?? undefined,
             difficultCases: hr.difficult ?? undefined, // mapping
             stress: hr.stress ?? undefined,
@@ -238,7 +239,7 @@ export async function POST(request: NextRequest) {
             weekIso,
             interviews: hr.interviews || 0,
             jobPosts: hr.jobPosts || 0,
-            registrations: hr.registrations || 0,
+            registrations: hr.registered || 0,
             fullDays: hr.fullDays || 0,
             difficultCases: hr.difficult || null,
             stress: hr.stress || null,
@@ -256,7 +257,7 @@ export async function POST(request: NextRequest) {
           update: {
             messages: ops.messages ?? undefined,
             orders: ops.orders ?? undefined,
-            fullDays: body.baseData?.workdays ?? undefined, // Используем workdays из общей информации
+            fullDays: base?.workdays ?? undefined,
             diffCleaners: ops.diffCleaners ?? undefined,
             diffClients: ops.diffClients ?? undefined,
             stress: ops.stress ?? undefined,
@@ -269,7 +270,7 @@ export async function POST(request: NextRequest) {
             weekIso,
             messages: ops.messages || 0,
             orders: ops.orders || 0,
-            fullDays: body.baseData?.workdays || 0, // Используем workdays из общей информации
+            fullDays: base?.workdays || 0,
             diffCleaners: ops.diffCleaners || null,
             diffClients: ops.diffClients || null,
             stress: ops.stress || null,
