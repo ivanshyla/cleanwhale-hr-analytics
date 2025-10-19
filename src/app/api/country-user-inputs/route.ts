@@ -1,4 +1,5 @@
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
@@ -115,7 +116,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { weekIso, items } = body;
+    const { weekIso, items } = body || {};
 
     if (!weekIso || !items || !Array.isArray(items)) {
       return NextResponse.json(
@@ -124,63 +125,45 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Используем транзакцию для атомарного обновления
-    const result = await prisma.$transaction(async (tx) => {
-      const upsertResults = [];
+    // Логируем кратко входящие данные
+    console.log('[CountryUserInputs] Saving', { weekIso, itemsCount: items.length, firstItem: items[0] });
 
-      for (const item of items) {
-        const {
+    // Без транзакции, последовательно, с принудительным приведением типов
+    const result = [] as any[];
+    for (const rawItem of items) {
+      const userId = String(rawItem.userId || '').trim();
+      if (!userId) {
+        throw new Error('userId обязателен для каждого элемента');
+      }
+      const trengoResponses = Number(rawItem.trengoResponses ?? 0) || 0;
+      const crmComplaintsClosed = Number(rawItem.crmComplaintsClosed ?? 0) || 0;
+      const ordersHandled = Number(rawItem.ordersHandled ?? 0) || 0;
+      const notes = rawItem.notes ? String(rawItem.notes) : null;
+
+      const upserted = await prisma.countryUserInput.upsert({
+        where: { weekIso_userId: { weekIso, userId } },
+        update: {
+          trengoResponses,
+          crmComplaintsClosed,
+          ordersHandled,
+          notes,
+          updatedAt: new Date()
+        },
+        create: {
+          weekIso,
           userId,
           trengoResponses,
           crmComplaintsClosed,
           ordersHandled,
           notes
-        } = item;
-
-        if (!userId) {
-          throw new Error('userId обязателен для каждого элемента');
+        },
+        include: {
+          user: { select: { id: true, name: true, email: true, city: true, role: true } }
         }
+      });
 
-        const upserted = await tx.countryUserInput.upsert({
-          where: {
-            weekIso_userId: {
-              weekIso,
-              userId
-            }
-          },
-          update: {
-            trengoResponses: trengoResponses || 0,
-            crmComplaintsClosed: crmComplaintsClosed || 0,
-            ordersHandled: ordersHandled || 0,
-            notes: notes || null,
-            updatedAt: new Date()
-          },
-          create: {
-            weekIso,
-            userId,
-            trengoResponses: trengoResponses || 0,
-            crmComplaintsClosed: crmComplaintsClosed || 0,
-            ordersHandled: ordersHandled || 0,
-            notes: notes || null
-          },
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                city: true,
-                role: true
-              }
-            }
-          }
-        });
-
-        upsertResults.push(upserted);
-      }
-
-      return upsertResults;
-    });
+      result.push(upserted);
+    }
 
     return NextResponse.json({
       message: 'Данные по менеджерам сохранены',
