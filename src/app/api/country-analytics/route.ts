@@ -1,13 +1,12 @@
-export const revalidate = 60; // кэшировать на 60 секунд
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth';
 import { isoWeekOf } from '@/lib/week';
 
-// Кэш для результатов (простой in-memory кэш)
-const cache = new Map<string, { data: any; timestamp: number }>();
-const CACHE_TTL = 60000; // 60 секунд
+// Кэш отключен для точных актуальных данных
 
 export async function GET(request: NextRequest) {
   const authResult = requireAuth(request);
@@ -24,15 +23,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const weekIso = searchParams.get('weekIso') || isoWeekOf();
 
-    // Проверяем кэш
-    const cacheKey = `country-analytics-${weekIso}`;
-    const cached = cache.get(cacheKey);
-    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-      return NextResponse.json({
-        ...cached.data,
-        cached: true,
-      });
-    }
+    // Кэш отключен
 
     // Получаем все отчеты за неделю с метриками и данными пользователей
     // Оптимизируем select - загружаем только нужные поля
@@ -109,7 +100,7 @@ export async function GET(request: NextRequest) {
       overtimeHours: report.overtimeHours,
     }));
 
-    // 2. РАЗРЕЗ ПО ГОРОДАМ
+    // 2. РАЗРЕЗ ПО ГОРОДАМ (база: самоотчеты)
     const cityMap = new Map<string, any>();
     
     weeklyReports.forEach(report => {
@@ -165,6 +156,44 @@ export async function GET(request: NextRequest) {
       cityData.totalOvertime += report.overtimeHours || 0;
     });
     
+    // 2.1 Загружаем агрегаты Country Manager и ПРИОРИТЕТНО вливаем поверх
+    const aggregates = await prisma.countryAggregate.findMany({
+      where: { weekIso },
+      select: {
+        cityId: true,
+        trengoMessages: true,
+        hiredPeople: true,
+        cityOrders: true,
+        city: { select: { code: true } }
+      }
+    });
+
+    for (const agg of aggregates) {
+      const code = agg.city.code as string;
+      if (!cityMap.has(code)) {
+        cityMap.set(code, {
+          city: code,
+          totalEmployees: 0,
+          hrManagers: 0,
+          opsManagers: 0,
+          mixedManagers: 0,
+          totalInterviews: 0,
+          totalJobPosts: 0,
+          totalRegistered: 0,
+          totalMessages: 0,
+          totalOrders: 0,
+          totalWorkdays: 0,
+          avgStress: 0,
+          totalOvertime: 0,
+        });
+      }
+      const cityData = cityMap.get(code)!;
+      // Приоритет значений Country Manager
+      cityData.totalRegistered = agg.hiredPeople || 0;
+      cityData.totalOrders = agg.cityOrders || 0;
+      cityData.totalMessages = agg.trengoMessages || 0;
+    }
+
     const byCity = Array.from(cityMap.values()).map(city => ({
       ...city,
       avgStress: city.totalEmployees > 0 ? (city.avgStress / city.totalEmployees).toFixed(1) : 0,
@@ -246,11 +275,7 @@ export async function GET(request: NextRequest) {
       generatedAt: new Date().toISOString(),
     };
 
-    // Сохраняем в кэш
-    cache.set(cacheKey, {
-      data: result,
-      timestamp: Date.now(),
-    });
+    // Кэш отключен
 
     return NextResponse.json(result);
 
