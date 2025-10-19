@@ -87,7 +87,6 @@ export default function CountryUsersTab({ weekIso }: UsersTabProps) {
       const itemsToSave = filteredUsers.map(user => ({
         userId: user.userId,
         trengoResponses: user.trengoResponses,
-        trengoTickets: user.trengoTickets,
         crmComplaintsClosed: user.crmComplaintsClosed,
         ordersHandled: user.ordersHandled,
         notes: user.notes
