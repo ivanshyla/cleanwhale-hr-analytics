@@ -67,38 +67,56 @@ export async function GET(request: NextRequest) {
       }
     });
 
+    // Загружаем ввод Country Manager по людям (на тот же weekIso) для fallback'а
+    const userInputs = await prisma.countryUserInput.findMany({
+      where: { weekIso },
+      select: {
+        userId: true,
+        trengoResponses: true,
+        crmComplaintsClosed: true,
+        ordersHandled: true,
+      }
+    });
+    const userInputMap = new Map<string, typeof userInputs[number]>();
+    for (const ui of userInputs) userInputMap.set(ui.userId, ui);
+
     // Фильтруем отчеты с существующими пользователями
     const weeklyReports = allReports.filter(r => r.user !== null);
 
     // 1. РАЗРЕЗ ПО СОТРУДНИКАМ
-    const byEmployee = weeklyReports.map(report => ({
-      userId: report.user.id,
-      name: report.user.name,
-      login: report.user.login,
-      role: report.user.role,
-      city: report.user.city,
-      
-      // HR метрики
-      interviews: report.hrMetrics?.interviews || 0,
-      jobPosts: report.hrMetrics?.jobPosts || 0,
-      registered: report.hrMetrics?.registrations || 0,
-      hrFullDays: report.hrMetrics?.fullDays || 0,
-      hrStress: report.hrMetrics?.stress || 0,
-      hrOvertime: report.hrMetrics?.overtime || false,
-      
-      // Ops метрики
-      messages: report.opsMetrics?.messages || 0,
-      orders: report.opsMetrics?.orders || 0,
-      opsFullDays: report.opsMetrics?.fullDays || 0,
-      opsStress: report.opsMetrics?.stress || 0,
-      opsOvertime: report.opsMetrics?.overtime || false,
-      
-      // Общие метрики
-      workdays: report.workdays,
-      stressLevel: report.stressLevel,
-      overtime: report.overtime,
-      overtimeHours: report.overtimeHours,
-    }));
+    const byEmployee = weeklyReports.map(report => {
+      const ui = userInputMap.get(report.user.id);
+      const messages = report.opsMetrics?.messages ?? ui?.trengoResponses ?? 0;
+      const orders = report.opsMetrics?.orders ?? ui?.ordersHandled ?? 0;
+      return {
+        userId: report.user.id,
+        name: report.user.name,
+        login: report.user.login,
+        role: report.user.role,
+        city: report.user.city,
+        
+        // HR метрики
+        interviews: report.hrMetrics?.interviews || 0,
+        jobPosts: report.hrMetrics?.jobPosts || 0,
+        registered: report.hrMetrics?.registrations || 0,
+        hrFullDays: report.hrMetrics?.fullDays || 0,
+        hrStress: report.hrMetrics?.stress || 0,
+        hrOvertime: report.hrMetrics?.overtime || false,
+        
+        // Ops метрики (fallback к данным Country Manager по конкретному пользователю)
+        messages,
+        orders,
+        opsFullDays: report.opsMetrics?.fullDays || 0,
+        opsStress: report.opsMetrics?.stress || 0,
+        opsOvertime: report.opsMetrics?.overtime || false,
+        
+        // Общие метрики
+        workdays: report.workdays,
+        stressLevel: report.stressLevel,
+        overtime: report.overtime,
+        overtimeHours: report.overtimeHours,
+      };
+    });
 
     // 2. РАЗРЕЗ ПО ГОРОДАМ (база: самоотчеты)
     const cityMap = new Map<string, any>();
