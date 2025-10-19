@@ -9,7 +9,9 @@ import { logger } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   try {
-    const { login, password } = await request.json();
+    const body = await request.json();
+    const login = (body?.login ?? '').trim();
+    const password = (body?.password ?? '').trim();
 
     if (!login || !password) {
       return NextResponse.json(
@@ -28,13 +30,14 @@ export async function POST(request: NextRequest) {
     if (!user || !user.isActive) {
       // Extra diagnostics to catch prod DB/env mismatch without exposing secrets
       const usersCount = await prisma.user.count();
+      const sample = await prisma.user.findMany({ select: { login: true }, take: 3, orderBy: { createdAt: 'asc' } });
       let dbInfo: any = undefined;
       try {
         const dbUrl = process.env.DATABASE_URL || '';
         const u = new URL(dbUrl);
         dbInfo = { host: u.hostname, db: u.pathname.replace('/', '') };
       } catch {}
-      logger.warn('Login failed - user not found or inactive', { login, found: !!user, active: user?.isActive, usersCount, dbInfo });
+      logger.warn('Login failed - user not found or inactive', { login, found: !!user, active: user?.isActive, usersCount, sample, dbInfo });
       return NextResponse.json(
         { message: 'Неверные учетные данные' },
         { status: 401 }
