@@ -21,12 +21,20 @@ export async function POST(request: NextRequest) {
     // Поиск пользователя
     logger.info('Login attempt', { login });
     
-    const user = await prisma.user.findUnique({
-      where: { login },
+    const user = await prisma.user.findFirst({
+      where: { login: { equals: login, mode: 'insensitive' } },
     });
 
     if (!user || !user.isActive) {
-      logger.warn('Login failed - user not found or inactive', { login, found: !!user, active: user?.isActive });
+      // Extra diagnostics to catch prod DB/env mismatch without exposing secrets
+      const usersCount = await prisma.user.count();
+      let dbInfo: any = undefined;
+      try {
+        const dbUrl = process.env.DATABASE_URL || '';
+        const u = new URL(dbUrl);
+        dbInfo = { host: u.hostname, db: u.pathname.replace('/', '') };
+      } catch {}
+      logger.warn('Login failed - user not found or inactive', { login, found: !!user, active: user?.isActive, usersCount, dbInfo });
       return NextResponse.json(
         { message: 'Неверные учетные данные' },
         { status: 401 }
