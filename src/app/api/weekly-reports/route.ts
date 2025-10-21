@@ -190,12 +190,12 @@ export async function POST(request: NextRequest) {
           userId_weekIso: { userId, weekIso }
         },
         update: {
-          workdays: base?.workdays ?? undefined,
-          stressLevel: base?.stressLevel ?? undefined,
-          overtime: base?.overtime ?? undefined,
-          overtimeHours: base?.overtimeHours ?? undefined,
-          notes: base?.notes ?? undefined,
-          teamComment: base?.teamComment ?? undefined,
+          workdays: base?.workdays !== undefined ? base.workdays : undefined,
+          stressLevel: base?.stressLevel !== undefined ? base.stressLevel : undefined,
+          overtime: base?.overtime !== undefined ? base.overtime : undefined,
+          overtimeHours: base?.overtimeHours !== undefined ? base.overtimeHours : undefined,
+          notes: base?.notes !== undefined ? (base.notes || null) : undefined,
+          teamComment: base?.teamComment !== undefined ? (base.teamComment || null) : undefined,
           isCompleted: true, // Отмечаем отчет как завершенный
           updatedAt: new Date()
         },
@@ -224,13 +224,13 @@ export async function POST(request: NextRequest) {
             userId_weekIso: { userId, weekIso }
           },
           update: {
-            interviews: hr.interviews ?? undefined,
-            jobPosts: hr.jobPosts ?? undefined,
-            registrations: hr.registered ?? undefined,
-            fullDays: hr.fullDays ?? undefined,
-            difficultCases: hr.difficult ?? undefined, // mapping
-            stress: hr.stress ?? undefined,
-            overtime: hr.overtime ?? undefined,
+            interviews: hr.interviews !== undefined ? hr.interviews : undefined,
+            jobPosts: hr.jobPosts !== undefined ? hr.jobPosts : undefined,
+            registrations: hr.registered !== undefined ? hr.registered : undefined,
+            fullDays: hr.fullDays !== undefined ? hr.fullDays : undefined,
+            difficultCases: hr.difficult !== undefined ? (hr.difficult || null) : undefined, // mapping
+            stress: hr.stress !== undefined ? hr.stress : undefined,
+            overtime: hr.overtime !== undefined ? hr.overtime : undefined,
             updatedAt: new Date()
           },
           create: {
@@ -255,13 +255,13 @@ export async function POST(request: NextRequest) {
             userId_weekIso: { userId, weekIso }
           },
           update: {
-            messages: ops.messages ?? undefined,
-            orders: ops.orders ?? undefined,
-            fullDays: base?.workdays ?? undefined,
-            diffCleaners: ops.diffCleaners ?? undefined,
-            diffClients: ops.diffClients ?? undefined,
-            stress: ops.stress ?? undefined,
-            overtime: ops.overtime ?? undefined,
+            messages: ops.messages !== undefined ? ops.messages : undefined,
+            orders: ops.orders !== undefined ? ops.orders : undefined,
+            fullDays: base?.workdays !== undefined ? base.workdays : undefined,
+            diffCleaners: ops.diffCleaners !== undefined ? (ops.diffCleaners || null) : undefined,
+            diffClients: ops.diffClients !== undefined ? (ops.diffClients || null) : undefined,
+            stress: ops.stress !== undefined ? ops.stress : undefined,
+            overtime: ops.overtime !== undefined ? ops.overtime : undefined,
             updatedAt: new Date()
           },
           create: {

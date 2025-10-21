@@ -380,9 +380,27 @@ function SchedulePage() {
                         </label>
                         <input 
                           type="time" 
+                          step="900"
                           {...register(`${day.key}Start` as any)} 
-                          className="w-full px-3 py-2 border border-white/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white/70 backdrop-blur-sm"
+                          placeholder="09:00"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white shadow-sm text-base font-medium"
                         />
+                        <div className="flex gap-1 mt-1">
+                          <button 
+                            type="button"
+                            onClick={() => setValue(`${day.key}Start` as any, '09:00')}
+                            className="px-2 py-0.5 text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 rounded"
+                          >
+                            9:00
+                          </button>
+                          <button 
+                            type="button"
+                            onClick={() => setValue(`${day.key}Start` as any, '10:00')}
+                            className="px-2 py-0.5 text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 rounded"
+                          >
+                            10:00
+                          </button>
+                        </div>
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1 flex items-center">
@@ -391,9 +409,27 @@ function SchedulePage() {
                         </label>
                         <input 
                           type="time" 
+                          step="900"
                           {...register(`${day.key}End` as any)} 
-                          className="w-full px-3 py-2 border border-white/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white/70 backdrop-blur-sm"
+                          placeholder="18:00"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white shadow-sm text-base font-medium"
                         />
+                        <div className="flex gap-1 mt-1">
+                          <button 
+                            type="button"
+                            onClick={() => setValue(`${day.key}End` as any, '18:00')}
+                            className="px-2 py-0.5 text-xs bg-green-50 hover:bg-green-100 text-green-700 rounded"
+                          >
+                            18:00
+                          </button>
+                          <button 
+                            type="button"
+                            onClick={() => setValue(`${day.key}End` as any, '19:00')}
+                            className="px-2 py-0.5 text-xs bg-green-50 hover:bg-green-100 text-green-700 rounded"
+                          >
+                            19:00
+                          </button>
+                        </div>
                       </div>
                     </div>
                     
