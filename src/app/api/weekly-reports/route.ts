@@ -160,6 +160,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Валидация workdays (максимум 7 дней в неделю)
+    if (base?.workdays !== undefined) {
+      if (base.workdays < 0 || base.workdays > 7) {
+        return NextResponse.json(
+          { message: 'Количество рабочих дней должно быть от 0 до 7' },
+          { status: 400 }
+        );
+      }
+    }
+
     // Проверяем пользователя
     const user = await prisma.user.findUnique({
       where: { id: userId },

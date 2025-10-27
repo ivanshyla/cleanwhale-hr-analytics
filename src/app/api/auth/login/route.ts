@@ -83,15 +83,20 @@ export async function POST(request: NextRequest) {
     });
 
     // Устанавливаем JWT в httpOnly cookie для безопасности
-    // Проверяем протокол для правильной установки Secure флага
-    const isHttps = request.headers.get('x-forwarded-proto') === 'https' || 
-                   new URL(request.url).protocol === 'https:';
+    // ВАЖНО: SameSite='none' для работы на всех устройствах
+    const isProduction = process.env.NODE_ENV === 'production';
+    
+    // Логируем вход
+    logger.info('User login successful', { 
+      userId: user.id, 
+      login: user.login
+    });
     
     response.cookies.set('token', token, {
       httpOnly: true,
-      secure: isHttps, // Secure только для HTTPS
-      sameSite: 'lax',
-      maxAge: 30 * 24 * 60 * 60, // 30 дней (синхронизировано с JWT)
+      secure: isProduction, // Secure только в production (HTTPS)
+      sameSite: isProduction ? 'none' : 'lax', // 'none' в production для совместимости
+      maxAge: 30 * 24 * 60 * 60, // 30 дней
       path: '/',
     });
 

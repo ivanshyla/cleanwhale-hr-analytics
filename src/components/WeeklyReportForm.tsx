@@ -264,7 +264,7 @@ const handleSave = async (submitRole: 'hr' | 'ops' | 'mixed') => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Отработанные дни
+              Отработанные дни (максимум 7)
             </label>
             <input
               type="number"
@@ -272,9 +272,16 @@ const handleSave = async (submitRole: 'hr' | 'ops' | 'mixed') => {
               max="7"
               step="0.5"
               value={baseData.workdays}
-              onChange={(e) => setBaseData(prev => ({ ...prev, workdays: parseFloat(e.target.value) || 0 }))}
+              onChange={(e) => {
+                const value = parseFloat(e.target.value) || 0;
+                // Ограничиваем значение от 0 до 7
+                const clampedValue = Math.min(Math.max(value, 0), 7);
+                setBaseData(prev => ({ ...prev, workdays: clampedValue }));
+              }}
               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+              disabled={isReportLocked}
             />
+            <p className="text-xs text-gray-500 mt-1">В неделе максимум 7 дней</p>
           </div>
 
           <div>

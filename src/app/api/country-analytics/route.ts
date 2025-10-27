@@ -6,6 +6,12 @@ import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth';
 import { isoWeekOf } from '@/lib/week';
 
+// Региональные менеджеры и города под их управлением
+// Их рабочие дни и метрики учитываются для всех указанных городов
+const REGIONAL_MANAGERS: Record<string, string[]> = {
+  'mix003': ['POZNAN', 'KATOWICE', 'BIALYSTOK', 'LUBLIN'], // Павел Познань
+};
+
 // Кэш отключен для точных актуальных данных
 
 export async function GET(request: NextRequest) {
@@ -122,56 +128,66 @@ export async function GET(request: NextRequest) {
     const cityMap = new Map<string, any>();
     
     weeklyReports.forEach(report => {
-      const city = report.user.city;
-      if (!cityMap.has(city)) {
-        cityMap.set(city, {
-          city,
-          totalEmployees: 0,
-          hrManagers: 0,
-          opsManagers: 0,
-          mixedManagers: 0,
+      // Определяем города для этого менеджера
+      const userId = report.user.id;
+      const cities = REGIONAL_MANAGERS[userId] || [report.user.city];
+      
+      // Учитываем данные менеджера для всех его городов
+      cities.forEach(city => {
+        if (!cityMap.has(city)) {
+          cityMap.set(city, {
+            city,
+            totalEmployees: 0,
+            hrManagers: 0,
+            opsManagers: 0,
+            mixedManagers: 0,
+            
+            // HR метрики
+            totalInterviews: 0,
+            totalJobPosts: 0,
+            totalRegistered: 0,
+            
+            // Ops метрики
+            totalMessages: 0,
+            totalOrders: 0,
+            
+            // Общее
+            totalWorkdays: 0,
+            avgStress: 0,
+            totalOvertime: 0,
+          });
+        }
+        
+        const cityData = cityMap.get(city)!;
+        
+        // Считаем сотрудника только один раз (в первом городе)
+        if (city === cities[0]) {
+          cityData.totalEmployees++;
           
-          // HR метрики
-          totalInterviews: 0,
-          totalJobPosts: 0,
-          totalRegistered: 0,
-          
-          // Ops метрики
-          totalMessages: 0,
-          totalOrders: 0,
-          
-          // Общее
-          totalWorkdays: 0,
-          avgStress: 0,
-          totalOvertime: 0,
-        });
-      }
-      
-      const cityData = cityMap.get(city)!;
-      cityData.totalEmployees++;
-      
-      // Подсчет по типам
-      if (report.user.role === 'HIRING_MANAGER') cityData.hrManagers++;
-      if (report.user.role === 'OPS_MANAGER') cityData.opsManagers++;
-      if (report.user.role === 'MIXED_MANAGER') cityData.mixedManagers++;
-      
-      // HR метрики
-      if (report.hrMetrics) {
-        cityData.totalInterviews += report.hrMetrics.interviews || 0;
-        cityData.totalJobPosts += report.hrMetrics.jobPosts || 0;
-        cityData.totalRegistered += report.hrMetrics.registrations || 0;
-      }
-      
-      // Ops метрики
-      if (report.opsMetrics) {
-        cityData.totalMessages += report.opsMetrics.messages || 0;
-        cityData.totalOrders += report.opsMetrics.orders || 0;
-      }
-      
-      // Общее
-      cityData.totalWorkdays += report.workdays || 0;
-      cityData.avgStress += report.stressLevel || 0;
-      cityData.totalOvertime += report.overtimeHours || 0;
+          // Подсчет по типам
+          if (report.user.role === 'HIRING_MANAGER') cityData.hrManagers++;
+          if (report.user.role === 'OPS_MANAGER') cityData.opsManagers++;
+          if (report.user.role === 'MIXED_MANAGER') cityData.mixedManagers++;
+        }
+        
+        // HR метрики
+        if (report.hrMetrics) {
+          cityData.totalInterviews += report.hrMetrics.interviews || 0;
+          cityData.totalJobPosts += report.hrMetrics.jobPosts || 0;
+          cityData.totalRegistered += report.hrMetrics.registrations || 0;
+        }
+        
+        // Ops метрики
+        if (report.opsMetrics) {
+          cityData.totalMessages += report.opsMetrics.messages || 0;
+          cityData.totalOrders += report.opsMetrics.orders || 0;
+        }
+        
+        // Общее
+        cityData.totalWorkdays += report.workdays || 0;
+        cityData.avgStress += report.stressLevel || 0;
+        cityData.totalOvertime += report.overtimeHours || 0;
+      });
     });
     
     // 2.1 Загружаем агрегаты Country Manager и ПРИОРИТЕТНО вливаем поверх

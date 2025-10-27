@@ -598,7 +598,6 @@ function CountryAnalyticsPage() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Роль</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Город</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Регистр.</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Заказы</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Раб.дни</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Стресс</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Переработка</th>
@@ -622,7 +621,6 @@ function CountryAnalyticsPage() {
                         {CITY_LABELS[emp.city] || emp.city}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{emp.registered}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{emp.orders}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{emp.workdays}</td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
